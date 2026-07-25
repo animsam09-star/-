@@ -51,14 +51,63 @@ def _esc(s) -> str:
     return html.escape(str(s or ""))
 
 
+def _impact_tag(b: dict) -> str:
+    if b.get("impact") == "피해":
+        return ' <span class="down">[피해]</span>'
+    return ' <span class="up">[수혜]</span>' if b.get("impact") else ""
+
+
 def _beneficiary_row(b: dict) -> str:
-    ret = ""
+    bits = []
     if b.get("ret20") is not None:
-        ret = f' <span class="muted">(20일 {b["ret20"]:+.1%})</span>'
-    return f'<li><b>{_esc(b["name"])}</b>{ret} — {_esc(b.get("reason") or b.get("comment", ""))}</li>'
+        bits.append(f'20일 {b["ret20"]:+.1%}')
+    if b.get("gap") is not None:
+        bits.append(f'갭 {b["gap"]:+.1%}')
+    meta = f' <span class="muted">({" · ".join(bits)})</span>' if bits else ""
+    return (f'<li><b>{_esc(b["name"])}</b>{_impact_tag(b)}{meta} — '
+            f'{_esc(b.get("reason") or b.get("comment", ""))}</li>')
 
 
-def render_html(base_date: str, candidates: list[dict], analysis: dict, site_title: str) -> str:
+def render_horizontal(horizontal: dict, names: dict[str, str], top_groups: int = 8,
+                      top_members: int = 5) -> str:
+    """가장 크게 움직인 그룹과 그 안에서 아직 안 따라온 종목을 표로 보여준다."""
+    gaps = (horizontal or {}).get("group_gaps") or {}
+    if not gaps:
+        return ""
+
+    ranked = sorted(gaps.items(), key=lambda kv: abs(kv[1]["group_move"]), reverse=True)[:top_groups]
+    blocks = []
+    for g, info in ranked:
+        rows = ""
+        for m in info["members"][:top_members]:
+            nm = names.get(m["ticker"], m["ticker"])
+            cls = "badge-mi" if m["gap"] > 0.03 else "badge-gi"
+            rows += (f"<tr><td>{_esc(nm)}</td><td class='muted'>{m['ticker']}</td>"
+                     f"<td>{m['beta']:+.2f}</td><td>{m['expected']:+.1%}</td>"
+                     f"<td>{m['actual']:+.1%}</td>"
+                     f"<td class='{cls}'>{m['gap']:+.1%}</td></tr>")
+        blocks.append(
+            f"<div class='card'><h3>{_esc(g)} "
+            f"<span class='chip'>그룹 5일 {info['group_move']:+.1%}</span></h3>"
+            f"<div class='scroll'><table>"
+            f"<tr><th>종목</th><th>코드</th><th>β</th><th>기대</th><th>실제</th><th>갭</th></tr>"
+            f"{rows}</table></div></div>")
+
+    moves = (horizontal or {}).get("factor_moves") or {}
+    fac = ""
+    if moves:
+        cells = " · ".join(
+            f"{_esc(k)} {v['ret5']:+.1%}" for k, v in moves.items() if v.get("ret5") is not None)
+        fac = f"<div class='card'><b>매크로 팩터 최근 5일</b><br><span class='muted'>{cells}</span></div>"
+
+    return ("<h2>수평 파급 — 같은 동인, 아직 안 움직인 종목</h2>"
+            "<p class='muted'>갭 = 기대수익률(β × 그룹 수익률) − 실제수익률. "
+            "양수가 클수록 함께 움직였어야 하는데 뒤처진 종목입니다.</p>"
+            + fac + "".join(blocks))
+
+
+def render_html(base_date: str, candidates: list[dict], analysis: dict, site_title: str,
+                horizontal: dict | None = None, names: dict[str, str] | None = None) -> str:
     date_fmt = f"{base_date[:4]}-{base_date[4:6]}-{base_date[6:]}"
     parts = [f"<main><h1>{_esc(site_title)}</h1>"
              f'<p class="sub">기준일 {date_fmt} · 후보 {len(candidates)}종목 · '
@@ -69,13 +118,16 @@ def render_html(base_date: str, candidates: list[dict], analysis: dict, site_tit
         parts.append("<h2>오늘의 종합</h2><div class='card'>")
         parts.append(f"<p>{_esc(synthesis.get('market_summary'))}</p></div>")
         for idea in synthesis.get("ideas", []):
-            bens = "".join(
-                f'<li><b>{_esc(b["name"])}</b> '
-                f'<span class="{"badge-mi" if b["priced_in"] == "미반영" else "badge-gi"}">'
-                f'[{_esc(b["priced_in"])}]</span> — {_esc(b["comment"])}</li>'
-                for b in idea.get("beneficiaries", []))
+            bens = ""
+            for b in idea.get("beneficiaries", []):
+                gap = f' <span class="muted">갭 {b["gap"]:+.1%}</span>' if b.get("gap") is not None else ""
+                bens += (
+                    f'<li><b>{_esc(b["name"])}</b>{_impact_tag(b)} '
+                    f'<span class="{"badge-mi" if b["priced_in"] == "미반영" else "badge-gi"}">'
+                    f'[{_esc(b["priced_in"])}]</span>{gap} — {_esc(b["comment"])}</li>')
+            axis = f"<span class='chip'>{_esc(idea['axis'])}축</span>" if idea.get("axis") else ""
             parts.append(
-                f"<div class='card'><h3>💡 {_esc(idea['title'])}</h3>"
+                f"<div class='card'><h3>💡 {_esc(idea['title'])}{axis}</h3>"
                 f"<p><b>동인:</b> {_esc(idea['driver'])}</p>"
                 f"<p><b>경로:</b> {_esc(idea['path'])}</p>"
                 f"<ul>{bens}</ul>"
@@ -90,14 +142,21 @@ def render_html(base_date: str, candidates: list[dict], analysis: dict, site_tit
                 bens = "".join(_beneficiary_row(b) for b in p.get("beneficiaries", []))
                 paths += (f"<div class='path'><b>{_esc(p['direction'])} → {_esc(p['target_industry'])}</b>"
                           f"<br>{_esc(p['logic'])}<ul>{bens}</ul></div>")
+            axis = f"<span class='chip'>{_esc(a['ripple_axis'])}축</span>" if a.get("ripple_axis") else ""
+            grp = ""
+            if a.get("groups"):
+                grp = (f"<p class='muted'>소속 그룹: "
+                       f"{_esc(' / '.join(a['groups'][:5]))}</p>")
             parts.append(
                 f"<div class='card'><h3>{_esc(a['name'])} <span class='muted'>{a['ticker']}</span>"
                 f"<span class='chip'>{_esc(a['trigger'])}</span>"
                 f"<span class='chip'>{_esc(a['cause_type'])}</span>"
-                f"<span class='chip'>{_esc(a['cause_scope'])}</span></h3>"
+                f"<span class='chip'>{_esc(a['cause_scope'])}</span>{axis}</h3>"
                 f"<p>{_esc(a['cause_summary'])}</p>"
                 f"<p class='muted'>근거: {_esc(a['evidence'])} · 확신도 {_esc(a['confidence'])} · "
-                f"20일 수익률 {a['ret20']:+.1%}</p>{paths}</div>")
+                f"20일 수익률 {a['ret20']:+.1%}</p>{grp}{paths}</div>")
+
+    parts.append(render_horizontal(horizontal or {}, names or {}))
 
     if candidates:
         rows = "".join(
@@ -139,11 +198,15 @@ def render_telegram(base_date: str, candidates: list[dict], analysis: dict, page
         lines.append(f"<i>{_esc(synthesis['market_summary'])}</i>")
         lines.append("")
         for idea in synthesis["ideas"][:5]:
-            lines.append(f"💡 <b>{_esc(idea['title'])}</b>")
+            axis = f" [{idea['axis']}축]" if idea.get("axis") else ""
+            lines.append(f"💡 <b>{_esc(idea['title'])}</b>{axis}")
             lines.append(f"  경로: {_esc(idea['path'])}")
             for b in idea.get("beneficiaries", [])[:4]:
                 mark = "🟢" if b["priced_in"] == "미반영" else ("🟡" if b["priced_in"] == "일부반영" else "⚪")
-                lines.append(f"  {mark} {_esc(b['name'])} [{_esc(b['priced_in'])}]")
+                if b.get("impact") == "피해":
+                    mark = "🔻"
+                gap = f" 갭{b['gap']:+.0%}" if b.get("gap") is not None else ""
+                lines.append(f"  {mark} {_esc(b['name'])} [{_esc(b['priced_in'])}]{gap}")
             lines.append("")
     elif candidates:
         lines.append("원인 분석 없이 스크리닝만 수행됨. 상위 후보:")
@@ -156,10 +219,20 @@ def render_telegram(base_date: str, candidates: list[dict], analysis: dict, page
     return "\n".join(lines)
 
 
-def build(base_date: str, candidates: list[dict], analysis: dict, cfg: dict) -> Path:
+def build(base_date: str, candidates: list[dict], analysis: dict, cfg: dict,
+          horizontal: dict | None = None) -> Path:
     REPORTS_DIR.mkdir(exist_ok=True)
+
+    names: dict[str, str] = {}
+    returns_file = ROOT / "data" / f"returns_{base_date}.json"
+    if returns_file.exists():
+        raw = json.loads(returns_file.read_text(encoding="utf-8"))
+        names = {t: v.get("name") for t, v in raw.items() if isinstance(v, dict) and v.get("name")}
+
     out = REPORTS_DIR / f"{base_date}.html"
-    out.write_text(render_html(base_date, candidates, analysis, cfg["site_title"]), encoding="utf-8")
+    out.write_text(
+        render_html(base_date, candidates, analysis, cfg["site_title"], horizontal, names),
+        encoding="utf-8")
     (REPORTS_DIR / "index.html").write_text(render_index(cfg["site_title"]), encoding="utf-8")
     print(f"리포트 생성: {out}")
     return out

@@ -14,6 +14,35 @@ screener:
   # 최종 후보 수
   top_n: 30
 
+# 수평 그래프: 섹터를 관통하는 그룹과 매크로 팩터 노출
+horizontal:
+  enabled: true
+  beta_window: 120                  # 베타 회귀 구간(거래일)
+  gap_window: 5                     # 미반영 갭 판정 구간(최근 N거래일)
+  min_abs_corr: 0.2                 # 팩터 노출로 인정할 최소 |상관계수|
+  min_group_corr: 0.3               # 그룹 파급 대상으로 인정할 최소 상관계수
+  max_peers_per_group: 6            # 그룹당 프롬프트/리포트에 넣을 미반영 상위 종목 수
+  # 팩터 대용치는 전부 국내 상장 ETF/ETN. 티커가 아닌 종목명 키워드로 런타임 해석한다.
+  factors:
+    - name: 달러
+      keywords: [달러선물]
+      exclude: [인버스, 레버리지, 2X]
+    - name: 구리
+      keywords: [구리]
+      exclude: [인버스, 레버리지]
+    - name: 유가
+      keywords: [원유, WTI]
+      exclude: [인버스, 레버리지]
+    - name: 금
+      keywords: [골드, 금현물]
+      exclude: [인버스, 레버리지]
+    - name: 미국채금리
+      keywords: [미국채10년, 미국30년, 국채10년]
+      exclude: [인버스, 레버리지]
+    - name: 국내금리
+      keywords: [국고채10년, 국고채3년]
+      exclude: [인버스, 레버리지]
+
 collect:
   news_per_stock: 8                 # 종목당 수집 뉴스 수
   news_days: 14                     # 뉴스 조회 기간(일)

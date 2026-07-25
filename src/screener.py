@@ -121,7 +121,7 @@ def fetch_names(base_date: str) -> dict[str, str]:
     return names
 
 
-def screen(end_date: str, cfg: dict) -> dict:
+def screen(end_date: str, cfg: dict) -> tuple[dict, pd.DataFrame]:
     """스크리닝 실행. 후보 목록과 전 종목 수익률 스냅샷을 반환/저장한다."""
     dates = get_trading_dates(end_date, cfg["lookback_days"])
     base_date = dates[-1]
@@ -194,4 +194,5 @@ def screen(end_date: str, cfg: dict) -> dict:
         json.dumps(snapshot, ensure_ascii=False), encoding="utf-8")
 
     print(f"후보 {len(candidates)}종목 (유니버스 {len(sig)}종목)")
-    return result
+    # 가격 패널은 팩터 베타·그룹 갭 회귀에 재사용한다(재조회 방지).
+    return result, close.loc[:, close.columns.intersection(sig.index)]
