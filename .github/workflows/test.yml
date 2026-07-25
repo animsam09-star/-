@@ -1,0 +1,53 @@
+name: test
+
+# 1층 검증: 로직이 의도대로 도는가. 네트워크 없이 합성 데이터로 매 푸시마다 확인한다.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Run tests
+        run: python -m pytest tests/ -v
+
+      - name: Validate config and value chain maps
+        run: |
+          python - <<'PY'
+          import pathlib, yaml
+
+          cfg = yaml.safe_load(open("config.yaml", encoding="utf-8"))
+          required = {"screener", "horizontal", "collect", "analyze", "report"}
+          missing = required - cfg.keys()
+          assert not missing, f"config.yaml에 누락된 섹션: {missing}"
+
+          for spec in cfg["horizontal"]["factors"]:
+              assert spec.get("name") and spec.get("keywords"), f"팩터 정의 오류: {spec}"
+
+          for f in pathlib.Path("valuechain").glob("*.yaml"):
+              data = yaml.safe_load(f.read_text(encoding="utf-8"))
+              assert data.get("industry"), f"{f}: industry 누락"
+
+          for f in pathlib.Path(".github/workflows").glob("*.yml"):
+              yaml.safe_load(f.read_text(encoding="utf-8"))
+
+          print("설정·밸류체인 맵·워크플로우 검증 통과")
+          PY

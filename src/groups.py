@@ -123,12 +123,20 @@ def build_groups(base_date: str, universe: set[str] | None = None) -> dict:
     return out
 
 
-def group_returns(close: pd.DataFrame, groups: dict[str, list[str]]) -> pd.DataFrame:
-    """그룹별 동일가중 일간 수익률 시계열."""
-    rets = close.pct_change()
+def group_returns(close: pd.DataFrame, groups: dict[str, list[str]],
+                  min_members: int = 3) -> pd.DataFrame:
+    """그룹별 동일가중 일간 수익률 시계열.
+
+    거래정지·신규상장으로 일부 종목이 비는 날에 남은 한두 종목의 등락이 그룹 전체
+    수익률로 잡히면 안 되므로, 유효 종목이 min_members 미만인 날은 결측 처리한다.
+    """
+    rets = close.pct_change(fill_method=None)
     data = {}
     for g, members in groups.items():
         cols = [m for m in members if m in rets.columns]
-        if len(cols) >= 3:
-            data[g] = rets[cols].mean(axis=1)
+        if len(cols) < min_members:
+            continue
+        sub = rets[cols]
+        mean = sub.mean(axis=1)
+        data[g] = mean.where(sub.notna().sum(axis=1) >= min_members)
     return pd.DataFrame(data)

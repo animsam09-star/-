@@ -1,0 +1,110 @@
+name: smoke
+
+# 2층 검증: 실제 KRX 데이터로 라이브 경로가 도는가.
+# 커밋도 Pages 배포도 하지 않고, 결과물은 아티팩트로만 남긴다.
+# 병합 전에 Actions 탭에서 수동 실행해 확인하는 용도.
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "기준일 YYYYMMDD (비우면 오늘)"
+        required: false
+      with_llm:
+        description: "LLM 원인 분석까지 실행 (ANTHROPIC_API_KEY 필요, 비용 발생)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Check KRX reachability
+        env:
+          KRX_ID: ${{ secrets.KRX_ID }}
+          KRX_PW: ${{ secrets.KRX_PW }}
+        run: |
+          python - <<'PY'
+          from pykrx import stock
+          dates = stock.get_previous_business_days(fromdate="20260101", todate="20260131")
+          day = dates[-1].strftime("%Y%m%d")
+          df = stock.get_market_ohlcv(day, market="KOSPI")
+          assert df is not None and not df.empty, "KRX에서 시세를 받지 못했습니다"
+          print(f"KRX 응답 정상: {day} 기준 KOSPI {len(df)}종목")
+          PY
+
+      - name: Run pipeline (smoke)
+        env:
+          KRX_ID: ${{ secrets.KRX_ID }}
+          KRX_PW: ${{ secrets.KRX_PW }}
+          ANTHROPIC_API_KEY: ${{ inputs.with_llm && secrets.ANTHROPIC_API_KEY || '' }}
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+        run: |
+          ARGS="--smoke --skip-notify"
+          if [ -n "${{ inputs.date }}" ]; then ARGS="$ARGS --date ${{ inputs.date }}"; fi
+          if [ "${{ inputs.with_llm }}" != "true" ]; then ARGS="$ARGS --skip-analyze"; fi
+          python -m src.pipeline $ARGS
+
+      - name: Verify outputs
+        run: |
+          python - <<'PY'
+          import json, pathlib, sys
+
+          reports = sorted(pathlib.Path("reports").glob("2*.html"))
+          assert reports, "리포트가 생성되지 않았습니다"
+          html = reports[-1].read_text(encoding="utf-8")
+          assert len(html) > 500, "리포트가 비어 있습니다"
+          print(f"리포트 생성 확인: {reports[-1].name} ({len(html):,}자)")
+
+          data = pathlib.Path("data")
+          cands = sorted(data.glob("candidates_*.json"))
+          assert cands, "후보 파일이 없습니다"
+          payload = json.loads(cands[-1].read_text(encoding="utf-8"))
+          n = len(payload["candidates"])
+          print(f"후보 {n}종목 / 유니버스 {payload['universe_size']}종목")
+          assert payload["universe_size"] > 100, "유니버스가 비정상적으로 작습니다"
+
+          # 수평 그래프는 실패해도 파이프라인이 죽지 않으므로 명시적으로 확인한다
+          groups = sorted(data.glob("groups_*.json"))
+          factors = sorted(data.glob("factors_*.json"))
+          if groups and factors:
+              g = json.loads(groups[-1].read_text(encoding="utf-8"))
+              f = json.loads(factors[-1].read_text(encoding="utf-8"))
+              print(f"그룹 {len(g['groups'])}개 / 팩터 {len(f['factor_moves'])}개 / "
+                    f"갭 산출 그룹 {len(f['group_gaps'])}개")
+              proxies = f.get("factor_proxies", {})
+              for name, info in proxies.items():
+                  print(f"  팩터 대용: {name} → {info['proxy_name']} ({info['ticker']})")
+              if not f["factor_moves"]:
+                  print("::warning::팩터가 하나도 해석되지 않았습니다. "
+                        "config.yaml의 키워드를 점검하세요.")
+              if not g["groups"]:
+                  print("::warning::그룹이 하나도 구성되지 않았습니다.")
+          else:
+              print("::warning::수평 그래프 산출물이 없습니다 — 로그에서 실패 원인을 확인하세요.")
+          PY
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-output
+          path: |
+            reports/
+            data/
+          retention-days: 7

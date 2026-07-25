@@ -37,72 +37,106 @@ def _retry(fn, *args, retries=3, delay=1.5, **kwargs):
             time.sleep(delay * (attempt + 1))
 
 
+def as_date_index(obj):
+    """인덱스를 'YYYYMMDD' 문자열로 통일한다.
+
+    pykrx는 함수마다 인덱스 타입이 다르다. 전 종목 스냅샷(get_market_ohlcv(date, market=))은
+    티커 인덱스를 주고, 그것으로 만든 스크리너의 가격 패널은 문자열 날짜 인덱스가 된다.
+    반면 시계열 조회(get_index_ohlcv_by_date / get_etf_ohlcv_by_date)는 DatetimeIndex를 준다.
+
+    이 둘을 섞으면 pandas가 서로 다른 라벨로 보아 정렬에 실패하는데, **예외가 아니라 전부
+    NaN이 된다.** 시장 수익률이 통째로 NaN이 되면 fillna(0)을 거쳐 시장 요인이 0으로
+    취급되고, 2팩터 보정이 조용히 무력화된다. 그래서 외부에서 들어오는 모든 시계열을
+    이 함수로 통과시킨다.
+    """
+    idx = obj.index
+    if isinstance(idx, pd.DatetimeIndex):
+        new = idx.strftime("%Y%m%d")
+    else:
+        new = pd.Index([i.strftime("%Y%m%d") if hasattr(i, "strftime") else str(i)
+                        for i in idx])
+    out = obj.copy()
+    out.index = new
+    return out
+
+
 def resolve_factor_tickers(specs: list[dict], base_date: str) -> dict[str, dict]:
     """종목명 키워드로 팩터 대용 ETF/ETN 티커를 해석한다.
 
     같은 키워드에 여러 상품이 걸리면 이름이 가장 짧은 것을 고른다
     (레버리지·헤지형 등 수식어가 붙지 않은 기본 상품일 가능성이 높다).
     """
-    catalog: list[tuple[str, str]] = []
-    for lister, namer in ((stock.get_etf_ticker_list, stock.get_etf_ticker_name),
-                          (stock.get_etn_ticker_list, stock.get_etn_ticker_name)):
+    catalog: list[tuple[str, str, str]] = []  # (ticker, name, kind)
+    for kind, lister, namer in (("etf", stock.get_etf_ticker_list, stock.get_etf_ticker_name),
+                                ("etn", stock.get_etn_ticker_list, stock.get_etn_ticker_name)):
         try:
             for t in _retry(lister, date=base_date):
                 try:
-                    catalog.append((t, _retry(namer, t)))
+                    catalog.append((t, _retry(namer, t), kind))
                 except Exception:
                     continue
         except Exception as e:
-            print(f"  팩터 후보 목록 조회 실패: {e}")
+            print(f"  {kind.upper()} 목록 조회 실패: {e}")
 
     resolved: dict[str, dict] = {}
     for spec in specs:
         matches = [
-            (t, n) for t, n in catalog
-            if any(k in n for k in spec["keywords"])
-            and not any(x in n for x in spec.get("exclude", []))
+            entry for entry in catalog
+            if any(k in entry[1] for k in spec["keywords"])
+            and not any(x in entry[1] for x in spec.get("exclude", []))
         ]
         if not matches:
             print(f"  팩터 '{spec['name']}' 대용 상품을 찾지 못해 건너뜁니다.")
             continue
-        ticker, name = min(matches, key=lambda p: len(p[1]))
-        resolved[spec["name"]] = {"ticker": ticker, "proxy_name": name,
-                                  "kind": spec.get("kind", "etf")}
+        # 수식어(레버리지·헤지형 등)가 붙지 않은 기본 상품일 가능성이 높은 쪽을 고른다
+        ticker, name, kind = min(matches, key=lambda e: len(e[1]))
+        resolved[spec["name"]] = {"ticker": ticker, "proxy_name": name, "kind": kind}
     return resolved
 
 
+def _fetch_close_series(ticker: str, kind: str, start: str, end: str) -> pd.Series | None:
+    """ETF/ETN 종가 시계열. ETN 전용 조회 함수는 pykrx에 없으므로 일반 시세로 받는다."""
+    fetchers = ([stock.get_etf_ohlcv_by_date, stock.get_market_ohlcv_by_date]
+                if kind == "etf" else [stock.get_market_ohlcv_by_date])
+    for fetcher in fetchers:
+        try:
+            df = _retry(fetcher, start, end, ticker)
+        except Exception:
+            continue
+        if df is not None and not df.empty and "종가" in df.columns:
+            s = as_date_index(df["종가"])
+            s = s[s > 0]
+            if not s.empty:
+                return s
+    return None
+
+
 def fetch_factor_panel(resolved: dict[str, dict], dates: list[str]) -> pd.DataFrame:
-    """팩터별 종가 시계열 패널. 시장(KOSPI 지수)은 항상 포함한다."""
+    """팩터별 종가 시계열 패널. 시장(KOSPI 지수)은 항상 포함한다.
+
+    모든 시계열은 as_date_index로 문자열 날짜 인덱스에 맞춘다. 이걸 빠뜨리면
+    가격 패널과 정렬되지 않아 조용히 전부 NaN이 된다(as_date_index 설명 참조).
+    """
     start, end = dates[0], dates[-1]
     series: dict[str, pd.Series] = {}
 
     try:
         idx = _retry(stock.get_index_ohlcv_by_date, start, end, MARKET_INDEX)
-        series["시장"] = idx["종가"]
+        if idx is not None and not idx.empty and "종가" in idx.columns:
+            series["시장"] = as_date_index(idx["종가"])
     except Exception as e:
         print(f"  시장지수 조회 실패: {e}")
 
     for name, info in resolved.items():
-        try:
-            df = _retry(stock.get_etf_ohlcv_by_date, start, end, info["ticker"])
-            if df is None or df.empty:
-                df = _retry(stock.get_market_ohlcv_by_date, start, end, info["ticker"])
-        except Exception:
-            try:
-                df = _retry(stock.get_market_ohlcv_by_date, start, end, info["ticker"])
-            except Exception as e:
-                print(f"  팩터 '{name}' 시계열 조회 실패: {e}")
-                continue
-        if df is None or df.empty or "종가" not in df.columns:
+        s = _fetch_close_series(info["ticker"], info.get("kind", "etf"), start, end)
+        if s is None:
+            print(f"  팩터 '{name}'({info['proxy_name']}) 시계열 조회 실패 — 제외")
             continue
-        s = df["종가"]
-        s.index = pd.to_datetime(s.index).strftime("%Y%m%d")
-        series[name] = s[s > 0]
+        series[name] = s
 
     if not series:
         return pd.DataFrame()
-    panel = pd.DataFrame(series).sort_index()
-    return panel
+    return pd.DataFrame(series).sort_index()
 
 
 def _beta_vs(returns: pd.DataFrame, x: pd.Series) -> tuple[pd.Series, pd.Series]:
@@ -137,12 +171,22 @@ def compute_exposures(close: pd.DataFrame, factor_panel: pd.DataFrame,
     if factor_panel.empty:
         return {}
 
-    stock_ret = close.pct_change().iloc[-window:]
-    factor_ret = factor_panel.pct_change().reindex(stock_ret.index)
+    close, factor_panel = as_date_index(close), as_date_index(factor_panel)
+
+    # 조회 기간이 베타 구간보다 짧아도(스모크 테스트·신규 상장) 동작하도록 축소한다.
+    window = max(20, min(window, len(close) - 1))
+    stock_ret = close.pct_change(fill_method=None).iloc[-window:]
+    factor_ret = factor_panel.pct_change(fill_method=None).reindex(stock_ret.index)
 
     if "시장" not in factor_ret.columns:
         return {}
-    mkt = factor_ret["시장"].fillna(0.0)
+    mkt = factor_ret["시장"]
+    if mkt.notna().sum() < window * MIN_VALID_RATIO:
+        # 시장 시계열이 가격 패널과 정렬되지 않은 상태. 여기서 진행하면 시장 요인이
+        # 0으로 취급되어 조용히 틀린 결과가 나오므로 중단한다.
+        print("  시장 시계열이 가격 패널과 정렬되지 않아 팩터 노출 계산을 건너뜁니다.")
+        return {}
+    mkt = mkt.fillna(0.0)
 
     # 1) 시장 베타 → 잔차
     beta_mkt, _ = _beta_vs(stock_ret, mkt)
@@ -199,9 +243,19 @@ def compute_group_gaps(close: pd.DataFrame, group_ret: pd.DataFrame,
     갭이 클수록 '같이 움직였어야 하는데 아직 안 움직인' 종목이다.
     판정 대상은 해당 그룹의 구성종목으로 한정한다(그룹 밖 종목의 갭은 근거가 없다).
     """
-    stock_ret = close.pct_change()
+    close, group_ret = as_date_index(close), as_date_index(group_ret)
+    stock_ret = close.pct_change(fill_method=None)
+
     if market_ret is None:
         market_ret = stock_ret.mean(axis=1)  # 시장 시계열이 없으면 유니버스 평균으로 대용
+    else:
+        market_ret = as_date_index(market_ret)
+        overlap = market_ret.reindex(close.index).notna().sum()
+        if overlap < len(close) * MIN_VALID_RATIO:
+            print("  시장 시계열이 가격 패널과 정렬되지 않아 유니버스 평균으로 대체합니다.")
+            market_ret = stock_ret.mean(axis=1)
+
+    window = max(20, min(window, len(close) - 1))
     gaps: dict[str, dict] = {}
 
     for g in group_ret.columns:
@@ -237,15 +291,27 @@ def compute_group_gaps(close: pd.DataFrame, group_ret: pd.DataFrame,
         resid = pd.DataFrame(resid, index=aligned.index, columns=aligned.columns)
 
         beta_grp, corr = _beta_vs(resid, grp_resid)
-        actual = stock_ret.iloc[-recent:].sum()
+
+        # 최근 구간 실제 수익률. 거래정지로 관측이 없으면 sum()이 0을 돌려주는데,
+        # 그대로 두면 '안 움직인 종목'으로 보여 미반영 1순위가 된다. 관측 수를 세어
+        # 실제로 거래된 종목만 판정 대상으로 삼는다.
+        recent_block = stock_ret.iloc[-recent:]
+        actual = recent_block.sum(min_count=1)
+        valid_recent = recent_block.notna().sum()
+        min_recent_obs = max(1, int(recent * 0.6))
 
         rows = []
         for t in beta_grp.index:
             c = corr.get(t)
             if pd.isna(c) or c < min_beta_corr:
                 continue  # 그룹 고유 요인과 함께 움직인 이력이 없으면 파급 대상이 아니다
+            if int(valid_recent.get(t, 0)) < min_recent_obs:
+                continue  # 최근 구간에 거의 거래되지 않음(거래정지 등)
+            act = actual.get(t)
+            if pd.isna(act):
+                continue
             expected = float(beta_mkt[t]) * recent_mkt + float(beta_grp[t]) * recent_grp
-            act = float(actual.get(t, 0.0))
+            act = float(act)
             rows.append({
                 "ticker": t,
                 "beta": round(float(beta_grp[t]), 2),
@@ -271,7 +337,7 @@ def build(close: pd.DataFrame, group_ret: pd.DataFrame, groups: dict[str, list[s
 
     market_ret = None
     if not panel.empty and "시장" in panel.columns:
-        market_ret = panel["시장"].pct_change().reindex(close.index)
+        market_ret = panel["시장"].pct_change(fill_method=None).reindex(close.index)
 
     exposure = compute_exposures(close, panel, window=cfg["beta_window"],
                                  min_abs_corr=cfg["min_abs_corr"])

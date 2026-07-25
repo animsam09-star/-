@@ -61,14 +61,26 @@ def fetch_panel(dates: list[str]) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFr
 
 def compute_signals(close: pd.DataFrame, volume: pd.DataFrame, value: pd.DataFrame,
                     cfg: dict) -> pd.DataFrame:
-    """종목별 시그널 테이블을 계산한다."""
+    """종목별 시그널 테이블을 계산한다.
+
+    거래정지 종목은 당일 종가가 결측이라 수익률이 NaN이 되고, 마지막 dropna에서 빠진다.
+    (결측을 앞값으로 채우면 '전혀 안 움직인 종목'으로 보여 잘못 편입되므로 채우지 않는다.)
+    """
     # 데이터가 60일 미만인 종목(신규상장 등)은 제외
     valid = close.count() >= 60
     close = close.loc[:, valid]
 
-    ret5 = close.iloc[-1] / close.iloc[-6] - 1 if len(close) > 6 else pd.Series(dtype=float)
-    ret20 = close.iloc[-1] / close.iloc[-21] - 1
-    ret60 = close.iloc[-1] / close.iloc[-61] - 1 if len(close) > 61 else pd.Series(dtype=float)
+    def period_return(days: int) -> pd.Series:
+        """days 거래일 전 대비 수익률. 기간이 부족하면 빈 결과를 돌려준다."""
+        if len(close) <= days:
+            return pd.Series(dtype=float)
+        return close.iloc[-1] / close.iloc[-(days + 1)] - 1
+
+    ret5, ret20, ret60 = period_return(5), period_return(20), period_return(60)
+    if ret20.empty:
+        raise ValueError(
+            f"20일 수익률을 계산하려면 최소 21거래일이 필요합니다(현재 {len(close)}일). "
+            "config.yaml의 screener.lookback_days를 늘리세요.")
 
     ma20 = close.rolling(20).mean()
     ma60 = close.rolling(60).mean()
@@ -79,7 +91,7 @@ def compute_signals(close: pd.DataFrame, volume: pd.DataFrame, value: pd.DataFra
     golden_cross = (above.iloc[-1]) & (~above.iloc[-(gc_window + 1)])
 
     # 60일 이평 기울기 전환: 최근 10일 기울기 (+), 30일 전 10일 기울기 (-)
-    slope_now = ma60.iloc[-1] - ma60.iloc[-11]
+    slope_now = ma60.iloc[-1] - ma60.iloc[-11] if len(ma60) > 11 else pd.Series(dtype=float)
     slope_before = ma60.iloc[-31] - ma60.iloc[-41] if len(ma60) > 41 else pd.Series(dtype=float)
     slope_turn = (slope_now > 0) & (slope_before < 0)
 

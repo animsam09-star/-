@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from pathlib import Path
 
 import yaml
@@ -246,6 +247,28 @@ def analyze_stock(client: Anthropic, cand: dict, evidence: dict, vc_maps: str,
     return _extract_json(response)
 
 
+_NAME_NOISE = re.compile(r"\s|㈜|\(주\)|（주）|주식회사")
+
+
+def normalize_name(name: str) -> str:
+    """종목명 대조용 정규화. 공백·법인 표기·대소문자 차이를 흡수한다."""
+    return _NAME_NOISE.sub("", str(name)).upper()
+
+
+def build_name_index(names: dict[str, str]) -> dict[str, str]:
+    """정규화된 종목명 → 티커 인덱스.
+
+    LLM이 내놓은 종목명은 KRX 공식 표기와 공백·법인 표기가 다를 수 있다.
+    정확 일치만 쓰면 조용히 누락되고, 유사도 매칭은 엉뚱한 회사에 붙을 위험이 있어
+    정규화 후 정확 일치까지만 허용한다. 매칭 실패는 호출부에서 집계해 드러낸다.
+    """
+    index: dict[str, str] = {}
+    for ticker, name in names.items():
+        if name:
+            index.setdefault(normalize_name(name), ticker)
+    return index
+
+
 def best_gaps(horizontal: dict) -> dict[str, dict]:
     """종목별 최대 미반영 갭(어느 그룹에서 가장 덜 따라왔는지)."""
     best: dict[str, dict] = {}
@@ -257,30 +280,54 @@ def best_gaps(horizontal: dict) -> dict[str, dict]:
     return best
 
 
-def check_priced_in(analyses: list[dict], returns: dict, name_to_ticker: dict,
-                    horizontal: dict | None = None) -> None:
-    """수혜 후보에 최근 수익률과 미반영 갭을 주입한다.
+def _iter_beneficiaries(analyses: list[dict] | None, synthesis: dict | None):
+    """개별 분석의 파급 경로와 종합 아이디어에 들어 있는 수혜·피해 후보를 모두 순회한다."""
+    for a in analyses or []:
+        for path in a.get("ripple_paths", []):
+            yield from path.get("beneficiaries", [])
+    for idea in (synthesis or {}).get("ideas", []):
+        yield from idea.get("beneficiaries", [])
+
+
+def check_priced_in(analyses: list[dict] | None, returns: dict, name_index: dict,
+                    horizontal: dict | None = None,
+                    synthesis: dict | None = None) -> dict:
+    """수혜 후보에 티커·최근 수익률·미반영 갭을 주입하고, 매칭 결과를 집계해 반환한다.
 
     수익률만으로는 '많이 올랐다'만 알 수 있다. 갭은 '같은 동인에 노출된 정도 대비
     얼마나 덜 움직였는가'라서 미반영 판정이 정량적이 된다.
+
+    **개별 분석과 종합 아이디어 양쪽에 모두 주입해야 한다.** 사후 채점(score.py)은
+    종합 아이디어의 티커를 읽으므로, 여기를 빠뜨리면 채점이 항상 0건이 된다.
+
+    티커 매칭에 실패한 종목명은 갭도 수익률도 못 받고 채점에서도 빠지므로,
+    조용히 넘기지 않고 unmatched로 돌려준다.
     """
     gaps = best_gaps(horizontal or {})
-    for a in analyses:
-        for path in a.get("ripple_paths", []):
-            for b in path.get("beneficiaries", []):
-                ticker = name_to_ticker.get(b["name"])
-                if not ticker:
-                    continue
-                b["ticker"] = ticker
-                if ticker in returns:
-                    r = returns[ticker]
-                    b["ret5"] = r.get("ret5")
-                    b["ret20"] = r.get("ret20")
-                if ticker in gaps:
-                    g = gaps[ticker]
-                    b["gap"] = g["gap"]
-                    b["gap_group"] = g["group"]
-                    b["beta"] = g["beta"]
+    matched, unmatched = 0, []
+
+    for b in _iter_beneficiaries(analyses, synthesis):
+        ticker = name_index.get(normalize_name(b.get("name", "")))
+        if not ticker:
+            unmatched.append(b.get("name", ""))
+            continue
+        matched += 1
+        b["ticker"] = ticker
+        if ticker in returns:
+            r = returns[ticker]
+            b["ret5"] = r.get("ret5")
+            b["ret20"] = r.get("ret20")
+        if ticker in gaps:
+            g = gaps[ticker]
+            b["gap"] = g["gap"]
+            b["gap_group"] = g["group"]
+            b["beta"] = g["beta"]
+
+    total = matched + len(unmatched)
+    if unmatched:
+        preview = ", ".join(dict.fromkeys(unmatched))[:200]
+        print(f"  종목명 매칭 {matched}/{total} — 미매칭: {preview}")
+    return {"matched": matched, "total": total, "unmatched": sorted(set(unmatched))}
 
 
 def synthesize(client: Anthropic, analyses: list[dict], cfg: dict) -> dict | None:
@@ -325,7 +372,7 @@ def analyze(candidates: list[dict], evidence_all: dict, base_date: str, cfg: dic
     returns_file = DATA_DIR / f"returns_{base_date}.json"
     returns = json.loads(returns_file.read_text(encoding="utf-8")) if returns_file.exists() else {}
     names = {t: v.get("name") for t, v in returns.items() if isinstance(v, dict)}
-    name_to_ticker = {n: t for t, n in names.items() if n}
+    name_index = build_name_index(names)
 
     max_peers = cfg.get("max_peers_per_group", 6)
     analyses = []
@@ -346,7 +393,8 @@ def analyze(candidates: list[dict], evidence_all: dict, base_date: str, cfg: dic
             result["groups"] = horizontal.get("membership", {}).get(cand["ticker"], [])
             analyses.append(result)
 
-    check_priced_in(analyses, returns, name_to_ticker, horizontal)
+    # 종합에 넘기기 전에 개별 분석부터 채워야 갭이 프롬프트 근거로 쓰인다
+    check_priced_in(analyses, returns, name_index, horizontal)
 
     try:
         synthesis = synthesize(client, analyses, cfg)
@@ -354,7 +402,11 @@ def analyze(candidates: list[dict], evidence_all: dict, base_date: str, cfg: dic
         print(f"종합 분석 실패: {e}")
         synthesis = None
 
-    out = {"base_date": base_date, "analyses": analyses, "synthesis": synthesis}
+    # 종합 아이디어의 후보에도 주입한다(사후 채점이 이 티커를 읽는다)
+    match_stats = check_priced_in(None, returns, name_index, horizontal, synthesis)
+
+    out = {"base_date": base_date, "analyses": analyses, "synthesis": synthesis,
+           "name_match": match_stats}
     (DATA_DIR / f"analysis_{base_date}.json").write_text(
         json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"종목 분석 {len(analyses)}건 완료")

@@ -34,9 +34,17 @@ def main():
     parser.add_argument("--skip-analyze", action="store_true", help="LLM 분석 생략")
     parser.add_argument("--skip-notify", action="store_true", help="텔레그램 알림 생략")
     parser.add_argument("--skip-horizontal", action="store_true", help="수평 그래프 생략")
+    parser.add_argument("--smoke", action="store_true",
+                        help="스모크 모드: 조회 기간·후보 수를 줄여 라이브 경로만 빠르게 확인")
     args = parser.parse_args()
 
     cfg = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
+    if args.smoke:
+        # 라이브 경로가 뚫리는지만 보는 모드. 베타 구간은 factors 쪽에서 자동 축소된다.
+        cfg["screener"]["lookback_days"] = 60
+        cfg["screener"]["top_n"] = 5
+        cfg["analyze"]["max_candidates"] = 2
+        print("스모크 모드: lookback 60일 / 후보 5종목 / 분석 2종목")
     end_date = args.date or datetime.now(KST).strftime("%Y%m%d")
 
     # 1. 정량 스크리닝
