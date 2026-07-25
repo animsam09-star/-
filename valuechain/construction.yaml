@@ -1,0 +1,19 @@
+industry: 건설·EPC
+description: 국내외 건축·토목·플랜트 시공 및 설계·조달·시공(EPC)
+drivers: [해외 수주(중동·플랜트), 국내 주택 분양, SOC 예산, 원전·에너지 인프라, 원자재 가격(원가)]
+peers: [현대건설, 대우건설, GS건설, DL이앤씨, 삼성E&A, HDC현대산업개발, 금호건설, 코오롱글로벌]
+upstream:  # 후방: 소재·부품·장비 공급
+  - segment: 시멘트·레미콘
+    companies: [쌍용C&E, 한일시멘트, 아세아시멘트, 유진기업]
+  - segment: 철근·형강
+    companies: [현대제철, 동국제강, 대한제강, 한국철강]
+  - segment: 건자재·마감재
+    companies: [KCC, LX하우시스, 벽산, 아이에스동서]
+  - segment: 건설기계
+    companies: [HD현대인프라코어, HD현대건설기계, 두산밥캣]
+downstream:  # 전방: 수요처
+  - segment: 부동산 개발·시행
+    companies: [HDC, SK디앤디]
+  - segment: 리츠·자산운용
+    companies: [ESR켄달스퀘어리츠, SK리츠]
+notes: 해외 플랜트 수주 사이클은 삼성E&A·현대건설 선행 → 기자재(성광벤드, 태광, 동국S&C) 6~12개월 후행 경향

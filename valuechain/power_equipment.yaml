@@ -1,0 +1,15 @@
+industry: 전력기기·전선
+description: 변압기·차단기·배전반 등 전력 인프라 기자재와 전선
+drivers: [미국·글로벌 전력망 교체 투자, AI 데이터센터 전력 수요, 신재생 계통연계, 구리 가격]
+peers: [HD현대일렉트릭, 효성중공업, LS ELECTRIC, 일진전기, 제룡전기, 산일전기]
+upstream:
+  - segment: 전선·구리 가공
+    companies: [LS, LS에코에너지, 대한전선, 가온전선]
+  - segment: 변압기 부품·권선
+    companies: [제룡산업, 광명전기, 비츠로테크]
+downstream:
+  - segment: 유틸리티·발전
+    companies: [한국전력, 한전KPS, 한전기술]
+  - segment: 데이터센터·건설
+    companies: [삼성물산, 현대건설, GS건설]
+notes: 대형 3사(HD현대일렉트릭·효성중공업·LS일렉) 수주 서프라이즈 → 중소형(제룡전기·산일전기·일진전기)과 전선주로 온기 확산 패턴 반복

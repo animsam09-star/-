@@ -1,0 +1,165 @@
+"""리포트 생성: 일자별 HTML 리포트(GitHub Pages용)와 텔레그램 요약 텍스트를 만든다."""
+
+from __future__ import annotations
+
+import html
+import json
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+REPORTS_DIR = ROOT / "reports"
+
+CSS = """
+:root { --bg:#fafafa; --card:#fff; --fg:#1a1a2e; --muted:#667; --line:#e2e2ea;
+        --up:#c0392b; --down:#2471a3; --accent:#5b4b8a; --chip:#eee9f7; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg:#14141c; --card:#1d1d28; --fg:#e8e8f0; --muted:#99a; --line:#33334a;
+          --up:#ff7b6b; --down:#6bb2ff; --accent:#a794e0; --chip:#2b2440; } }
+* { box-sizing:border-box; margin:0; }
+body { background:var(--bg); color:var(--fg); font-family:'Apple SD Gothic Neo','Malgun Gothic',
+       -apple-system,sans-serif; line-height:1.6; padding:24px 16px; }
+main { max-width:880px; margin:0 auto; }
+h1 { font-size:1.5rem; margin-bottom:4px; }
+h2 { font-size:1.15rem; margin:32px 0 12px; color:var(--accent); }
+.sub { color:var(--muted); font-size:.9rem; margin-bottom:24px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:12px;
+        padding:16px 18px; margin-bottom:14px; }
+.card h3 { font-size:1.05rem; margin-bottom:6px; }
+.chip { display:inline-block; background:var(--chip); color:var(--accent); border-radius:99px;
+        padding:1px 10px; font-size:.78rem; margin-left:6px; vertical-align:middle; }
+.up { color:var(--up); font-weight:600; } .down { color:var(--down); font-weight:600; }
+.muted { color:var(--muted); font-size:.86rem; }
+table { width:100%; border-collapse:collapse; font-size:.88rem; }
+th,td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); }
+th { color:var(--muted); font-weight:600; }
+.scroll { overflow-x:auto; }
+.path { border-left:3px solid var(--accent); padding:6px 12px; margin:8px 0; }
+ul.dates { list-style:none; } ul.dates li { padding:6px 0; border-bottom:1px solid var(--line); }
+a { color:var(--accent); }
+.badge-mi { color:#1e8449; font-weight:600; } .badge-gi { color:var(--muted); }
+"""
+
+
+def _pct(v) -> str:
+    if v is None:
+        return "-"
+    cls = "up" if v > 0 else "down"
+    return f'<span class="{cls}">{v:+.1%}</span>'
+
+
+def _esc(s) -> str:
+    return html.escape(str(s or ""))
+
+
+def _beneficiary_row(b: dict) -> str:
+    ret = ""
+    if b.get("ret20") is not None:
+        ret = f' <span class="muted">(20일 {b["ret20"]:+.1%})</span>'
+    return f'<li><b>{_esc(b["name"])}</b>{ret} — {_esc(b.get("reason") or b.get("comment", ""))}</li>'
+
+
+def render_html(base_date: str, candidates: list[dict], analysis: dict, site_title: str) -> str:
+    date_fmt = f"{base_date[:4]}-{base_date[4:6]}-{base_date[6:]}"
+    parts = [f"<main><h1>{_esc(site_title)}</h1>"
+             f'<p class="sub">기준일 {date_fmt} · 후보 {len(candidates)}종목 · '
+             f'<a href="index.html">지난 리포트</a></p>']
+
+    synthesis = (analysis or {}).get("synthesis")
+    if synthesis:
+        parts.append("<h2>오늘의 종합</h2><div class='card'>")
+        parts.append(f"<p>{_esc(synthesis.get('market_summary'))}</p></div>")
+        for idea in synthesis.get("ideas", []):
+            bens = "".join(
+                f'<li><b>{_esc(b["name"])}</b> '
+                f'<span class="{"badge-mi" if b["priced_in"] == "미반영" else "badge-gi"}">'
+                f'[{_esc(b["priced_in"])}]</span> — {_esc(b["comment"])}</li>'
+                for b in idea.get("beneficiaries", []))
+            parts.append(
+                f"<div class='card'><h3>💡 {_esc(idea['title'])}</h3>"
+                f"<p><b>동인:</b> {_esc(idea['driver'])}</p>"
+                f"<p><b>경로:</b> {_esc(idea['path'])}</p>"
+                f"<ul>{bens}</ul>"
+                f"<p class='muted'>체크포인트: {_esc(idea['watch_points'])}</p></div>")
+
+    analyses = (analysis or {}).get("analyses", [])
+    if analyses:
+        parts.append("<h2>종목별 분석</h2>")
+        for a in analyses:
+            paths = ""
+            for p in a.get("ripple_paths", []):
+                bens = "".join(_beneficiary_row(b) for b in p.get("beneficiaries", []))
+                paths += (f"<div class='path'><b>{_esc(p['direction'])} → {_esc(p['target_industry'])}</b>"
+                          f"<br>{_esc(p['logic'])}<ul>{bens}</ul></div>")
+            parts.append(
+                f"<div class='card'><h3>{_esc(a['name'])} <span class='muted'>{a['ticker']}</span>"
+                f"<span class='chip'>{_esc(a['trigger'])}</span>"
+                f"<span class='chip'>{_esc(a['cause_type'])}</span>"
+                f"<span class='chip'>{_esc(a['cause_scope'])}</span></h3>"
+                f"<p>{_esc(a['cause_summary'])}</p>"
+                f"<p class='muted'>근거: {_esc(a['evidence'])} · 확신도 {_esc(a['confidence'])} · "
+                f"20일 수익률 {a['ret20']:+.1%}</p>{paths}</div>")
+
+    if candidates:
+        rows = "".join(
+            f"<tr><td>{_esc(c['name'])}</td><td>{c['ticker']}</td><td>{_esc(c['trigger'])}</td>"
+            f"<td>{_pct(c['ret5'])}</td><td>{_pct(c['ret20'])}</td>"
+            f"<td>{c['vol_surge']}x</td><td>{c['high_proximity']:.0%}</td></tr>"
+            for c in candidates)
+        parts.append(
+            "<h2>스크리닝 전체 후보</h2><div class='card scroll'><table>"
+            "<tr><th>종목</th><th>코드</th><th>유형</th><th>5일</th><th>20일</th>"
+            "<th>거래량</th><th>신고가대비</th></tr>" + rows + "</table></div>")
+
+    parts.append("<p class='muted'>본 자료는 자동 생성된 참고 자료이며 투자 권유가 아닙니다.</p></main>")
+    body = "".join(parts)
+    return (f"<!doctype html><html lang='ko'><head><meta charset='utf-8'>"
+            f"<meta name='viewport' content='width=device-width,initial-scale=1'>"
+            f"<title>{_esc(site_title)} {date_fmt}</title><style>{CSS}</style></head>"
+            f"<body>{body}</body></html>")
+
+
+def render_index(site_title: str) -> str:
+    dates = sorted((p.stem for p in REPORTS_DIR.glob("2*.html")), reverse=True)
+    items = "".join(f'<li><a href="{d}.html">{d[:4]}-{d[4:6]}-{d[6:]}</a></li>' for d in dates)
+    latest = f'<meta http-equiv="refresh" content="0; url={dates[0]}.html">' if dates else ""
+    return (f"<!doctype html><html lang='ko'><head><meta charset='utf-8'>{latest}"
+            f"<meta name='viewport' content='width=device-width,initial-scale=1'>"
+            f"<title>{_esc(site_title)}</title><style>{CSS}</style></head><body><main>"
+            f"<h1>{_esc(site_title)}</h1><p class='sub'>일자별 리포트</p>"
+            f"<ul class='dates'>{items}</ul></main></body></html>")
+
+
+def render_telegram(base_date: str, candidates: list[dict], analysis: dict, pages_url: str | None) -> str:
+    """텔레그램용 요약 (HTML parse mode)."""
+    date_fmt = f"{base_date[:4]}-{base_date[4:6]}-{base_date[6:]}"
+    lines = [f"📈 <b>상승 종목 원인·파급 분석</b> ({date_fmt})", ""]
+
+    synthesis = (analysis or {}).get("synthesis")
+    if synthesis and synthesis.get("ideas"):
+        lines.append(f"<i>{_esc(synthesis['market_summary'])}</i>")
+        lines.append("")
+        for idea in synthesis["ideas"][:5]:
+            lines.append(f"💡 <b>{_esc(idea['title'])}</b>")
+            lines.append(f"  경로: {_esc(idea['path'])}")
+            for b in idea.get("beneficiaries", [])[:4]:
+                mark = "🟢" if b["priced_in"] == "미반영" else ("🟡" if b["priced_in"] == "일부반영" else "⚪")
+                lines.append(f"  {mark} {_esc(b['name'])} [{_esc(b['priced_in'])}]")
+            lines.append("")
+    elif candidates:
+        lines.append("원인 분석 없이 스크리닝만 수행됨. 상위 후보:")
+        for c in candidates[:10]:
+            lines.append(f"· {_esc(c['name'])} ({c['trigger']}, 20일 {c['ret20']:+.1%})")
+        lines.append("")
+
+    if pages_url:
+        lines.append(f'👉 <a href="{pages_url}">상세 리포트 보기</a>')
+    return "\n".join(lines)
+
+
+def build(base_date: str, candidates: list[dict], analysis: dict, cfg: dict) -> Path:
+    REPORTS_DIR.mkdir(exist_ok=True)
+    out = REPORTS_DIR / f"{base_date}.html"
+    out.write_text(render_html(base_date, candidates, analysis, cfg["site_title"]), encoding="utf-8")
+    (REPORTS_DIR / "index.html").write_text(render_index(cfg["site_title"]), encoding="utf-8")
+    print(f"리포트 생성: {out}")
+    return out

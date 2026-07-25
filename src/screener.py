@@ -1,0 +1,197 @@
+"""정량 스크리닝: KRX 전 종목에서 강세 지속형/상승 전환형 후보를 추출한다.
+
+pykrx로 일자별 스냅샷(전 종목 OHLCV)을 수집해 가격 패널을 만들고,
+모멘텀·전환 시그널을 계산한 뒤 상위 후보를 JSON으로 저장한다.
+"""
+
+from __future__ import annotations
+
+import json
+import time
+from pathlib import Path
+
+import pandas as pd
+from pykrx import stock
+
+DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+
+
+def _retry(fn, *args, retries=3, delay=2, **kwargs):
+    for attempt in range(retries):
+        try:
+            return fn(*args, **kwargs)
+        except Exception:
+            if attempt == retries - 1:
+                raise
+            time.sleep(delay * (attempt + 1))
+
+
+def get_trading_dates(end_date: str, n_days: int) -> list[str]:
+    """end_date(YYYYMMDD) 기준 최근 n_days 거래일 목록(오름차순)."""
+    start = (pd.Timestamp(end_date) - pd.Timedelta(days=int(n_days * 1.8) + 30)).strftime("%Y%m%d")
+    dates = _retry(stock.get_previous_business_days, fromdate=start, todate=end_date)
+    dates = [d.strftime("%Y%m%d") for d in dates]
+    return dates[-n_days:]
+
+
+def fetch_panel(dates: list[str]) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """일자별 전 종목 스냅샷을 모아 close/volume/value 패널(index=date, columns=ticker)을 만든다."""
+    closes, volumes, values = {}, {}, {}
+    for i, d in enumerate(dates):
+        frames = []
+        for market in ("KOSPI", "KOSDAQ"):
+            df = _retry(stock.get_market_ohlcv, d, market=market)
+            if df is not None and not df.empty:
+                frames.append(df)
+        if not frames:
+            continue
+        snap = pd.concat(frames)
+        # 거래정지 등으로 종가 0인 행 제외
+        snap = snap[snap["종가"] > 0]
+        closes[d] = snap["종가"]
+        volumes[d] = snap["거래량"]
+        values[d] = snap["거래대금"]
+        if (i + 1) % 20 == 0:
+            print(f"  ... 가격 수집 {i + 1}/{len(dates)}일")
+    close = pd.DataFrame(closes).T.sort_index()
+    volume = pd.DataFrame(volumes).T.sort_index()
+    value = pd.DataFrame(values).T.sort_index()
+    return close, volume, value
+
+
+def compute_signals(close: pd.DataFrame, volume: pd.DataFrame, value: pd.DataFrame,
+                    cfg: dict) -> pd.DataFrame:
+    """종목별 시그널 테이블을 계산한다."""
+    # 데이터가 60일 미만인 종목(신규상장 등)은 제외
+    valid = close.count() >= 60
+    close = close.loc[:, valid]
+
+    ret5 = close.iloc[-1] / close.iloc[-6] - 1 if len(close) > 6 else pd.Series(dtype=float)
+    ret20 = close.iloc[-1] / close.iloc[-21] - 1
+    ret60 = close.iloc[-1] / close.iloc[-61] - 1 if len(close) > 61 else pd.Series(dtype=float)
+
+    ma20 = close.rolling(20).mean()
+    ma60 = close.rolling(60).mean()
+
+    # 골든크로스: 최근 N일 내 ma20이 ma60을 상향 돌파
+    gc_window = cfg["golden_cross_window"]
+    above = ma20 > ma60
+    golden_cross = (above.iloc[-1]) & (~above.iloc[-(gc_window + 1)])
+
+    # 60일 이평 기울기 전환: 최근 10일 기울기 (+), 30일 전 10일 기울기 (-)
+    slope_now = ma60.iloc[-1] - ma60.iloc[-11]
+    slope_before = ma60.iloc[-31] - ma60.iloc[-41] if len(ma60) > 41 else pd.Series(dtype=float)
+    slope_turn = (slope_now > 0) & (slope_before < 0)
+
+    # 거래량 급증: 최근 5일 평균 / 직전 20일 평균
+    vol_recent = volume.iloc[-5:].mean()
+    vol_base = volume.iloc[-25:-5].mean()
+    vol_surge = vol_recent / vol_base.replace(0, pd.NA)
+
+    # 120일 신고가 근접도
+    high120 = close.iloc[-120:].max()
+    high_proximity = close.iloc[-1] / high120
+
+    avg_turnover = value.iloc[-20:].mean()
+
+    sig = pd.DataFrame({
+        "close": close.iloc[-1],
+        "ret5": ret5,
+        "ret20": ret20,
+        "ret60": ret60,
+        "golden_cross": golden_cross,
+        "slope_turn": slope_turn,
+        "vol_surge": vol_surge,
+        "high_proximity": high_proximity,
+        "avg_turnover": avg_turnover,
+    })
+    return sig.dropna(subset=["ret20", "high_proximity"])
+
+
+def fetch_names(base_date: str) -> dict[str, str]:
+    """전 종목 티커 → 종목명 맵 (시장별 일괄 조회)."""
+    names: dict[str, str] = {}
+    for market in ("KOSPI", "KOSDAQ"):
+        try:
+            df = _retry(stock.get_market_price_change, base_date, base_date, market=market)
+            if "종목명" in df.columns:
+                names.update(df["종목명"].to_dict())
+        except Exception:
+            continue
+    return names
+
+
+def screen(end_date: str, cfg: dict) -> dict:
+    """스크리닝 실행. 후보 목록과 전 종목 수익률 스냅샷을 반환/저장한다."""
+    dates = get_trading_dates(end_date, cfg["lookback_days"])
+    base_date = dates[-1]
+    print(f"기준일: {base_date}, 조회 거래일 수: {len(dates)}")
+
+    close, volume, value = fetch_panel(dates)
+    sig = compute_signals(close, volume, value, cfg)
+
+    # 시가총액 필터
+    caps = []
+    for market in ("KOSPI", "KOSDAQ"):
+        cap_df = _retry(stock.get_market_cap, base_date, market=market)
+        caps.append(cap_df["시가총액"])
+    market_cap = pd.concat(caps)
+    sig = sig.join(market_cap.rename("market_cap"), how="inner")
+    sig = sig[(sig["market_cap"] >= cfg["min_market_cap"])
+              & (sig["avg_turnover"] >= cfg["min_avg_turnover"])]
+
+    # 유형 태깅
+    momentum = (sig["ret20"] >= cfg["momentum_ret20"]) | (sig["high_proximity"] >= cfg["high_proximity"])
+    turnaround = (sig["golden_cross"] | sig["slope_turn"]) & (sig["vol_surge"] >= cfg["volume_surge_ratio"])
+    sig["trigger"] = None
+    sig.loc[turnaround, "trigger"] = "상승전환"
+    sig.loc[momentum, "trigger"] = "강세지속"          # 둘 다 해당하면 강세지속 우선
+    cand = sig.dropna(subset=["trigger"]).copy()
+
+    # 복합 점수: 수익률 순위 + 거래량 급증 순위 + 신고가 근접 순위
+    cand["score"] = (cand["ret20"].rank(pct=True)
+                     + cand["vol_surge"].rank(pct=True)
+                     + cand["high_proximity"].rank(pct=True))
+    cand = cand.sort_values("score", ascending=False).head(cfg["top_n"])
+
+    names = fetch_names(base_date)
+    for t in cand.index:
+        if t not in names:
+            names[t] = _retry(stock.get_market_ticker_name, t)
+
+    candidates = []
+    for t, row in cand.iterrows():
+        candidates.append({
+            "ticker": t,
+            "name": names[t],
+            "trigger": row["trigger"],
+            "close": int(row["close"]),
+            "ret5": round(float(row["ret5"]), 4),
+            "ret20": round(float(row["ret20"]), 4),
+            "ret60": round(float(row["ret60"]), 4) if pd.notna(row["ret60"]) else None,
+            "vol_surge": round(float(row["vol_surge"]), 2),
+            "high_proximity": round(float(row["high_proximity"]), 3),
+            "market_cap": int(row["market_cap"]),
+        })
+
+    # 전 종목 수익률 스냅샷: 파급 분석에서 수혜 후보의 '미반영 체크'에 사용
+    snapshot = {}
+    for t in sig.index:
+        row = sig.loc[t]
+        snapshot[t] = {
+            "name": names.get(t),
+            "ret5": round(float(row["ret5"]), 4) if pd.notna(row["ret5"]) else None,
+            "ret20": round(float(row["ret20"]), 4),
+            "ret60": round(float(row["ret60"]), 4) if pd.notna(row["ret60"]) else None,
+        }
+
+    result = {"base_date": base_date, "candidates": candidates, "universe_size": len(sig)}
+
+    DATA_DIR.mkdir(exist_ok=True)
+    (DATA_DIR / f"candidates_{base_date}.json").write_text(
+        json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    (DATA_DIR / f"returns_{base_date}.json").write_text(
+        json.dumps(snapshot, ensure_ascii=False), encoding="utf-8")
+
+    print(f"후보 {len(candidates)}종목 (유니버스 {len(sig)}종목)")
+    return result

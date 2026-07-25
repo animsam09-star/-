@@ -1,0 +1,28 @@
+# 상승 종목 스크리닝 → 원인 분석 → 밸류체인 파급 예측 파이프라인 설정
+
+screener:
+  # 조회할 거래일 수 (신호 계산에 필요한 최소치: 120일 + 여유)
+  lookback_days: 130
+  # 유니버스 필터
+  min_market_cap: 100000000000      # 시가총액 하한 1,000억원
+  min_avg_turnover: 1000000000      # 20일 평균 거래대금 하한 10억원
+  # 시그널 임계값
+  momentum_ret20: 0.15              # 강세 지속형: 20일 수익률 15% 이상
+  high_proximity: 0.97              # 강세 지속형: 120일 신고가 대비 97% 이상
+  volume_surge_ratio: 2.5           # 상승 전환형: 거래량 20일 평균 대비 배수
+  golden_cross_window: 7            # 최근 N거래일 내 골든크로스
+  # 최종 후보 수
+  top_n: 30
+
+collect:
+  news_per_stock: 8                 # 종목당 수집 뉴스 수
+  news_days: 14                     # 뉴스 조회 기간(일)
+  dart_days: 14                     # DART 공시 조회 기간(일)
+
+analyze:
+  model: claude-opus-5
+  max_candidates: 20                # 분석 대상 상한 (비용 제어)
+  max_tokens: 8000
+
+report:
+  site_title: 상승 종목 원인·파급 분석

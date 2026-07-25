@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.env
+data/returns_*.json
+data/evidence_*.json
+data/corp_codes.json
