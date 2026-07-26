@@ -1,23 +1,27 @@
-"""Claude API 기반 원인 분석 및 밸류체인 파급 추론.
+"""Layer 2 — 원인 분석 및 파급 추론 (Claude API).
 
 1) 종목별 분석: 뉴스·공시 근거로 상승 원인을 분류하고, 원인이 '산업공통'이면
-   밸류체인 맵을 참고해 동종/전방/후방 파급 경로와 수혜 후보를 도출한다.
-2) 미반영 체크: 수혜 후보의 최근 수익률을 조회해 이미 주가에 반영됐는지 표시한다.
+   **관계 그래프에서 뽑은 해당 종목의 서브그래프**를 근거로 파급 경로를 도출한다.
+2) 미반영 체크: 수혜 후보에 티커·수익률·갭을 주입한다.
 3) 종합: 산업공통 원인들을 묶어 최종 투자 아이디어를 정리한다.
+
+LLM의 역할이 바뀌었다. 이전에는 밸류체인 맵 전체를 덤프해 주고 후보를 **생성**하게
+했다. 지금은 그래프가 후보를 제시하고, LLM은 **선별하고 부호를 판정한다.** 후보 집합이
+코드로 결정되므로 재현되고, 엣지 단위로 채점된다.
 """
 
 from __future__ import annotations
 
 import json
 import os
-import re
 from pathlib import Path
 
-import yaml
 from anthropic import Anthropic
 
+from . import graph as G
+from .universe import Universe, normalize_name  # noqa: F401  (이름 정규화 단일 출처)
+
 ROOT = Path(__file__).resolve().parent.parent
-VALUECHAIN_DIR = ROOT / "valuechain"
 DATA_DIR = ROOT / "data"
 
 CAUSE_TYPES = ["실적서프라이즈", "수주·공급계약", "업황개선(P/Q/C)", "정책·규제",
@@ -146,14 +150,17 @@ SYSTEM_PROMPT = """당신은 한국 주식시장 파급효과 분석 전문 애�
   사업 내용상 납득되지 않는 연결은 채택하지 마라.
 - 갭(gap)이 양수인 종목은 '같이 움직였어야 하는데 아직 안 움직인' 후보다. 우선 검토하되,
   움직이지 않은 데 정당한 이유(사업 노출이 실제로 없음)가 있는지 먼저 확인하라.
-- 제공된 밸류체인 맵을 우선 참고하되, 맵에 없는 산업은 스스로 추론한다."""
 
+## 관계 그래프 사용법
 
-def load_valuechain_maps() -> str:
-    parts = []
-    for f in sorted(VALUECHAIN_DIR.glob("*.yaml")):
-        parts.append(f.read_text(encoding="utf-8"))
-    return "\n---\n".join(parts) if parts else "(밸류체인 맵 없음)"
+'관계 그래프' 블록은 해당 종목의 이웃만 뽑아 온 것이다. 당신의 역할은 후보를 새로
+만들어 내는 것이 아니라 **거기서 골라내고 부호를 판정하는 것**이다.
+
+- 후방/전방에 붙은 '신뢰'는 그 관계의 확실성이다. 낮은 관계는 논리를 더 엄격히 따져라.
+- 그래프에 없는 종목을 꼽아도 되지만, 그때는 왜 그래프가 놓쳤는지를 reason에 밝혀라
+  (맵 미수록 산업, 신규 사업 진출 등). 근거 없이 그래프 밖 종목을 추가하지 마라.
+- 그래프에 있다는 사실은 **연결의 존재**를 뜻할 뿐, 이번 원인이 그 경로를 탄다는
+  보장이 아니다. 원인과 무관한 이웃은 버려라."""
 
 
 def build_horizontal_context(ticker: str, horizontal: dict, names: dict[str, str],
@@ -211,7 +218,7 @@ def _extract_json(response) -> dict | None:
     return json.loads(text)
 
 
-def analyze_stock(client: Anthropic, cand: dict, evidence: dict, vc_maps: str,
+def analyze_stock(client: Anthropic, cand: dict, evidence: dict, graph_ctx: str,
                   horizontal_ctx: str, cfg: dict) -> dict | None:
     news = "\n".join(f"- [{n['date']}] {n['title']} — {n['description']}" for n in evidence.get("news", []))
     filings = "\n".join(f"- [{f['date']}] {f['title']}" for f in evidence.get("filings", []))
@@ -231,11 +238,11 @@ def analyze_stock(client: Anthropic, cand: dict, evidence: dict, vc_maps: str,
 ## 최근 공시
 {filings or '(수집된 공시 없음)'}
 
-## 수평 그래프 (가격 데이터에서 계산된 사실)
-{horizontal_ctx}
+## 관계 그래프 — 이 종목의 이웃 (수직축 밸류체인 + 노출 동인)
+{graph_ctx}
 
-## 밸류체인 맵 — 수직축 참고자료
-{vc_maps}"""
+## 수평 그래프 — 미반영 갭 (가격 데이터에서 계산된 사실)
+{horizontal_ctx}"""
 
     response = client.messages.create(
         model=cfg["model"],
@@ -245,28 +252,6 @@ def analyze_stock(client: Anthropic, cand: dict, evidence: dict, vc_maps: str,
         messages=[{"role": "user", "content": prompt}],
     )
     return _extract_json(response)
-
-
-_NAME_NOISE = re.compile(r"\s|㈜|\(주\)|（주）|주식회사")
-
-
-def normalize_name(name: str) -> str:
-    """종목명 대조용 정규화. 공백·법인 표기·대소문자 차이를 흡수한다."""
-    return _NAME_NOISE.sub("", str(name)).upper()
-
-
-def build_name_index(names: dict[str, str]) -> dict[str, str]:
-    """정규화된 종목명 → 티커 인덱스.
-
-    LLM이 내놓은 종목명은 KRX 공식 표기와 공백·법인 표기가 다를 수 있다.
-    정확 일치만 쓰면 조용히 누락되고, 유사도 매칭은 엉뚱한 회사에 붙을 위험이 있어
-    정규화 후 정확 일치까지만 허용한다. 매칭 실패는 호출부에서 집계해 드러낸다.
-    """
-    index: dict[str, str] = {}
-    for ticker, name in names.items():
-        if name:
-            index.setdefault(normalize_name(name), ticker)
-    return index
 
 
 def best_gaps(horizontal: dict) -> dict[str, dict]:
@@ -289,7 +274,7 @@ def _iter_beneficiaries(analyses: list[dict] | None, synthesis: dict | None):
         yield from idea.get("beneficiaries", [])
 
 
-def check_priced_in(analyses: list[dict] | None, returns: dict, name_index: dict,
+def check_priced_in(analyses: list[dict] | None, returns: dict, universe: Universe,
                     horizontal: dict | None = None,
                     synthesis: dict | None = None) -> dict:
     """수혜 후보에 티커·최근 수익률·미반영 갭을 주입하고, 매칭 결과를 집계해 반환한다.
@@ -300,14 +285,15 @@ def check_priced_in(analyses: list[dict] | None, returns: dict, name_index: dict
     **개별 분석과 종합 아이디어 양쪽에 모두 주입해야 한다.** 사후 채점(score.py)은
     종합 아이디어의 티커를 읽으므로, 여기를 빠뜨리면 채점이 항상 0건이 된다.
 
-    티커 매칭에 실패한 종목명은 갭도 수익률도 못 받고 채점에서도 빠지므로,
-    조용히 넘기지 않고 unmatched로 돌려준다.
+    이름 해석은 Universe(전 종목 마스터)가 담당한다. 예전에는 스크리닝을 통과한
+    종목만 담긴 returns 파일로 인덱스를 만들어서, 소형 후방 소재주는 해석 자체가
+    불가능했다 — 수직축이 잡아내야 할 바로 그 대상이 구조적으로 빠져 있었다.
     """
     gaps = best_gaps(horizontal or {})
     matched, unmatched = 0, []
 
     for b in _iter_beneficiaries(analyses, synthesis):
-        ticker = name_index.get(normalize_name(b.get("name", "")))
+        ticker = universe.resolve(b.get("name", ""))
         if not ticker:
             unmatched.append(b.get("name", ""))
             continue
@@ -328,6 +314,54 @@ def check_priced_in(analyses: list[dict] | None, returns: dict, name_index: dict
         preview = ", ".join(dict.fromkeys(unmatched))[:200]
         print(f"  종목명 매칭 {matched}/{total} — 미매칭: {preview}")
     return {"matched": matched, "total": total, "unmatched": sorted(set(unmatched))}
+
+
+def reachability(relation_graph: G.Graph, ticker: str,
+                 min_confidence: float = 0.0) -> dict[str, str]:
+    """해당 종목에서 그래프로 닿는 종목 → 경로 라벨.
+
+    '동종'보다 밸류체인 경로가, 그보다 산업 소속이 정보량이 많으므로 먼저 채운
+    라벨을 유지한다(수직 → 수평 순).
+    """
+    reach: dict[str, str] = {}
+
+    def put(t: str, label: str):
+        if t != ticker:
+            reach.setdefault(t, label)
+
+    for key, arrow in (("upstream", "후방"), ("downstream", "전방")):
+        rows = (relation_graph.upstream(ticker, min_confidence) if key == "upstream"
+                else relation_graph.downstream(ticker, min_confidence))
+        for r in rows:
+            for t in r["members"]:
+                put(t, f"{r['from_industry']}→{arrow}→{r['industry']}")
+    for ind, members in relation_graph.peers(ticker, min_confidence).items():
+        for t in members:
+            put(t, f"{ind}→동종")
+    for d in relation_graph.co_exposed(ticker, min_confidence):
+        for o in d["others"]:
+            put(o["ticker"], f"동인:{d['driver']}")
+    return reach
+
+
+def annotate_provenance(beneficiaries_iter, reach: dict[str, str]) -> dict:
+    """수혜 후보가 그래프에서 나온 것인지, LLM이 새로 만든 것인지 표시한다.
+
+    이걸 남겨야 사후 채점에서 '그래프 기반 후보'와 'LLM 창작 후보'의 적중률을
+    갈라 볼 수 있다. 밸류체인 맵이 실제로 값을 하는지는 그 비교로만 답이 나온다.
+    """
+    backed = 0
+    total = 0
+    for b in beneficiaries_iter:
+        if not b.get("ticker"):
+            continue
+        total += 1
+        via = reach.get(b["ticker"])
+        b["graph_backed"] = via is not None
+        if via:
+            b["via"] = via
+            backed += 1
+    return {"graph_backed": backed, "total": total}
 
 
 def synthesize(client: Anthropic, analyses: list[dict], cfg: dict) -> dict | None:
@@ -360,28 +394,39 @@ def synthesize(client: Anthropic, analyses: list[dict], cfg: dict) -> dict | Non
 
 
 def analyze(candidates: list[dict], evidence_all: dict, base_date: str, cfg: dict,
-            horizontal: dict | None = None) -> dict:
+            horizontal: dict | None = None, universe: Universe | None = None,
+            relation_graph: G.Graph | None = None) -> dict:
     if not os.getenv("ANTHROPIC_API_KEY"):
         print("ANTHROPIC_API_KEY 미설정 — 원인 분석을 건너뜁니다.")
         return {"analyses": [], "synthesis": None}
+    if universe is None:
+        raise ValueError(
+            "universe가 필요합니다. 종목명→티커 해석의 단일 출처이며, 없으면 "
+            "수혜 후보의 갭 주입과 사후 채점이 통째로 비게 됩니다.")
 
     client = Anthropic()
-    vc_maps = load_valuechain_maps()
     horizontal = horizontal or {}
+    relation_graph = relation_graph or G.Graph([])
 
     returns_file = DATA_DIR / f"returns_{base_date}.json"
     returns = json.loads(returns_file.read_text(encoding="utf-8")) if returns_file.exists() else {}
-    names = {t: v.get("name") for t, v in returns.items() if isinstance(v, dict)}
-    name_index = build_name_index(names)
+    names = {t: universe.name(t) for t in universe.entries}
+    gap_by_ticker = {t: g["gap"] for t, g in best_gaps(horizontal).items()}
 
     max_peers = cfg.get("max_peers_per_group", 6)
+    min_conf = cfg.get("min_edge_confidence", 0.0)
     analyses = []
     for cand in candidates[: cfg["max_candidates"]]:
         print(f"  분석 중: {cand['name']}")
+        graph_ctx = G.render_subgraph(
+            relation_graph, cand["ticker"], universe, gaps=gap_by_ticker,
+            min_confidence=min_conf,
+            max_members=cfg.get("max_members_per_industry", 8),
+            max_drivers=cfg.get("max_drivers", 6))
         ctx = build_horizontal_context(cand["ticker"], horizontal, names, max_peers)
         try:
             result = analyze_stock(client, cand, evidence_all.get(cand["ticker"], {}),
-                                   vc_maps, ctx, cfg)
+                                   graph_ctx, ctx, cfg)
         except Exception as e:
             print(f"  분석 실패({cand['name']}): {e}")
             continue
@@ -391,10 +436,19 @@ def analyze(candidates: list[dict], evidence_all: dict, base_date: str, cfg: dic
             result["trigger"] = cand["trigger"]
             result["ret20"] = cand["ret20"]
             result["groups"] = horizontal.get("membership", {}).get(cand["ticker"], [])
+            result["industries"] = [G.split_node(e["dst"])[1]
+                                    for e in relation_graph.industries_of(cand["ticker"])]
             analyses.append(result)
 
     # 종합에 넘기기 전에 개별 분석부터 채워야 갭이 프롬프트 근거로 쓰인다
-    check_priced_in(analyses, returns, name_index, horizontal)
+    check_priced_in(analyses, returns, universe, horizontal)
+
+    # 분석 종목별 그래프 도달 범위를 합쳐 후보의 출처를 표시한다
+    reach: dict[str, str] = {}
+    for a in analyses:
+        for t, via in reachability(relation_graph, a["ticker"], min_conf).items():
+            reach.setdefault(t, via)
+    annotate_provenance(_iter_beneficiaries(analyses, None), reach)
 
     try:
         synthesis = synthesize(client, analyses, cfg)
@@ -403,10 +457,13 @@ def analyze(candidates: list[dict], evidence_all: dict, base_date: str, cfg: dic
         synthesis = None
 
     # 종합 아이디어의 후보에도 주입한다(사후 채점이 이 티커를 읽는다)
-    match_stats = check_priced_in(None, returns, name_index, horizontal, synthesis)
+    match_stats = check_priced_in(None, returns, universe, horizontal, synthesis)
+    prov = annotate_provenance(_iter_beneficiaries(None, synthesis), reach)
+    if prov["total"]:
+        print(f"  종합 후보 {prov['total']}건 중 그래프 기반 {prov['graph_backed']}건")
 
     out = {"base_date": base_date, "analyses": analyses, "synthesis": synthesis,
-           "name_match": match_stats}
+           "name_match": match_stats, "provenance": prov}
     (DATA_DIR / f"analysis_{base_date}.json").write_text(
         json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"종목 분석 {len(analyses)}건 완료")

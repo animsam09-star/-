@@ -57,6 +57,18 @@ def _impact_tag(b: dict) -> str:
     return ' <span class="up">[수혜]</span>' if b.get("impact") else ""
 
 
+def _provenance_tag(b: dict) -> str:
+    """후보가 관계 그래프에서 나왔는지, LLM이 새로 만든 건지 드러낸다.
+
+    둘을 구분해 보여 줘야 밸류체인 맵이 값을 하는지 사람이 눈으로도 판단할 수 있다.
+    """
+    if b.get("via"):
+        return f' <span class="muted">[{_esc(b["via"])}]</span>'
+    if b.get("graph_backed") is False:
+        return ' <span class="muted">[그래프 밖]</span>'
+    return ""
+
+
 def _beneficiary_row(b: dict) -> str:
     bits = []
     if b.get("ret20") is not None:
@@ -64,7 +76,7 @@ def _beneficiary_row(b: dict) -> str:
     if b.get("gap") is not None:
         bits.append(f'갭 {b["gap"]:+.1%}')
     meta = f' <span class="muted">({" · ".join(bits)})</span>' if bits else ""
-    return (f'<li><b>{_esc(b["name"])}</b>{_impact_tag(b)}{meta} — '
+    return (f'<li><b>{_esc(b["name"])}</b>{_impact_tag(b)}{_provenance_tag(b)}{meta} — '
             f'{_esc(b.get("reason") or b.get("comment", ""))}</li>')
 
 
@@ -106,6 +118,36 @@ def render_horizontal(horizontal: dict, names: dict[str, str], top_groups: int =
             + fac + "".join(blocks))
 
 
+def render_coverage(analysis: dict) -> str:
+    """그래프 커버리지를 리포트 하단에 드러낸다.
+
+    맵에 적어 놓고 티커로 해석되지 않은 회사, LLM이 그래프 밖에서 꺼내 온 후보 비율은
+    전부 '맵이 어디서 비어 있는가'를 가리킨다. 로그에만 남기면 아무도 안 본다.
+    """
+    vc = analysis.get("valuechain_coverage") or {}
+    prov = analysis.get("provenance") or {}
+    match = analysis.get("name_match") or {}
+    bits = []
+
+    if vc:
+        bits.append(f"밸류체인 산업 {len(vc.get('industries', []))}개 · "
+                    f"엣지 {vc.get('edges', 0)}개")
+        unresolved = sorted({n for v in (vc.get("unresolved") or {}).values() for n in v})
+        if unresolved:
+            bits.append("<b>맵에 있으나 티커 미해석</b>: "
+                        + _esc(", ".join(unresolved[:20]))
+                        + (f" 외 {len(unresolved) - 20}건" if len(unresolved) > 20 else ""))
+    if prov.get("total"):
+        bits.append(f"종합 후보 {prov['total']}건 중 그래프 기반 {prov['graph_backed']}건")
+    if match.get("unmatched"):
+        bits.append("<b>LLM 종목명 미매칭</b>: " + _esc(", ".join(match["unmatched"][:15])))
+
+    if not bits:
+        return ""
+    return ("<h2>그래프 커버리지</h2><div class='card'><p class='muted'>"
+            + "<br>".join(bits) + "</p></div>")
+
+
 def render_html(base_date: str, candidates: list[dict], analysis: dict, site_title: str,
                 horizontal: dict | None = None, names: dict[str, str] | None = None) -> str:
     date_fmt = f"{base_date[:4]}-{base_date[4:6]}-{base_date[6:]}"
@@ -124,7 +166,8 @@ def render_html(base_date: str, candidates: list[dict], analysis: dict, site_tit
                 bens += (
                     f'<li><b>{_esc(b["name"])}</b>{_impact_tag(b)} '
                     f'<span class="{"badge-mi" if b["priced_in"] == "미반영" else "badge-gi"}">'
-                    f'[{_esc(b["priced_in"])}]</span>{gap} — {_esc(b["comment"])}</li>')
+                    f'[{_esc(b["priced_in"])}]</span>{gap}{_provenance_tag(b)} '
+                    f'— {_esc(b["comment"])}</li>')
             axis = f"<span class='chip'>{_esc(idea['axis'])}축</span>" if idea.get("axis") else ""
             parts.append(
                 f"<div class='card'><h3>💡 {_esc(idea['title'])}{axis}</h3>"
@@ -169,6 +212,7 @@ def render_html(base_date: str, candidates: list[dict], analysis: dict, site_tit
             "<tr><th>종목</th><th>코드</th><th>유형</th><th>5일</th><th>20일</th>"
             "<th>거래량</th><th>신고가대비</th></tr>" + rows + "</table></div>")
 
+    parts.append(render_coverage(analysis or {}))
     parts.append("<p class='muted'>본 자료는 자동 생성된 참고 자료이며 투자 권유가 아닙니다.</p></main>")
     body = "".join(parts)
     return (f"<!doctype html><html lang='ko'><head><meta charset='utf-8'>"

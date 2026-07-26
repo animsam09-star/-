@@ -77,8 +77,24 @@ def collect_predictions(min_age_days: int) -> list[dict]:
                     "impact": b.get("impact", "수혜"),
                     "priced_in": b.get("priced_in"),
                     "gap": b.get("gap"),
+                    "graph_backed": b.get("graph_backed"),
+                    "via": b.get("via"),
                 })
     return [r for r in rows if r["ticker"]]
+
+
+def _by_path(scored: list[dict], summarize, min_n: int = 3) -> dict:
+    """경로별 성과. '건설·EPC→후방→시멘트'가 몇 번 맞았는지 누적하면
+    밸류체인 맵이 고정 지식이 아니라 신뢰도가 갱신되는 자산이 된다.
+
+    표본이 min_n 미만인 경로는 버린다 — 1~2건짜리 적중률은 잡음이다.
+    """
+    buckets: dict[str, list[dict]] = {}
+    for r in scored:
+        if r.get("via"):
+            buckets.setdefault(r["via"], []).append(r)
+    out = {k: summarize(v) for k, v in buckets.items() if len(v) >= min_n}
+    return dict(sorted(out.items(), key=lambda kv: -kv[1]["n"]))
 
 
 def score(horizon: int = 10, min_age_days: int | None = None) -> dict:
@@ -125,6 +141,13 @@ def score(horizon: int = 10, min_age_days: int | None = None) -> dict:
                       for k in ("수혜", "피해")},
         "directional_hit_rate": round(
             sum(directional_hit(r) for r in scored) / len(scored), 3),
+        # 밸류체인 맵이 실제로 값을 하는가 — 그래프에서 나온 후보와 LLM이 새로
+        # 만든 후보를 갈라 본다. 이 비교가 수직축 투자에 대한 유일한 정직한 답이다.
+        "by_provenance": {
+            "그래프기반": summarize([r for r in scored if r.get("graph_backed") is True]),
+            "LLM창작": summarize([r for r in scored if r.get("graph_backed") is False]),
+        },
+        "by_path": _by_path(scored, summarize),
     }
 
     # 갭 지표 자체가 유효한지: 갭과 이후 수익률의 상관
@@ -158,6 +181,14 @@ def render(result: dict) -> str:
     out += [line(k, v) for k, v in result["by_axis"].items() if v]
     out += ["", "[부호별]"]
     out += [line(k, v) for k, v in result["by_impact"].items() if v]
+    out += ["", "[후보 출처별]"]
+    out += [line(k, v) for k, v in result["by_provenance"].items() if v]
+    out += ["  (그래프기반이 LLM창작보다 낫지 않다면 밸류체인 맵은 값을 못 하고 있다)"]
+
+    if result.get("by_path"):
+        out += ["", "[파급 경로별]"]
+        out += [line(k, v) for k, v in result["by_path"].items()]
+
     out += ["", f"방향 적중률(수혜↑·피해↓): {result['directional_hit_rate']:.0%}"]
 
     if "gap_correlation" in result:

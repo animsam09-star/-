@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src import analyze, factors, groups
+from src import analyze, factors, groups, universe
 
 N_DAYS = 130
 DATES = pd.date_range("2026-01-01", periods=N_DAYS, freq="B")
@@ -116,23 +116,41 @@ def test_halted_stock_is_not_reported_as_unmoved():
     assert "000004" not in reported, "거래정지 종목이 갭 판정에 포함되면 안 된다"
 
 
+def _universe(names: dict[str, str], caps: dict[str, int] | None = None):
+    return universe.from_entries("20260101", {
+        t: {"name": n, "market": "KOSPI", "market_cap": (caps or {}).get(t, 1)}
+        for t, n in names.items()})
+
+
 class TestNameMatching:
     """LLM이 내놓은 종목명과 KRX 공식 표기의 차이를 흡수한다."""
 
     NAMES = {"000001": "LS ELECTRIC", "000002": "HD현대일렉트릭", "000003": "㈜한화"}
 
     def test_normalization_absorbs_spacing_and_entity_marks(self):
-        index = analyze.build_name_index(self.NAMES)
-        assert index[analyze.normalize_name("LS ELECTRIC")] == "000001"
-        assert index[analyze.normalize_name("LSELECTRIC")] == "000001"
-        assert index[analyze.normalize_name("한화")] == "000003"
-        assert index[analyze.normalize_name("(주)한화")] == "000003"
+        uni = _universe(self.NAMES)
+        assert uni.resolve("LS ELECTRIC") == "000001"
+        assert uni.resolve("LSELECTRIC") == "000001"
+        assert uni.resolve("한화") == "000003"
+        assert uni.resolve("(주)한화") == "000003"
+
+    def test_preferred_shares_are_not_merged_into_common(self):
+        """'현대차우'를 '현대차'로 흡수하면 엉뚱한 종목에 수혜가 귀속된다."""
+        uni = _universe({"005380": "현대차", "005385": "현대차우"})
+        assert uni.resolve("현대차") == "005380"
+        assert uni.resolve("현대차우") == "005385"
+
+    def test_name_collision_prefers_larger_cap_and_is_recorded(self):
+        uni = _universe({"000001": "동성", "000002": "동성"},
+                        caps={"000001": 100, "000002": 900})
+        assert uni.resolve("동성") == "000002"
+        assert uni.collisions, "이름 충돌은 기록돼 드러나야 한다"
 
     def test_unmatched_names_are_reported_not_swallowed(self):
         """매칭 실패는 조용히 넘어가면 안 된다 — 갭도 채점도 전부 빠지기 때문이다."""
         analyses = [{"ripple_paths": [{"beneficiaries": [
             {"name": "HD현대일렉트릭"}, {"name": "존재하지않는회사"}]}]}]
-        stats = analyze.check_priced_in(analyses, {}, analyze.build_name_index(self.NAMES))
+        stats = analyze.check_priced_in(analyses, {}, _universe(self.NAMES))
         assert stats["matched"] == 1
         assert stats["unmatched"] == ["존재하지않는회사"]
 
@@ -148,8 +166,7 @@ def test_synthesis_beneficiaries_get_tickers():
          "expected": 0.05, "actual": 0.01, "gap": 0.04}]}}}
     stats = analyze.check_priced_in(
         None, {"000009": {"ret5": 0.01, "ret20": 0.02}},
-        analyze.build_name_index({"000009": "테스트전선"}),
-        horizontal, synthesis)
+        _universe({"000009": "테스트전선"}), horizontal, synthesis)
     b = synthesis["ideas"][0]["beneficiaries"][0]
     assert stats["matched"] == 1
     assert b["ticker"] == "000009"

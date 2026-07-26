@@ -48,6 +48,14 @@ collect:
   news_days: 14                     # 뉴스 조회 기간(일)
   dart_days: 14                     # DART 공시 조회 기간(일)
 
+# 관계 그래프: 수직축(밸류체인)과 수평축(공통 동인)을 하나의 엣지 테이블로 본다
+graph:
+  # 프롬프트에 넣을 엣지의 최소 신뢰도. 밸류체인 2홉 경로는 0.5×0.5=0.25이므로
+  # 이 값을 0.25보다 크게 잡으면 수직축이 통째로 사라진다.
+  min_edge_confidence: 0.0
+  max_members_per_industry: 8       # 산업당 프롬프트에 넣을 종목 수(시총 상위)
+  max_drivers: 6                    # 종목당 프롬프트에 넣을 동인 수
+
 analyze:
   model: claude-opus-5
   max_candidates: 20                # 분석 대상 상한 (비용 제어)

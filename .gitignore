@@ -4,3 +4,7 @@ __pycache__/
 data/returns_*.json
 data/evidence_*.json
 data/corp_codes.json
+data/universe_*.json
+# 수평축 엣지는 매일 재계산되는 산출물 — 커밋하면 diff만 더럽힌다.
+# 수직축 엣지(graph/edges.jsonl)는 누적 자산이므로 커밋 대상이다.
+data/edges_*.jsonl

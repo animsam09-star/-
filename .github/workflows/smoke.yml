@@ -32,18 +32,67 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Check KRX reachability
+      # 단위 테스트는 픽스처를 우리가 직접 만들기 때문에 외부 API의 실제 컬럼명·
+      # 인덱스 타입이 바뀌어도 잡지 못한다. 구조적 사각지대라, 여기서 계약을 명시적으로
+      # 검증한다. pykrx나 KRX 응답이 바뀌면 조용히 틀리는 대신 여기서 터져야 한다.
+      - name: Verify external API contract
         env:
           KRX_ID: ${{ secrets.KRX_ID }}
           KRX_PW: ${{ secrets.KRX_PW }}
         run: |
           python - <<'PY'
+          import pandas as pd
           from pykrx import stock
+
           dates = stock.get_previous_business_days(fromdate="20260101", todate="20260131")
           day = dates[-1].strftime("%Y%m%d")
-          df = stock.get_market_ohlcv(day, market="KOSPI")
-          assert df is not None and not df.empty, "KRX에서 시세를 받지 못했습니다"
-          print(f"KRX 응답 정상: {day} 기준 KOSPI {len(df)}종목")
+          print(f"기준일 {day}")
+          fail = []
+
+          def check(label, cond, detail=""):
+              (print(f"  OK   {label}") if cond
+               else (fail.append(f"{label} — {detail}"), print(f"  FAIL {label}: {detail}")))
+
+          # (1) 스냅샷 계열은 티커 인덱스 + 한글 컬럼명
+          for fn, kwargs, cols in (
+              (stock.get_market_ohlcv, {"market": "KOSPI"}, ["종가", "거래량", "거래대금"]),
+              (stock.get_market_cap, {"market": "KOSPI"}, ["시가총액"]),
+          ):
+              df = fn(day, **kwargs)
+              name = fn.__name__
+              check(f"{name} 비어있지 않음", df is not None and not df.empty)
+              check(f"{name} 티커 인덱스",
+                    not isinstance(df.index, pd.DatetimeIndex)
+                    and all(str(i).isdigit() for i in df.index[:5]),
+                    f"index={type(df.index).__name__} 샘플={list(df.index[:3])}")
+              missing = [c for c in cols if c not in df.columns]
+              check(f"{name} 컬럼 {cols}", not missing,
+                    f"누락={missing} 실제={list(df.columns)}")
+
+          pc = stock.get_market_price_change(day, day, market="KOSPI")
+          check("get_market_price_change 종목명 컬럼", "종목명" in pc.columns,
+                f"실제={list(pc.columns)}")
+
+          # (2) 상장 목록 — 종목 마스터의 기준이 된다
+          tickers = stock.get_market_ticker_list(day, market="KOSPI")
+          check("get_market_ticker_list 반환", isinstance(tickers, list) and len(tickers) > 500,
+                f"{type(tickers).__name__} len={len(tickers) if tickers else 0}")
+          check("상장 목록이 스냅샷을 포함", len(set(tickers) - set(pc.index)) < len(tickers) * 0.2,
+                "일괄 조회 누락이 20%를 넘으면 개별 조회 상한에 걸린다")
+
+          # (3) 시계열 계열은 DatetimeIndex — 스냅샷과 타입이 다르다는 사실 자체가 계약이다
+          ts = stock.get_market_ohlcv_by_date("20260101", day, tickers[0])
+          check("get_market_ohlcv_by_date DatetimeIndex",
+                isinstance(ts.index, pd.DatetimeIndex), f"index={type(ts.index).__name__}")
+
+          # (4) ETN 전용 시계열 함수는 존재하지 않는다(있으면 factors.py를 단순화할 수 있다)
+          check("get_etn_ohlcv_by_date 부재 유지",
+                not hasattr(stock, "get_etn_ohlcv_by_date"),
+                "함수가 생겼다 — factors.py의 우회 경로를 정리할 수 있다")
+
+          if fail:
+              raise SystemExit("외부 API 계약 위반:\n  - " + "\n  - ".join(fail))
+          print("외부 API 계약 전부 만족")
           PY
 
       - name: Run pipeline (smoke)
@@ -78,6 +127,39 @@ jobs:
           n = len(payload["candidates"])
           print(f"후보 {n}종목 / 유니버스 {payload['universe_size']}종목")
           assert payload["universe_size"] > 100, "유니버스가 비정상적으로 작습니다"
+
+          # 종목 마스터(Layer 0) — 스크리닝 필터와 독립적으로 전 종목을 담아야 한다.
+          # 유니버스보다 작으면 소형 후방주가 이름 해석에서 빠진다.
+          unis = sorted(data.glob("universe_*.json"))
+          assert unis, "종목 마스터가 생성되지 않았습니다"
+          uni = json.loads(unis[-1].read_text(encoding="utf-8"))["entries"]
+          named = sum(1 for e in uni.values() if e.get("name"))
+          print(f"종목 마스터 {len(uni)}종목 (이름 확보 {named}종목)")
+          assert len(uni) >= payload["universe_size"], (
+              f"종목 마스터({len(uni)})가 스크리닝 유니버스({payload['universe_size']})보다 "
+              "작습니다 — 전 종목을 담지 못했습니다")
+          assert named / max(1, len(uni)) > 0.9, f"종목명 확보율이 낮습니다: {named}/{len(uni)}"
+
+          # 관계 그래프(Layer 1)
+          import collections
+          edges = [json.loads(l) for l in
+                   pathlib.Path("graph/edges.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
+          by_rel = collections.Counter(e["rel"] for e in edges)
+          print(f"수직축 엣지 {len(edges)}개 — {dict(by_rel)}")
+          assert by_rel["소속"] > 0, "밸류체인 회사명이 하나도 티커로 해석되지 않았습니다"
+          assert by_rel["후방"] > 0 and by_rel["전방"] > 0, "산업 간 관계가 비었습니다"
+
+          daily_edges = sorted(data.glob("edges_*.jsonl"))
+          if daily_edges:
+              de = [json.loads(l) for l in
+                    daily_edges[-1].read_text(encoding="utf-8").splitlines() if l.strip()]
+              signs = collections.Counter(e["sign"] for e in de)
+              print(f"수평축 엣지 {len(de)}개 — 부호 분포 {dict(signs)}")
+              if signs.get(-1, 0) == 0:
+                  print("::warning::음(-)의 노출이 하나도 없습니다. "
+                        "부호 판정이 작동하는지 확인하세요(구리↑ = 전선 원가 부담).")
+          else:
+              print("::warning::수평축 엣지가 없습니다.")
 
           # 수평 그래프는 실패해도 파이프라인이 죽지 않으므로 명시적으로 확인한다
           groups = sorted(data.glob("groups_*.json"))

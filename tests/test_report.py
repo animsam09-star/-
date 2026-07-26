@@ -2,7 +2,7 @@
 
 import pytest
 
-from src import analyze, report
+from src import analyze, report, universe
 
 NAMES = {"000001": "테스트제련", "000002": "테스트전선", "000003": "테스트리더",
          "000004": "테스트라거드"}
@@ -78,7 +78,9 @@ def test_gap_is_injected_into_beneficiaries():
     analyses = [dict(a, ripple_paths=[dict(p, beneficiaries=[dict(b) for b in p["beneficiaries"]])
                                       for p in a["ripple_paths"]]) for a in ANALYSES]
     returns = {t: {"name": n, "ret5": 0.01, "ret20": 0.03} for t, n in NAMES.items()}
-    analyze.check_priced_in(analyses, returns, {n: t for t, n in NAMES.items()}, HORIZONTAL)
+    uni = universe.from_entries("20260724", {
+        t: {"name": n, "market": "KOSPI", "market_cap": 1} for t, n in NAMES.items()})
+    analyze.check_priced_in(analyses, returns, uni, HORIZONTAL)
     laggard = analyses[0]["ripple_paths"][0]["beneficiaries"][0]
     assert laggard["gap"] == pytest.approx(0.040)
     assert laggard["gap_group"] == "ETF:테스트그룹"
@@ -97,6 +99,36 @@ def test_html_survives_missing_horizontal(analysis):
     html = report.render_html("20260724", CANDIDATES, analysis, "테스트", None, None)
     assert "테스트리더" in html
     assert "수평 파급" not in html
+
+
+def test_html_shows_graph_provenance(analysis):
+    """그래프 기반 후보와 그래프 밖 후보가 눈으로 구분돼야 한다."""
+    enriched = {"analyses": ANALYSES, "synthesis": {**SYNTHESIS, "ideas": [
+        {**SYNTHESIS["ideas"][0], "beneficiaries": [
+            {**SYNTHESIS["ideas"][0]["beneficiaries"][0],
+             "graph_backed": True, "via": "비철금속→전방→전선"},
+            {**SYNTHESIS["ideas"][0]["beneficiaries"][1], "graph_backed": False},
+        ]}]}}
+    html = report.render_html("20260724", CANDIDATES, enriched, "테스트", HORIZONTAL, NAMES)
+    assert "비철금속→전방→전선" in html
+    assert "그래프 밖" in html
+
+
+def test_coverage_section_surfaces_map_holes():
+    """맵에 적어 놓고 티커로 해석되지 않은 회사는 리포트에 드러나야 한다."""
+    out = report.render_coverage({
+        "valuechain_coverage": {"industries": ["건설·EPC"], "edges": 12,
+                                "unresolved": {"construction.yaml": ["없어진회사"]}},
+        "provenance": {"graph_backed": 3, "total": 5},
+        "name_match": {"matched": 4, "total": 5, "unmatched": ["오타난이름"]},
+    })
+    assert "없어진회사" in out
+    assert "그래프 기반 3건" in out
+    assert "오타난이름" in out
+
+
+def test_coverage_section_is_empty_when_nothing_to_report():
+    assert report.render_coverage({}) == ""
 
 
 def test_telegram_marks_negative_impact(analysis):

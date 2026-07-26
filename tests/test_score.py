@@ -75,5 +75,34 @@ def test_directional_hit_counts_losses_as_correct_for_negative_calls(cases_dir, 
     assert result["by_impact"]["피해"]["mean"] == pytest.approx(-0.05)
 
 
+def test_provenance_and_path_are_scored_separately(cases_dir, monkeypatch):
+    """그래프 기반 후보와 LLM 창작 후보를 갈라 봐야 밸류체인 맵의 값을 알 수 있다."""
+    old = (datetime.now() - timedelta(days=60)).strftime("%Y%m%d")
+    _write_case(cases_dir, old, [
+        {"name": f"수혜{i}", "ticker": f"00000{i}", "priced_in": "미반영",
+         "impact": "수혜", "graph_backed": True, "via": "건설·EPC→후방→시멘트"}
+        for i in range(1, 4)
+    ] + [{"name": "창작", "ticker": "000009", "priced_in": "미반영",
+          "impact": "수혜", "graph_backed": False}])
+    monkeypatch.setattr(score, "_forward_return",
+                        lambda t, d, h: -0.04 if t == "000009" else 0.06)
+
+    result = score.score(horizon=10)
+    assert result["by_provenance"]["그래프기반"]["n"] == 3
+    assert result["by_provenance"]["LLM창작"]["n"] == 1
+    assert result["by_path"]["건설·EPC→후방→시멘트"]["n"] == 3
+    assert "건설·EPC→후방→시멘트" in score.render(result)
+
+
+def test_path_buckets_below_min_sample_are_dropped(cases_dir, monkeypatch):
+    """1~2건짜리 경로 적중률은 잡음이라 보고하지 않는다."""
+    old = (datetime.now() - timedelta(days=60)).strftime("%Y%m%d")
+    _write_case(cases_dir, old, [
+        {"name": "A", "ticker": "000001", "priced_in": "미반영", "impact": "수혜",
+         "graph_backed": True, "via": "조선→후방→조선기자재"}])
+    monkeypatch.setattr(score, "_forward_return", lambda t, d, h: 0.05)
+    assert score.score(horizon=10)["by_path"] == {}
+
+
 def test_render_handles_empty_result():
     assert "없습니다" in score.render({"n": 0})
