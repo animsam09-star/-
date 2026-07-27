@@ -4,6 +4,40 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from src import screener
+
+
+class TestCredentialDiagnostics:
+    """pykrx는 로그인 실패 시 예외 없이 빈 목록을 준다.
+
+    그대로 두면 호출부에서 IndexError가 나고 진짜 원인(자격 증명 누락)이
+    스택트레이스 어디에도 남지 않는다. 실제로 프로덕션 실행이 그렇게 죽었다.
+    """
+
+    def test_empty_dates_names_the_missing_credentials(self, monkeypatch):
+        monkeypatch.delenv("KRX_ID", raising=False)
+        monkeypatch.delenv("KRX_PW", raising=False)
+        monkeypatch.setattr(screener.stock, "get_previous_business_days",
+                            lambda **kw: [])
+        with pytest.raises(RuntimeError, match="KRX_ID"):
+            screener.get_trading_dates("20260724", 130)
+
+    def test_empty_dates_with_credentials_blames_the_response(self, monkeypatch):
+        monkeypatch.setenv("KRX_ID", "x")
+        monkeypatch.setenv("KRX_PW", "y")
+        monkeypatch.setattr(screener.stock, "get_previous_business_days",
+                            lambda **kw: [])
+        with pytest.raises(RuntimeError, match="KRX 응답이 비어"):
+            screener.get_trading_dates("20260724", 130)
+
+    def test_empty_panel_is_not_reported_as_short_lookback(self, monkeypatch):
+        """가격이 하나도 안 오는 것과 조회 기간이 짧은 것은 다른 문제다."""
+        monkeypatch.setattr(screener, "get_trading_dates", lambda *a: ["20260724"])
+        monkeypatch.setattr(screener, "fetch_panel",
+                            lambda dates: (pd.DataFrame(), pd.DataFrame(), pd.DataFrame()))
+        with pytest.raises(RuntimeError, match="가격 스냅샷이 하나도"):
+            screener.screen("20260724", {"lookback_days": 130})
+
 from src.screener import compute_signals
 
 N_DAYS = 130

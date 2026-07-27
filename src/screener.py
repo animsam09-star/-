@@ -7,6 +7,7 @@ pykrx로 일자별 스냅샷(전 종목 OHLCV)을 수집해 가격 패널을 만
 from __future__ import annotations
 
 import json
+import os
 import time
 from pathlib import Path
 
@@ -26,11 +27,29 @@ def _retry(fn, *args, retries=3, delay=2, **kwargs):
             time.sleep(delay * (attempt + 1))
 
 
+KRX_CREDENTIAL_HINT = (
+    "KRX_ID / KRX_PW 환경 변수가 설정되지 않았습니다.\n"
+    "  KRX가 대량 조회에 로그인을 요구하므로 이 자격 증명 없이는 가격 수집이 되지 않습니다.\n"
+    "  로컬: .env 또는 셸 환경변수로 설정\n"
+    "  GitHub Actions: Settings → Secrets and variables → Actions → New repository secret\n"
+    "  계정 발급: https://data.krx.co.kr")
+
+
 def get_trading_dates(end_date: str, n_days: int) -> list[str]:
-    """end_date(YYYYMMDD) 기준 최근 n_days 거래일 목록(오름차순)."""
+    """end_date(YYYYMMDD) 기준 최근 n_days 거래일 목록(오름차순).
+
+    pykrx는 로그인에 실패해도 예외를 올리지 않고 **빈 목록을 돌려준다.** 그대로
+    두면 호출부에서 `dates[-1]`이 IndexError로 죽어, 진짜 원인(자격 증명 누락)이
+    스택트레이스 어디에도 나오지 않는다. 여기서 원인을 지목한다.
+    """
     start = (pd.Timestamp(end_date) - pd.Timedelta(days=int(n_days * 1.8) + 30)).strftime("%Y%m%d")
     dates = _retry(stock.get_previous_business_days, fromdate=start, todate=end_date)
-    dates = [d.strftime("%Y%m%d") for d in dates]
+    dates = [d.strftime("%Y%m%d") for d in (dates or [])]
+    if not dates:
+        detail = (KRX_CREDENTIAL_HINT
+                  if not (os.getenv("KRX_ID") and os.getenv("KRX_PW"))
+                  else "KRX 응답이 비어 있습니다. 조회 구간과 서비스 상태를 확인하세요.")
+        raise RuntimeError(f"거래일을 하나도 조회하지 못했습니다({start}~{end_date}).\n{detail}")
     return dates[-n_days:]
 
 
@@ -140,6 +159,13 @@ def screen(end_date: str, cfg: dict) -> tuple[dict, pd.DataFrame]:
     print(f"기준일: {base_date}, 조회 거래일 수: {len(dates)}")
 
     close, volume, value = fetch_panel(dates)
+    if close.empty:
+        # 거래일은 받았는데 스냅샷이 전부 비었다면 인증이 아니라 조회 쪽 문제다.
+        # compute_signals까지 흘려보내면 'lookback_days를 늘리세요'라는 엉뚱한
+        # 메시지가 나온다.
+        raise RuntimeError(
+            f"거래일 {len(dates)}일을 조회했으나 가격 스냅샷이 하나도 오지 않았습니다. "
+            "KRX 응답 또는 조회 권한을 확인하세요.")
     sig = compute_signals(close, volume, value, cfg)
 
     # 시가총액 필터
