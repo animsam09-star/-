@@ -36,6 +36,34 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      # 어떤 Secret이 없어서 무엇이 안 되는지 한눈에 보여준다.
+      # 값은 절대 출력하지 않고 등록 여부만 확인한다.
+      - name: Report secret availability
+        env:
+          KRX_ID: ${{ secrets.KRX_ID }}
+          KRX_PW: ${{ secrets.KRX_PW }}
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python - <<'PY'
+          import os
+          checks = [
+              ("KRX_ID + KRX_PW", bool(os.getenv("KRX_ID") and os.getenv("KRX_PW")),
+               "가격 수집 — 없으면 파이프라인 전체가 동작하지 않음"),
+              ("DART_API_KEY", bool(os.getenv("DART_API_KEY")),
+               "공시 수집 + 수직축 자동 구축"),
+              ("NAVER_CLIENT_ID", bool(os.getenv("NAVER_CLIENT_ID")), "뉴스 수집"),
+              ("ANTHROPIC_API_KEY", bool(os.getenv("ANTHROPIC_API_KEY")), "원인 분석"),
+          ]
+          width = max(len(n) for n, _, _ in checks)
+          for name, ok, purpose in checks:
+              print(f"  {'있음' if ok else '없음'}  {name:<{width}}  {purpose}")
+          if not checks[0][1]:
+              print("::warning::KRX 자격 증명이 없어 스모크 테스트가 실패합니다. "
+                    "Settings → Secrets and variables → Actions에서 등록하세요.")
+          PY
+
       # 단위 테스트는 픽스처를 우리가 직접 만들기 때문에 외부 API의 실제 컬럼명·
       # 인덱스 타입이 바뀌어도 잡지 못한다. 구조적 사각지대라, 여기서 계약을 명시적으로
       # 검증한다. pykrx나 KRX 응답이 바뀌면 조용히 틀리는 대신 여기서 터져야 한다.
@@ -45,12 +73,32 @@ jobs:
           KRX_PW: ${{ secrets.KRX_PW }}
         run: |
           python - <<'PY'
+          import os, sys
+          from datetime import datetime, timedelta, timezone
+
+          # 자격 증명부터 확인한다. 없으면 pykrx가 빈 목록을 돌려주고 그 다음 줄이
+          # IndexError로 죽어, 정작 무엇이 문제인지 알려주지 못한다.
+          if not (os.getenv("KRX_ID") and os.getenv("KRX_PW")):
+              sys.exit(
+                  "KRX_ID / KRX_PW Secrets가 등록되지 않았습니다.\n"
+                  "  KRX가 대량 조회에 로그인을 요구하므로 이 자격 증명 없이는 "
+                  "가격 수집 자체가 되지 않습니다.\n"
+                  "  등록: Settings → Secrets and variables → Actions → New repository secret\n"
+                  "  계정 발급: https://data.krx.co.kr")
+
           import pandas as pd
           from pykrx import stock
 
-          dates = stock.get_previous_business_days(fromdate="20260101", todate="20260131")
+          kst = timezone(timedelta(hours=9))
+          today = datetime.now(kst)
+          begin = (today - timedelta(days=30)).strftime("%Y%m%d")
+          dates = stock.get_previous_business_days(
+              fromdate=begin, todate=today.strftime("%Y%m%d"))
+          if not dates:
+              sys.exit(f"거래일 조회 결과가 비었습니다({begin}~). "
+                       "KRX 응답이나 자격 증명을 확인하세요.")
           day = dates[-1].strftime("%Y%m%d")
-          print(f"기준일 {day}")
+          print(f"기준일 {day} (최근 {len(dates)}거래일)")
           fail = []
 
           def check(label, cond, detail=""):
@@ -85,7 +133,7 @@ jobs:
                 "일괄 조회 누락이 20%를 넘으면 개별 조회 상한에 걸린다")
 
           # (3) 시계열 계열은 DatetimeIndex — 스냅샷과 타입이 다르다는 사실 자체가 계약이다
-          ts = stock.get_market_ohlcv_by_date("20260101", day, tickers[0])
+          ts = stock.get_market_ohlcv_by_date(begin, day, tickers[0])
           check("get_market_ohlcv_by_date DatetimeIndex",
                 isinstance(ts.index, pd.DatetimeIndex), f"index={type(ts.index).__name__}")
 
@@ -102,8 +150,10 @@ jobs:
       # DART 문서 API는 확장자가 .xml이지만 실제로는 ZIP을 준다. 인코딩도 EUC-KR과
       # UTF-8이 섞인다. 단위 테스트는 우리가 만든 합성 ZIP만 보므로 이 가정들이
       # 실제로 맞는지 확인하지 못한다 — 여기서 진짜 공시 한 건으로 검증한다.
+      # KRX와 독립적이므로 KRX 검증이 실패해도 실행한다 —
+      # 한 번의 실행으로 두 소스의 상태를 모두 알 수 있어야 한다.
       - name: Verify DART contract
-        if: ${{ inputs.check_dart }}
+        if: ${{ always() && inputs.check_dart }}
         env:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
         run: |
