@@ -71,7 +71,8 @@ def from_valuechain(universe: Universe, asof: str,
                 "valuechain", confidence=VALUECHAIN_CONFIDENCE,
                 evidence=f"{origin}: {name}", asof=asof))
 
-    for f in sorted(directory.glob("*.yaml")):
+    # '_'로 시작하는 파일은 맵이 아닌 부속 파일(별칭 표 등)이다
+    for f in sorted(p for p in directory.glob("*.yaml") if not p.name.startswith("_")):
         try:
             doc = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
         except yaml.YAMLError as e:

@@ -7,17 +7,16 @@ API 키가 없으면 해당 소스는 건너뛰고 빈 목록을 반환한다(�
 
 from __future__ import annotations
 
-import io
 import json
 import os
 import re
 import time
-import zipfile
 from datetime import datetime, timedelta
 from pathlib import Path
-from xml.etree import ElementTree
 
 import requests
+
+from .dart import load_corp_codes
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
@@ -64,29 +63,6 @@ def fetch_news(name: str, cfg: dict) -> list[dict]:
     return items
 
 
-def _load_corp_codes(api_key: str) -> dict[str, str]:
-    """종목코드 → DART corp_code 매핑. 결과를 data/에 캐시한다."""
-    cache = DATA_DIR / "corp_codes.json"
-    if cache.exists():
-        return json.loads(cache.read_text(encoding="utf-8"))
-    resp = requests.get(
-        "https://opendart.fss.or.kr/api/corpCode.xml",
-        params={"crtfc_key": api_key}, timeout=60,
-    )
-    resp.raise_for_status()
-    with zipfile.ZipFile(io.BytesIO(resp.content)) as zf:
-        xml = zf.read(zf.namelist()[0]).decode("utf-8")
-    mapping = {}
-    for el in ElementTree.fromstring(xml).iter("list"):
-        stock_code = (el.findtext("stock_code") or "").strip()
-        corp_code = (el.findtext("corp_code") or "").strip()
-        if stock_code and corp_code:
-            mapping[stock_code] = corp_code
-    DATA_DIR.mkdir(exist_ok=True)
-    cache.write_text(json.dumps(mapping), encoding="utf-8")
-    return mapping
-
-
 def fetch_filings(ticker: str, corp_codes: dict[str, str], cfg: dict) -> list[dict]:
     api_key = os.getenv("DART_API_KEY")
     if not api_key or ticker not in corp_codes:
@@ -116,7 +92,7 @@ def collect(candidates: list[dict], base_date: str, cfg: dict) -> dict:
     corp_codes = {}
     if os.getenv("DART_API_KEY"):
         try:
-            corp_codes = _load_corp_codes(os.environ["DART_API_KEY"])
+            corp_codes = load_corp_codes()
         except Exception as e:
             print(f"DART corp_code 매핑 실패: {e}")
 

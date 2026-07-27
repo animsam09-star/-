@@ -131,6 +131,15 @@ class Graph:
     def industries_of(self, ticker: str, min_confidence: float = 0.0) -> list[dict]:
         return self.out(ticker_node(ticker), REL_MEMBER, min_confidence)
 
+    def industry_names(self, ticker: str, min_confidence: float = 0.0) -> list[str]:
+        """소속 산업명(중복 제거).
+
+        밸류체인과 DART가 같은 소속을 각각 주장하면 엣지가 둘이라, 이름을 그대로
+        나열하면 '시멘트·레미콘, 시멘트·레미콘'처럼 찍힌다.
+        """
+        return list(dict.fromkeys(
+            split_node(e["dst"])[1] for e in self.industries_of(ticker, min_confidence)))
+
     def members_of(self, industry: str, min_confidence: float = 0.0) -> list[str]:
         """산업 소속 종목 티커. 시총 순 정렬은 호출부(Universe 필요)에서 한다."""
         return [split_node(e["src"])[1]
@@ -156,22 +165,34 @@ class Graph:
 
         경로 신뢰도는 두 엣지 신뢰도의 곱으로 둔다. 소속이 불확실하면 그 위에
         얹힌 밸류체인 추론도 같이 불확실해야 하기 때문이다.
+
+        **같은 (기준산업, 상대산업) 쌍은 하나로 합친다.** 밸류체인 YAML과 DART가
+        같은 관계를 각각 주장하면 엣지는 둘 다 남지만(교차 검증의 근거다), 조회
+        결과까지 둘로 나오면 프롬프트에 같은 산업이 두 줄로 찍혀 서로 다른 관계인
+        것처럼 읽힌다. 신뢰도는 가장 높은 것을 쓰고 출처는 모아서 보여준다.
         """
-        results: list[dict] = []
+        merged: dict[tuple[str, str], dict] = {}
         for me in self.industries_of(ticker, min_confidence):
             my_ind = me["dst"]
             for ve in self.out(my_ind, rel, min_confidence):
                 target = split_node(ve["dst"])[1]
-                results.append({
-                    "from_industry": split_node(my_ind)[1],
-                    "relation": rel,
-                    "industry": target,
-                    "members": self.members_of(target, min_confidence),
-                    "confidence": round(me["confidence"] * ve["confidence"], 3),
-                    "source": ve["source"],
-                    "evidence": ve.get("evidence", ""),
-                })
-        return sorted(results, key=lambda r: -r["confidence"])
+                key = (split_node(my_ind)[1], target)
+                conf = round(me["confidence"] * ve["confidence"], 3)
+                cur = merged.get(key)
+                if cur is None:
+                    merged[key] = {
+                        "from_industry": key[0], "relation": rel, "industry": target,
+                        "members": self.members_of(target, min_confidence),
+                        "confidence": conf, "sources": [ve["source"]],
+                        "source": ve["source"], "evidence": ve.get("evidence", ""),
+                    }
+                    continue
+                if ve["source"] not in cur["sources"]:
+                    cur["sources"].append(ve["source"])
+                if conf > cur["confidence"]:
+                    cur.update(confidence=conf, source=ve["source"],
+                               evidence=ve.get("evidence", ""))
+        return sorted(merged.values(), key=lambda r: -r["confidence"])
 
     def upstream(self, ticker: str, min_confidence: float = 0.0) -> list[dict]:
         return self._vertical(ticker, REL_UPSTREAM, min_confidence)
@@ -200,8 +221,7 @@ class Graph:
         """
         return {
             "ticker": ticker,
-            "industries": [split_node(e["dst"])[1]
-                           for e in self.industries_of(ticker, min_confidence)],
+            "industries": self.industry_names(ticker, min_confidence),
             "peers": self.peers(ticker, min_confidence),
             "upstream": self.upstream(ticker, min_confidence),
             "downstream": self.downstream(ticker, min_confidence),
@@ -247,13 +267,19 @@ def render_subgraph(graph: "Graph", ticker: str, universe, *, gaps: dict | None 
 
     for key, title in (("upstream", "후방 — 이 산업에 납품하는 쪽 (물량 전이에 시차 있음)"),
                        ("downstream", "전방 — 이 산업의 수요처")):
-        rows = [r for r in sub[key] if r["members"]]
+        rows = sub[key]
         if not rows:
             continue
         lines.append(f"\n**{title}**")
         for r in rows:
-            lines.append(f"  - {r['industry']} [신뢰 {r['confidence']:.2f}, {r['source']}]"
-                         f"\n      {_fmt_members(r['members'], universe, gaps, max_members)}")
+            # 출처가 둘 이상이면 서로 다른 근거가 같은 관계를 지지한다는 뜻이다
+            src = "+".join(r.get("sources") or [r["source"]])
+            # 소속 종목이 없어도 관계 자체는 보여준다 — 수요·공급 구조가 정보이고,
+            # 상장 종목이 없는 산업(예: 석탄)도 원인 해석에는 필요하다
+            names = (_fmt_members(r["members"], universe, gaps, max_members)
+                     if r["members"] else "(상장 종목 미상)")
+            lines.append(f"  - {r['industry']} [신뢰 {r['confidence']:.2f}, {src}]"
+                         f"\n      {names}")
 
     drivers = sorted(sub["drivers"], key=lambda d: -abs(d.get("my_weight") or 0))
     drivers = [d for d in drivers if d["others"]][:max_drivers]

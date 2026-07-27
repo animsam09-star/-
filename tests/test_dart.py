@@ -1,0 +1,394 @@
+"""DART 추출 검증.
+
+라이브 DART는 이 환경에서 막혀 있어 네트워크 경로는 스텁으로 대체한다.
+여기서 고정하는 것은 **조용히 틀린 답을 내는** 지점들이다.
+- 인용 검증이 실제로 환각을 걷어내는가 (이게 없으면 그럴듯한 거짓이 그대로 엣지가 된다)
+- 목차를 본문으로 착각하지 않는가 (예외 없이 30자짜리 절이 나온다)
+- 산업 어휘가 과·소 병합되지 않는가 (그래프 파편화 / 엉뚱한 병합)
+- 표 셀 경계가 살아남는가 (원재료 비중이 뭉개지면 등급 A가 사라진다)
+"""
+
+import io
+import json
+import zipfile
+
+import pytest
+
+from src import dart, dart_extract as dx
+from src import graph as G
+
+ASOF = "20260726"
+
+SECTION = """II. 사업의 내용
+
+1. 사업의 개요
+당사는 시멘트 및 레미콘을 제조·판매하고 있습니다.
+
+2. 주요 제품 및 서비스
+제품 | 매출액 | 비중
+시멘트 | 8,000 | 62.0%
+레미콘 | 4,900 | 38.0%
+
+3. 원재료 및 생산설비
+당사의 주요 원재료는 유연탄이며 전량 수입에 의존하고 있습니다.
+원재료 | 매입액 | 비중
+유연탄 | 3,200 | 71.0%
+석회석 | 1,300 | 29.0%
+
+4. 매출 및 수주상황
+당사 제품은 국내 대형 건설사에 주로 납품되고 있습니다.
+"""
+
+
+def _doc(section: str = SECTION) -> dict:
+    return {"ticker": "003410", "corp_code": "00126380", "corp_name": "테스트시멘트",
+            "report_nm": "사업보고서", "rcept_dt": "20260315", "section": section,
+            "truncated": False}
+
+
+# ---- 절 추출 --------------------------------------------------------------
+
+class TestSectionExtraction:
+    def test_slices_business_section(self):
+        text = ("I. 회사의 개요\n연혁입니다.\n" + SECTION
+                + "\nIII. 재무에 관한 사항\n재무제표입니다.")
+        out = dart.extract_business_section(text)
+        assert "주요 제품 및 서비스" in out
+        assert "재무제표입니다" not in out
+        assert "연혁입니다" not in out
+
+    def test_table_of_contents_is_not_mistaken_for_body(self):
+        """목차에도 같은 제목이 있다. 첫 매치를 쓰면 30자짜리 절이 조용히 나온다."""
+        text = ("- 목  차 -\nI. 회사의 개요\nII. 사업의 내용\nIII. 재무에 관한 사항\n\n"
+                "I. 회사의 개요\n연혁\n\n" + SECTION + "\nIII. 재무에 관한 사항\n표\n")
+        out = dart.extract_business_section(text)
+        assert "유연탄" in out, "목차를 본문으로 착각했다"
+
+    def test_full_width_roman_numerals(self):
+        text = "Ⅰ. 회사의 개요\n\nⅡ. 사업의 내용\n" + "가" * 600 + "\nⅢ. 재무에 관한 사항\n"
+        assert len(dart.extract_business_section(text)) >= 500
+
+    def test_returns_empty_when_section_absent(self):
+        """못 찾으면 통짜 문서를 넘기지 말고 비워야 한다 — 비용과 오독을 막는다."""
+        assert dart.extract_business_section("I. 회사의 개요\n" + "가" * 5000) == ""
+
+    def test_rejects_too_short_section(self):
+        text = "II. 사업의 내용\n짧음\nIII. 재무에 관한 사항\n"
+        assert dart.extract_business_section(text) == ""
+
+
+# ---- 마크업 → 텍스트 ------------------------------------------------------
+
+class TestXmlToText:
+    def test_table_cells_keep_boundaries(self):
+        """셀 경계가 뭉개지면 '어느 원재료가 몇 %'가 사라져 등급 A가 전멸한다."""
+        xml = ("<TABLE><TR><TD>유연탄</TD><TD>3,200</TD><TD>71.0%</TD></TR>"
+               "<TR><TD>석회석</TD><TD>1,300</TD><TD>29.0%</TD></TR></TABLE>")
+        out = dart.xml_to_text(xml)
+        assert "유연탄 | 3,200 | 71.0%" in out
+        assert "석회석" in out.split("\n")[1]
+
+    def test_entities_and_comments(self):
+        out = dart.xml_to_text("<P>A&amp;B<!-- 주석 -->&nbsp;C</P>")
+        assert "A&B" in out and "주석" not in out
+
+    def test_numeric_character_references_are_decoded(self):
+        """&#183;를 남기면 LLM은 그걸 보고 인용엔 '·'로 적어, 정상 관계가
+        인용 검증에서 환각으로 오판돼 폐기된다. 예외는 나지 않는다."""
+        out = dart.xml_to_text("<P>제조&#183;판매 &#xB7; 유통</P>")
+        assert "제조·판매" in out
+        assert "&#" not in out
+
+    def test_te_cells_are_handled(self):
+        # DART는 헤더 셀에 TE 태그를 쓴다
+        assert "제품 | 비중" in dart.xml_to_text("<TR><TE>제품</TE><TE>비중</TE></TR>")
+
+
+class TestDecoding:
+    def test_uses_declared_encoding(self):
+        raw = '<?xml version="1.0" encoding="euc-kr"?><P>시멘트</P>'.encode("euc-kr")
+        assert "시멘트" in dart._decode(raw)
+
+    def test_falls_back_when_declaration_missing(self):
+        assert "시멘트" in dart._decode("<P>시멘트</P>".encode("cp949"))
+
+    def test_utf8_document(self):
+        assert "시멘트" in dart._decode("<P>시멘트</P>".encode("utf-8"))
+
+
+def test_fetch_document_reports_error_body(monkeypatch, tmp_path):
+    """오류 응답은 ZIP이 아니라 XML로 온다. 조용히 빈 문서가 되면 안 된다."""
+    monkeypatch.setattr(dart, "DOC_CACHE", tmp_path)
+
+    class Resp:
+        content = '<result><status>013</status><message>없음</message></result>'.encode("utf-8")
+
+    monkeypatch.setattr(dart, "_get", lambda *a, **k: Resp())
+    with pytest.raises(dart.DartError, match="문서 조회 실패"):
+        dart.fetch_document("20260315000001")
+
+
+def test_fetch_document_picks_largest_xml(monkeypatch, tmp_path):
+    monkeypatch.setattr(dart, "DOC_CACHE", tmp_path)
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        zf.writestr("cover.xml", "<P>표지</P>".encode("cp949"))
+        zf.writestr("body.xml", ("<P>" + "본문" * 500 + "</P>").encode("cp949"))
+
+    class Resp:
+        content = buf.getvalue()
+
+    monkeypatch.setattr(dart, "_get", lambda *a, **k: Resp())
+    out = dart.fetch_document("20260315000002")
+    assert "본문" in out and "표지" not in out
+    assert (tmp_path / "20260315000002.txt").exists(), "캐시가 기록돼야 한다"
+
+
+# ---- 인용 검증 ------------------------------------------------------------
+
+class TestQuoteVerification:
+    def test_accepts_verbatim_quote(self):
+        assert dx.verify_quote("주요 원재료는 유연탄이며 전량 수입에 의존", SECTION)
+
+    def test_accepts_reflowed_whitespace(self):
+        """표를 읽으면서 줄바꿈이 달라지는 건 환각이 아니다."""
+        assert dx.verify_quote("주요 원재료는\n유연탄이며  전량 수입에 의존", SECTION)
+
+    def test_rejects_fabricated_quote(self):
+        assert not dx.verify_quote("당사는 반도체 웨이퍼를 주요 원재료로 매입합니다", SECTION)
+
+    def test_rejects_too_short_quote(self):
+        """짧은 인용은 우연히 일치한다 — 근거로 인정하면 검증이 무력해진다."""
+        assert not dx.verify_quote("시멘트", SECTION)
+
+    def test_accepts_short_table_row_with_figures(self):
+        """표 행은 짧지만 가장 강한 근거다. 산문 하한을 그대로 적용하면
+        등급 A 근거가 통째로 폐기된다 — 예외 없이 조용히."""
+        assert dx.verify_quote("레미콘 | 4,900 | 38.0%", SECTION)
+        assert dx.verify_quote("유연탄 | 3,200", SECTION)
+
+    def test_still_rejects_bare_figure(self):
+        """수치만 떼어 오면 어느 항목의 것인지 알 수 없어 근거가 아니다."""
+        assert not dx.verify_quote("38.0%", SECTION)
+
+    def test_hallucinated_relation_is_dropped(self):
+        """이 테스트가 이 모듈의 존재 이유다. 예외 없이 그럴듯한 거짓이 통과하면 안 된다."""
+        extraction = {
+            "products": [{"industry": "시멘트·레미콘", "product": "시멘트",
+                          "revenue_share": 0.62, "tier": "A",
+                          "quote": "시멘트 | 8,000 | 62.0%"}],
+            "upstream": [
+                {"industry": "석탄", "material": "유연탄", "cost_share": 0.71, "tier": "A",
+                 "quote": "주요 원재료는 유연탄이며 전량 수입에 의존"},
+                {"industry": "반도체", "material": "웨이퍼", "cost_share": 0.4, "tier": "B",
+                 "quote": "당사는 반도체 웨이퍼를 주요 원재료로 매입합니다"},
+            ],
+            "downstream": [], "unmapped": "",
+        }
+        clean, stats = dx.filter_by_quote(extraction, SECTION)
+        assert [u["industry"] for u in clean["upstream"]] == ["석탄"]
+        assert stats["dropped"] == 1 and stats["kept"] == 2
+        assert stats["dropped_samples"], "폐기 내역이 드러나야 한다"
+
+
+# ---- 어휘 통제 ------------------------------------------------------------
+
+class TestIndustryVocab:
+    def test_normalization_folds_suffix_and_spacing(self):
+        assert dx.normalize_industry("시멘트 제조업") == dx.normalize_industry("시멘트")
+        assert dx.normalize_industry("건설 산업") == dx.normalize_industry("건설")
+
+    def test_normalization_does_not_gut_short_names(self):
+        """'농업'을 '농'으로 깎으면 엉뚱한 산업과 붙는다."""
+        assert dx.normalize_industry("농업") == "농업"
+
+    def test_distinct_industries_stay_distinct(self):
+        assert dx.normalize_industry("시멘트") != dx.normalize_industry("시멘트·레미콘")
+
+    def test_resolves_to_existing_vocabulary(self):
+        vocab = dx.IndustryVocab(known=["건설·EPC", "시멘트·레미콘"])
+        assert vocab.resolve("건설·EPC 산업") == "건설·EPC"
+        assert not vocab.new
+
+    def test_alias_folds_what_normalization_cannot(self):
+        vocab = dx.IndustryVocab(known=["시멘트·레미콘"], aliases={"레미콘": "시멘트·레미콘"})
+        assert vocab.resolve("레미콘") == "시멘트·레미콘"
+
+    def test_new_industry_is_recorded_not_swallowed(self):
+        vocab = dx.IndustryVocab(known=["건설·EPC"])
+        assert vocab.resolve("우주항공") == "우주항공"
+        assert vocab.new == {"우주항공": 1}
+
+    def test_same_new_industry_is_reused_within_a_run(self):
+        vocab = dx.IndustryVocab(known=[])
+        vocab.resolve("우주항공")
+        assert vocab.resolve("우주항공 산업") == "우주항공", "같은 실행 안에서 갈라지면 안 된다"
+
+    def test_prefix_overlap_is_suggested_not_auto_merged(self):
+        """'건설'과 '건설·EPC'는 후보로 제안하되 자동 병합하면 안 된다 —
+        같은 규칙이 '반도체'와 '반도체 장비'도 잘못 붙여 버린다."""
+        vocab = dx.IndustryVocab(known=["건설·EPC", "반도체 장비"])
+        assert vocab.resolve("건설") == "건설", "자동 병합됐다"
+        vocab.resolve("반도체")
+        sug = vocab.alias_suggestions()
+        assert sug["건설"] == ["건설·EPC"]
+        assert sug["반도체"] == ["반도체 장비"]
+
+    def test_no_suggestion_when_nothing_overlaps(self):
+        vocab = dx.IndustryVocab(known=["건설·EPC"])
+        vocab.resolve("해운")
+        assert vocab.alias_suggestions() == {}
+
+
+# ---- 엣지 변환 ------------------------------------------------------------
+
+class TestToEdges:
+    EXTRACTION = {
+        "products": [
+            {"industry": "레미콘", "product": "레미콘", "revenue_share": 0.38,
+             "tier": "A", "quote": "q"},
+            {"industry": "시멘트·레미콘", "product": "시멘트", "revenue_share": 0.62,
+             "tier": "A", "quote": "q"},
+        ],
+        "upstream": [{"industry": "석탄", "material": "유연탄", "cost_share": 0.71,
+                      "tier": "A", "quote": "q"}],
+        "downstream": [{"industry": "건설·EPC", "customer": "국내 건설사",
+                        "tier": "B", "quote": "q"}],
+        "unmapped": "",
+    }
+
+    def _graph(self):
+        vocab = dx.IndustryVocab(known=["시멘트·레미콘", "건설·EPC", "석탄"],
+                                 aliases={"레미콘": "시멘트·레미콘"})
+        return G.Graph(dx.to_edges("003410", self.EXTRACTION, vocab, ASOF)), vocab
+
+    def test_membership_needs_no_name_resolution(self):
+        """공시는 그 회사 자신의 것이라 티커를 이미 안다 — 이름 매칭 취약점이 없다."""
+        g, _ = self._graph()
+        assert g.industries_of("003410"), "소속 엣지가 있어야 한다"
+        assert set(g.members_of("시멘트·레미콘")) == {"003410"}
+
+    def test_primary_industry_is_largest_revenue_share(self):
+        g, _ = self._graph()
+        ups = g.upstream("003410")
+        assert {u["from_industry"] for u in ups} == {"시멘트·레미콘"}, \
+            "비중 62%인 시멘트가 기준 산업이어야 한다"
+
+    def test_reciprocal_edges_allow_reverse_lookup(self):
+        g, _ = self._graph()
+        assert [d["industry"] for d in g.downstream("003410")] == ["건설·EPC"]
+        # 석탄 산업에서 출발해도 시멘트를 전방으로 찾을 수 있어야 한다
+        assert any(e["dst"] == G.industry_node("시멘트·레미콘")
+                   for e in g.out(G.industry_node("석탄"), G.REL_DOWNSTREAM))
+
+    def test_aliased_products_are_folded_into_one_edge(self):
+        """별칭으로 같은 산업이 되면 엣지가 하나여야 한다.
+
+        접지 않으면 같은 엣지가 두 번 생기고, 매출 비중은 둘 중 하나만 임의로
+        남는다(38%가 62%를 덮을 수도 있다). 예외는 나지 않는다.
+        """
+        g, _ = self._graph()
+        member_edges = g.industries_of("003410")
+        assert len(member_edges) == 1, f"중복 소속 엣지: {member_edges}"
+        assert member_edges[0]["weight"] == pytest.approx(1.0), \
+            "같은 산업 안의 두 제품 비중은 합산돼야 한다"
+
+    def test_dart_confidence_beats_handwritten_valuechain(self):
+        from src import graph_build
+        g, _ = self._graph()
+        tier_a = [e for e in g.edges if e["confidence"] == dx.TIER_CONFIDENCE["A"]]
+        assert tier_a
+        assert dx.TIER_CONFIDENCE["C"] > graph_build.VALUECHAIN_CONFIDENCE
+
+    def test_self_referential_relation_is_skipped(self):
+        vocab = dx.IndustryVocab(known=["시멘트·레미콘"])
+        edges = dx.to_edges("003410", {
+            "products": [{"industry": "시멘트·레미콘", "product": "시멘트",
+                          "revenue_share": 1.0, "tier": "A", "quote": "q"}],
+            "upstream": [{"industry": "시멘트·레미콘", "material": "클링커",
+                          "cost_share": 0.5, "tier": "B", "quote": "q"}],
+            "downstream": [], "unmapped": "",
+        }, vocab, ASOF)
+        assert all(e["rel"] == G.REL_MEMBER for e in edges), "자기 자신으로 가는 관계는 무의미하다"
+
+    def test_products_without_share_still_yield_primary(self):
+        vocab = dx.IndustryVocab(known=[])
+        edges = dx.to_edges("000001", {
+            "products": [{"industry": "조선", "product": "선박", "revenue_share": None,
+                          "tier": "C", "quote": "q"}],
+            "upstream": [{"industry": "철강", "material": "후판", "cost_share": None,
+                          "tier": "B", "quote": "q"}],
+            "downstream": [], "unmapped": "",
+        }, vocab, ASOF)
+        assert any(e["rel"] == G.REL_UPSTREAM for e in edges)
+
+
+def test_dart_edges_merge_alongside_valuechain_not_over_it():
+    """같은 관계를 둘이 주장하면 교차 검증이다 — 합치면 근거가 사라진다."""
+    vc = G.make_edge("I:건설·EPC", "I:시멘트·레미콘", G.REL_UPSTREAM,
+                     "valuechain", confidence=0.5, asof=ASOF)
+    dart_edge = G.make_edge("I:건설·EPC", "I:시멘트·레미콘", G.REL_UPSTREAM,
+                            "dart", confidence=0.85, asof=ASOF)
+    merged = G.merge([vc], [dart_edge])
+    assert {e["source"] for e in merged} == {"valuechain", "dart"}
+
+
+def test_corroborated_relation_appears_once_in_lookup():
+    """엣지는 출처별로 남지만, 조회 결과가 둘로 나오면 프롬프트에 같은 산업이
+    두 줄로 찍혀 서로 다른 관계인 것처럼 읽힌다."""
+    edges = [
+        G.make_edge("T:003410", "I:시멘트·레미콘", G.REL_MEMBER, "dart",
+                    confidence=1.0, asof=ASOF),
+        G.make_edge("I:시멘트·레미콘", "I:건설·EPC", G.REL_DOWNSTREAM,
+                    "valuechain", confidence=0.5, asof=ASOF),
+        G.make_edge("I:시멘트·레미콘", "I:건설·EPC", G.REL_DOWNSTREAM,
+                    "dart", confidence=0.85, asof=ASOF),
+    ]
+    edges.append(G.make_edge("T:003410", "I:시멘트·레미콘", G.REL_MEMBER,
+                             "valuechain", confidence=0.5, asof=ASOF))
+    assert G.Graph(edges).industry_names("003410") == ["시멘트·레미콘"], \
+        "출처가 둘이면 산업명이 중복 표기된다"
+
+    rows = G.Graph(edges).downstream("003410")
+    assert len(rows) == 1
+    assert set(rows[0]["sources"]) == {"valuechain", "dart"}
+    assert rows[0]["confidence"] == pytest.approx(0.85), "가장 높은 신뢰도를 쓴다"
+
+    from src import universe
+    uni = universe.from_entries(ASOF, {"003410": {"name": "테스트시멘트",
+                                                  "market": "KOSPI", "market_cap": 1}})
+    out = G.render_subgraph(G.Graph(edges), "003410", uni)
+    assert out.count("건설·EPC") == 1
+    assert "valuechain+dart" in out
+
+
+def test_batch_results_are_keyed_by_custom_id_not_order():
+    """Batch API 결과는 순서가 보장되지 않는다. 위치로 대조하면 종목이 뒤섞인다."""
+    docs = [_doc(), {**_doc(), "ticker": "000660"}]
+    by_ticker = {d["ticker"]: d for d in docs}
+    returned = [("000660", {"products": []}), ("003410", {"products": []})]  # 역순
+    for custom_id, _ in returned:
+        assert by_ticker[custom_id]["ticker"] == custom_id
+
+
+def test_prompt_includes_vocabulary_and_source():
+    vocab = dx.IndustryVocab(known=["건설·EPC", "시멘트·레미콘"])
+    prompt = dx.build_prompt(_doc(), vocab)
+    assert "시멘트·레미콘" in prompt
+    assert "사업보고서" in prompt and "20260315" in prompt
+    assert "유연탄" in prompt
+
+
+def test_schema_is_valid_for_structured_output():
+    """구조화 출력은 모든 객체에 additionalProperties:false와 required를 요구한다."""
+    def check(node):
+        if node.get("type") == "object":
+            assert node.get("additionalProperties") is False
+            assert set(node.get("required", [])) == set(node.get("properties", {}))
+            for child in node["properties"].values():
+                check(child)
+        elif node.get("type") == "array":
+            check(node["items"])
+
+    check(dx.EXTRACT_SCHEMA)
+    assert json.dumps(dx.EXTRACT_SCHEMA)   # 직렬화 가능해야 한다

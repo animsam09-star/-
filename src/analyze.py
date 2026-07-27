@@ -436,8 +436,7 @@ def analyze(candidates: list[dict], evidence_all: dict, base_date: str, cfg: dic
             result["trigger"] = cand["trigger"]
             result["ret20"] = cand["ret20"]
             result["groups"] = horizontal.get("membership", {}).get(cand["ticker"], [])
-            result["industries"] = [G.split_node(e["dst"])[1]
-                                    for e in relation_graph.industries_of(cand["ticker"])]
+            result["industries"] = relation_graph.industry_names(cand["ticker"])
             analyses.append(result)
 
     # 종합에 넘기기 전에 개별 분석부터 채워야 갭이 프롬프트 근거로 쓰인다

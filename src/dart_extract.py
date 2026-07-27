@@ -1,0 +1,550 @@
+"""DART 사업보고서 → 수직축 엣지 (Claude 구조화 추출).
+
+밸류체인 YAML이 내 사전지식이라면, 이 모듈은 **1차 자료**에서 같은 관계를
+뽑아낸다. 같은 엣지 테이블에 `source: "dart"`로 들어가고 YAML 엣지와 병합되지
+않으므로, 둘이 같은 관계를 주장하면 교차 검증이 된다.
+
+## 환각을 죽이는 장치: 인용 검증
+
+사업보고서를 LLM에 넣고 "후방 산업이 뭐냐"고 물으면, 문서에 없어도 그럴듯한
+답이 나온다. 그럴듯하기 때문에 사람 눈으로는 안 걸러진다.
+
+그래서 **모든 관계에 원문 인용을 의무화하고, 코드가 그 인용이 실제로 문서에
+있는지 대조한다.** 없으면 그 관계는 버린다. "LLM을 믿는다"가 "부분 문자열이
+있는지 확인한다"로 바뀌는 것이 요점이다. 폐기율은 그대로 환각률의 하한이라
+로그로 남긴다.
+
+## 그래프를 조각내지 않기: 어휘 통제
+
+산업명을 자유롭게 쓰게 두면 '시멘트', '시멘트·레미콘', '시멘트 제조업'이 서로
+다른 노드가 되고 그래프가 조용히 파편화된다. 기존 산업 목록을 프롬프트에 주고,
+받은 뒤에도 정규화·별칭으로 한 번 더 접는다. 그래도 새 산업이면 새로 만들되
+**신규 목록을 보고해** 사람이 별칭을 정리할 수 있게 한다.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import time
+from pathlib import Path
+
+import yaml
+from anthropic import Anthropic
+
+from . import dart
+from . import graph as G
+from . import graph_build
+
+ROOT = Path(__file__).resolve().parent.parent
+DATA_DIR = ROOT / "data"
+ALIAS_FILE = ROOT / "valuechain" / "_industry_aliases.yaml"
+
+# 근거 등급 → 신뢰도. 전부 밸류체인 YAML(0.5)보다 높다 — 1차 자료이기 때문이다.
+TIER_CONFIDENCE = {"A": 0.85, "B": 0.70, "C": 0.55}
+
+# 인용 길이 하한. 짧은 인용은 우연히 일치해 검증을 무력화하기 때문에 둔다.
+# 다만 표 행("레미콘 | 38.0%")은 짧으면서도 가장 강한 근거라, 숫자를 포함하면
+# 하한을 낮춘다. 산문 하한을 그대로 적용하면 등급 A 근거가 통째로 폐기된다.
+MIN_QUOTE_CHARS = 10
+MIN_NUMERIC_QUOTE_CHARS = 6
+
+_RELATION = {"upstream": G.REL_UPSTREAM, "downstream": G.REL_DOWNSTREAM}
+
+_IND_NOISE = re.compile(r"[\s·,/\-—()·]")
+_IND_SUFFIX = re.compile(r"(?:제조업|사업부문|사업부|산업|부문|사업|업계)$")
+_WS = re.compile(r"\s+")
+
+
+def _nullable_number():
+    # 구조화 출력 스키마는 타입 배열보다 anyOf가 안전하다
+    return {"anyOf": [{"type": "number"}, {"type": "null"}]}
+
+
+def _relation_items(extra: dict[str, dict]) -> dict:
+    props = {
+        "industry": {"type": "string", "description": "상대 산업명"},
+        "quote": {"type": "string",
+                  "description": "이 관계의 근거가 되는 원문 문장 (그대로 복사)"},
+        "tier": {"type": "string", "enum": ["A", "B", "C"],
+                 "description": "A=표에서 비중까지 확인, B=본문 서술, C=제품명에서 추론"},
+        **extra,
+    }
+    return {"type": "array", "items": {
+        "type": "object", "properties": props,
+        "required": list(props), "additionalProperties": False}}
+
+
+EXTRACT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "products": _relation_items({
+            "product": {"type": "string", "description": "해당 산업으로 분류한 제품·서비스명"},
+            "revenue_share": {**_nullable_number(),
+                              "description": "매출 비중(0~1). 문서에 없으면 null"},
+        }),
+        "upstream": _relation_items({
+            "material": {"type": "string", "description": "매입하는 원재료·부품명"},
+            "cost_share": {**_nullable_number(),
+                           "description": "매입액 비중(0~1). 문서에 없으면 null"},
+        }),
+        "downstream": _relation_items({
+            "customer": {"type": "string",
+                         "description": "매출처 유형. 익명이면 '건설사'처럼 업종으로 적는다"},
+        }),
+        "unmapped": {"type": "string",
+                     "description": "문서에 있으나 산업으로 분류하기 어려웠던 내용. 없으면 빈 문자열"},
+    },
+    "required": ["products", "upstream", "downstream", "unmapped"],
+    "additionalProperties": False,
+}
+
+SYSTEM_PROMPT = """너는 한국 상장기업의 사업보고서에서 밸류체인 관계를 추출하는 애널리스트다.
+목적은 '이 기업이 속한 산업'과 '그 산업의 후방·전방 산업'을 1차 자료로 확정하는 것이다.
+
+## 절대 규칙: 인용
+
+모든 항목에 quote를 채워라. quote는 **제공된 문서에서 그대로 복사한 연속된 문장**이어야
+한다. 요약하거나 다시 쓰지 마라. 시스템이 원문과 대조해 일치하지 않는 항목을 전부
+폐기하므로, 지어내면 그 항목은 버려진다. 근거를 못 찾으면 그 항목을 아예 넣지 마라.
+적게 넣고 정확한 편이 많이 넣고 틀린 것보다 낫다.
+
+표에서 인용할 때는 **항목명과 수치를 한 줄로 함께** 복사하라(예: `레미콘 | 38.0%`).
+수치만 떼어 오면 근거로 인정되지 않는다.
+
+## 무엇을 뽑는가
+
+- **products**: 이 회사가 파는 것 → 이 회사가 속한 산업. '주요 제품 및 서비스',
+  '매출실적', 사업부문별 매출에서 찾는다. 매출 비중이 표에 있으면 revenue_share에 적는다.
+- **upstream**: 이 회사가 사는 것 → 후방 산업. '주요 원재료', '원재료 매입 현황'에서
+  찾는다. 원재료명을 그 원재료를 만드는 **산업**으로 옮겨라
+  (예: 원재료 '열연강판' → 산업 '철강').
+- **downstream**: 이 회사가 파는 상대 → 전방 산업. '매출 및 수주상황', '주요 매출처'.
+
+## 매출처가 익명이어도 괜찮다
+
+사업보고서의 거래처는 대개 익명이다("A사", "국내 대형 건설사"). **회사 이름은 필요 없다.**
+필요한 것은 업종이다. "국내 건설사에 납품"이면 downstream 산업은 '건설'이다.
+익명이라는 이유로 항목을 버리지 마라 — 업종만 식별되면 충분하다.
+
+## 산업명은 주어진 목록에서 고른다
+
+아래 '기존 산업 목록'에 맞는 이름이 있으면 **글자 그대로** 재사용하라. 목록에 없는
+산업일 때만 새 이름을 쓰되, 가장 일반적인 표기를 택하라. 같은 산업을 다른 이름으로
+부르면 그래프가 조각난다.
+
+## 등급
+
+- A: 표에서 비중 수치까지 확인됨
+- B: 본문 서술에서 명확히 확인됨(수치 없음)
+- C: 제품·원재료명에서 산업을 추론함
+
+## 하지 말 것
+
+- 문서에 없는 일반 상식으로 관계를 채우지 마라. 사전지식으로 아는 관계라도
+  이 문서에 근거가 없으면 넣지 마라.
+- 단순 소모품·용역(전기료, 운반비, 사무용품)은 upstream에 넣지 마라.
+- 지주회사의 단순 지분 관계를 밸류체인으로 취급하지 마라."""
+
+
+# ---- 어휘 통제 -----------------------------------------------------------
+
+def normalize_industry(name: str) -> str:
+    """대조용 정규화. 접미를 떼되 2글자 미만으로 줄지 않게 한다."""
+    s = _IND_NOISE.sub("", str(name))
+    prev = None
+    while prev != s:
+        prev = s
+        m = _IND_SUFFIX.search(s)
+        if m and len(s) - len(m.group()) >= 2:
+            s = s[:m.start()]
+    return s.upper()
+
+
+def load_aliases() -> dict[str, str]:
+    if not ALIAS_FILE.exists():
+        return {}
+    try:
+        data = yaml.safe_load(ALIAS_FILE.read_text(encoding="utf-8")) or {}
+    except yaml.YAMLError:
+        return {}
+    return {str(k): str(v) for k, v in data.items() if k and v}
+
+
+class IndustryVocab:
+    """산업명을 기존 어휘로 접는다. 접히지 않은 것은 신규로 보고한다."""
+
+    def __init__(self, known: list[str], aliases: dict[str, str] | None = None):
+        self.known = list(known)
+        self.aliases = aliases or {}
+        self._by_norm = {normalize_industry(k): k for k in reversed(self.known)}
+        self.new: dict[str, int] = {}
+
+    def resolve(self, name: str) -> str:
+        raw = str(name).strip()
+        if not raw:
+            return raw
+        target = self.aliases.get(raw, raw)
+        if target in self._by_norm.values() or target in self.known:
+            return target
+        hit = self._by_norm.get(normalize_industry(target))
+        if hit:
+            return hit
+        self.new[target] = self.new.get(target, 0) + 1
+        self._by_norm[normalize_industry(target)] = target
+        self.known.append(target)
+        return target
+
+    def alias_suggestions(self, min_len: int = 2) -> dict[str, list[str]]:
+        """신규 산업 → 같은 것일 수 있는 기존 산업 후보.
+
+        '건설'과 '건설·EPC'처럼 한쪽이 다른 쪽의 접두인 경우를 잡는다.
+        **자동으로 병합하지는 않는다** — '반도체'와 '반도체 장비'는 접두 관계지만
+        엄연히 다른 산업이라, 자동 병합은 조용한 오류를 만든다. 사람이 고르도록
+        후보만 내놓는다.
+        """
+        established = [k for k in self.known if k not in self.new]
+        out: dict[str, list[str]] = {}
+        for fresh in self.new:
+            nf = normalize_industry(fresh)
+            if len(nf) < min_len:
+                continue
+            hits = [k for k in established
+                    if (nk := normalize_industry(k)) != nf
+                    and (nk.startswith(nf) or nf.startswith(nk))]
+            if hits:
+                out[fresh] = hits
+        return out
+
+
+# ---- 인용 검증 -----------------------------------------------------------
+
+def _squash(s: str) -> str:
+    return _WS.sub("", str(s))
+
+
+def verify_quote(quote: str, source: str, min_chars: int = MIN_QUOTE_CHARS) -> bool:
+    """인용이 원문에 실제로 있는가.
+
+    공백은 무시한다 — 표를 읽으면서 줄바꿈이 달라질 수 있고, 그건 환각이 아니다.
+    너무 짧은 인용은 우연히 일치하므로 하한을 두되, 숫자를 포함한 인용은
+    우연 일치 가능성이 훨씬 낮으므로 하한을 낮춘다(표 행 근거를 살리기 위함).
+    """
+    q = _squash(quote)
+    if not q:
+        return False
+    floor = MIN_NUMERIC_QUOTE_CHARS if any(c.isdigit() for c in q) else min_chars
+    if len(q) < floor:
+        return False
+    return q in _squash(source)
+
+
+def filter_by_quote(extraction: dict, source: str) -> tuple[dict, dict]:
+    """인용이 검증되지 않은 항목을 걷어낸다. (남은 것, 폐기 통계)"""
+    kept: dict[str, list] = {}
+    stats = {"kept": 0, "dropped": 0, "dropped_samples": []}
+    for key in ("products", "upstream", "downstream"):
+        rows = []
+        for item in extraction.get(key) or []:
+            if verify_quote(item.get("quote", ""), source):
+                rows.append(item)
+                stats["kept"] += 1
+            else:
+                stats["dropped"] += 1
+                if len(stats["dropped_samples"]) < 5:
+                    stats["dropped_samples"].append(
+                        f"{key}:{item.get('industry')} — {str(item.get('quote'))[:60]}")
+        kept[key] = rows
+    kept["unmapped"] = extraction.get("unmapped", "")
+    return kept, stats
+
+
+# ---- 엣지 변환 -----------------------------------------------------------
+
+def _tier_conf(item: dict) -> float:
+    return TIER_CONFIDENCE.get(item.get("tier", "C"), 0.55)
+
+
+def _fold(items: list[dict], vocab: IndustryVocab, share_key: str | None) -> dict[str, dict]:
+    """산업명을 어휘로 접은 뒤 같은 산업끼리 합친다.
+
+    별칭 때문에 '레미콘'과 '시멘트·레미콘'이 같은 산업이 되는 일이 흔한데,
+    합치지 않으면 같은 엣지가 두 번 생기고 비중은 둘 중 하나만 임의로 남는다.
+    한 산업 안의 서로 다른 제품이므로 **비중은 더한다.**
+    신뢰도와 인용은 근거가 가장 강한(등급이 높은) 항목의 것을 쓴다.
+    """
+    folded: dict[str, dict] = {}
+    for item in items or []:
+        industry = vocab.resolve(item.get("industry", ""))
+        if not industry:
+            continue
+        share = item.get(share_key) if share_key else None
+        share = float(share) if isinstance(share, (int, float)) else None
+        conf = _tier_conf(item)
+        cur = folded.get(industry)
+        if cur is None:
+            folded[industry] = {"industry": industry, "share": share,
+                                "confidence": conf, "quote": item.get("quote", "")}
+            continue
+        if share is not None:
+            cur["share"] = share if cur["share"] is None else cur["share"] + share
+        if conf > cur["confidence"]:
+            cur["confidence"], cur["quote"] = conf, item.get("quote", "")
+    return folded
+
+
+def to_edges(ticker: str, extraction: dict, vocab: IndustryVocab,
+             asof: str, evidence_prefix: str = "") -> list[dict]:
+    """검증을 통과한 추출 결과를 엣지로 바꾼다.
+
+    **종목명→티커 해석이 필요 없다.** 공시는 그 회사 자신의 것이라 티커를 이미
+    알고, 상대는 회사가 아니라 산업으로만 표현된다. 익명화가 문제가 되지 않는
+    이유이자, YAML 경로보다 이쪽이 구조적으로 견고한 이유다.
+    """
+    edges: list[dict] = []
+    products = _fold(extraction.get("products") or [], vocab, "revenue_share")
+
+    for p in products.values():
+        edges.append(G.make_edge(
+            G.ticker_node(ticker), G.industry_node(p["industry"]), G.REL_MEMBER, "dart",
+            weight=p["share"], confidence=p["confidence"],
+            evidence=f"{evidence_prefix}{str(p['quote'])[:150]}", asof=asof))
+
+    if not products:
+        return edges
+    # 기준 산업 = 매출 비중이 가장 큰 산업. 비중이 없으면 첫 항목.
+    with_share = [p for p in products.values() if p["share"] is not None]
+    primary = (max(with_share, key=lambda p: p["share"])["industry"] if with_share
+               else next(iter(products)))
+
+    for key, rel in _RELATION.items():
+        share_key = "cost_share" if key == "upstream" else None
+        for item in _fold(extraction.get(key) or [], vocab, share_key).values():
+            target = item["industry"]
+            if target == primary:
+                continue
+            ev = f"{evidence_prefix}{str(item['quote'])[:150]}"
+            # 산업 간 관계는 양방향 — 소형 소재주에서 전방을 찾을 수 있어야 한다
+            edges.append(G.make_edge(G.industry_node(primary), G.industry_node(target),
+                                     rel, "dart", weight=item["share"],
+                                     confidence=item["confidence"], evidence=ev, asof=asof))
+            edges.append(G.make_edge(G.industry_node(target), G.industry_node(primary),
+                                     G._OPPOSITE[rel], "dart",
+                                     confidence=item["confidence"], evidence=ev, asof=asof))
+    return edges
+
+
+# ---- LLM 호출 ------------------------------------------------------------
+
+def build_prompt(doc: dict, vocab: IndustryVocab) -> str:
+    return (f"## 기존 산업 목록 (해당하면 글자 그대로 재사용)\n"
+            f"{', '.join(vocab.known)}\n\n"
+            f"## 대상 기업\n{doc.get('corp_name') or doc['ticker']} ({doc['ticker']})\n"
+            f"출처: {doc['report_nm']} (접수 {doc['rcept_dt']})"
+            f"{' — 분량 초과로 앞부분만' if doc.get('truncated') else ''}\n\n"
+            f"## 사업의 내용\n{doc['section']}")
+
+
+def _request_params(doc: dict, vocab: IndustryVocab, cfg: dict) -> dict:
+    return {
+        "model": cfg["model"],
+        "max_tokens": cfg.get("max_tokens", 8000),
+        # 시스템 프롬프트는 전 기업 공통이라 캐시하면 그대로 절약된다
+        "system": [{"type": "text", "text": SYSTEM_PROMPT,
+                    "cache_control": {"type": "ephemeral"}}],
+        "output_config": {"format": {"type": "json_schema", "schema": EXTRACT_SCHEMA}},
+        "messages": [{"role": "user", "content": build_prompt(doc, vocab)}],
+    }
+
+
+def _parse(response) -> dict | None:
+    if getattr(response, "stop_reason", None) == "refusal":
+        print("  모델이 응답을 거부했습니다.")
+        return None
+    for block in response.content:
+        if block.type == "text":
+            try:
+                return json.loads(block.text)
+            except json.JSONDecodeError:
+                return None
+    return None
+
+
+def extract_one(client: Anthropic, doc: dict, vocab: IndustryVocab, cfg: dict) -> dict | None:
+    return _parse(client.messages.create(**_request_params(doc, vocab, cfg)))
+
+
+def extract_batch(client: Anthropic, docs: list[dict], vocab: IndustryVocab,
+                  cfg: dict, poll_seconds: int = 30) -> dict[str, dict]:
+    """Batch API로 일괄 추출. 표준 요금의 50%이고 최대 10만 건까지 들어간다.
+
+    결과는 **순서가 보장되지 않으므로** custom_id(티커)로 대조한다.
+    """
+    from anthropic.types.message_create_params import MessageCreateParamsNonStreaming
+    from anthropic.types.messages.batch_create_params import Request
+
+    batch = client.messages.batches.create(requests=[
+        Request(custom_id=d["ticker"],
+                params=MessageCreateParamsNonStreaming(**_request_params(d, vocab, cfg)))
+        for d in docs])
+    print(f"배치 제출: {batch.id} ({len(docs)}건) — 완료까지 최대 24시간")
+
+    while True:
+        batch = client.messages.batches.retrieve(batch.id)
+        if batch.processing_status == "ended":
+            break
+        counts = batch.request_counts
+        print(f"  진행 중: 처리 {counts.processing} / 성공 {counts.succeeded} / 실패 {counts.errored}")
+        time.sleep(poll_seconds)
+
+    out: dict[str, dict] = {}
+    for result in client.messages.batches.results(batch.id):
+        if result.result.type != "succeeded":
+            print(f"  {result.custom_id}: {result.result.type}")
+            continue
+        parsed = _parse(result.result.message)
+        if parsed:
+            out[result.custom_id] = parsed
+    return out
+
+
+# ---- 파이프라인 ----------------------------------------------------------
+
+def collect_documents(tickers: list[str]) -> tuple[list[dict], list[str]]:
+    corp_codes = dart.load_corp_codes()
+    docs, missing = [], []
+    for i, t in enumerate(tickers, 1):
+        try:
+            doc = dart.retry(dart.fetch_business_section, t, corp_codes)
+        except dart.DartError as e:
+            print(f"  {t}: {e}")
+            missing.append(t)
+            continue
+        (docs.append(doc) if doc else missing.append(t))
+        if i % 20 == 0:
+            print(f"  ... 공시 수집 {i}/{len(tickers)} (확보 {len(docs)})")
+        time.sleep(0.15)   # DART 분당 호출 제한 배려
+    return docs, missing
+
+
+def run(tickers: list[str], cfg: dict, asof: str, use_batch: bool = True) -> dict:
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        raise SystemExit("ANTHROPIC_API_KEY가 필요합니다.")
+
+    print(f"== 사업보고서 수집 ({len(tickers)}종목) ==")
+    docs, missing = collect_documents(tickers)
+    print(f"'사업의 내용' 확보 {len(docs)}건 / 미확보 {len(missing)}건")
+    if not docs:
+        return {"edges": 0, "documents": 0}
+
+    existing = G.load()
+    vocab = IndustryVocab(
+        known=sorted({G.split_node(e["dst"])[1] for e in existing
+                      if e["rel"] in (G.REL_MEMBER, G.REL_UPSTREAM, G.REL_DOWNSTREAM)}),
+        aliases=load_aliases())
+    print(f"기존 산업 어휘 {len(vocab.known)}개, 별칭 {len(vocab.aliases)}개")
+
+    client = Anthropic()
+    print(f"== 추출 ({'배치' if use_batch else '순차'}, {cfg['model']}) ==")
+    if use_batch:
+        raw = extract_batch(client, docs, vocab, cfg)
+    else:
+        raw = {}
+        for i, d in enumerate(docs, 1):
+            try:
+                r = extract_one(client, d, vocab, cfg)
+            except Exception as e:
+                print(f"  {d['ticker']} 추출 실패: {e}")
+                continue
+            if r:
+                raw[d["ticker"]] = r
+            print(f"  {i}/{len(docs)} {d['ticker']}")
+
+    by_ticker = {d["ticker"]: d for d in docs}
+    edges: list[dict] = []
+    total = {"kept": 0, "dropped": 0}
+    samples: list[str] = []
+
+    for ticker, extraction in raw.items():
+        doc = by_ticker[ticker]
+        clean, stats = filter_by_quote(extraction, doc["section"])
+        total["kept"] += stats["kept"]
+        total["dropped"] += stats["dropped"]
+        samples.extend(stats["dropped_samples"][:2])
+        edges += to_edges(ticker, clean, vocab, asof,
+                          evidence_prefix=f"{doc['report_nm']}({doc['rcept_dt']}): ")
+
+    checked = total["kept"] + total["dropped"]
+    rate = total["dropped"] / checked if checked else 0.0
+    print(f"\n인용 검증: {total['kept']}/{checked} 통과 (폐기율 {rate:.1%})")
+    if rate > 0.3:
+        print("  ::warning:: 폐기율이 높습니다. 절 추출이 잘못됐거나 프롬프트를 점검하세요.")
+    for s in samples[:5]:
+        print(f"  폐기: {s}")
+
+    suggestions = vocab.alias_suggestions()
+    if vocab.new:
+        top = sorted(vocab.new.items(), key=lambda kv: -kv[1])[:20]
+        print(f"\n신규 산업 {len(vocab.new)}개 (별칭 정리 대상):")
+        print("  " + ", ".join(f"{k}({v})" for k, v in top))
+    if suggestions:
+        print(f"\n별칭 후보 — 같은 산업이면 {ALIAS_FILE.name}에 추가하세요:")
+        for fresh, hits in list(suggestions.items())[:15]:
+            print(f"  {fresh}: {hits[0]}" + (f"   (그 외 {hits[1:]})" if len(hits) > 1 else ""))
+
+    persistent = [e for e in existing if e.get("source") in graph_build.PERSISTENT_SOURCES]
+    merged = G.merge(persistent, edges)
+    G.save(merged)
+    print(f"\nDART 엣지 {len(edges)}개 반영 → 수직축 엣지 총 {len(merged)}개")
+
+    report = {"asof": asof, "documents": len(docs), "missing": missing,
+              "extracted": len(raw), "quote_kept": total["kept"],
+              "quote_dropped": total["dropped"], "drop_rate": round(rate, 3),
+              "new_industries": vocab.new, "alias_suggestions": suggestions,
+              "edges": len(edges), "total_edges": len(merged)}
+    DATA_DIR.mkdir(exist_ok=True)
+    (DATA_DIR / f"dart_extract_{asof}.json").write_text(
+        json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    return report
+
+
+def _default_tickers(top_n: int, base_date: str | None) -> list[str]:
+    """시가총액 상위 종목. 커버리지를 넓히는 가장 단순한 우선순위다."""
+    from . import universe as universe_mod
+    from pykrx import stock
+
+    date = base_date or stock.get_nearest_business_day_in_a_week()
+    uni = universe_mod.build(date)
+    ranked = sorted(uni.entries.items(), key=lambda kv: -(kv[1].get("market_cap") or 0))
+    return [t for t, _ in ranked[:top_n]]
+
+
+def main():
+    p = argparse.ArgumentParser(description="DART 사업보고서에서 수직축 엣지를 추출한다.")
+    p.add_argument("--tickers", help="쉼표로 구분한 종목코드. 없으면 시총 상위 --top-n")
+    p.add_argument("--top-n", type=int, default=100, help="대상 종목 수 (기본 100)")
+    p.add_argument("--date", help="종목 마스터 기준일 YYYYMMDD")
+    p.add_argument("--model", help="config.yaml의 dart.model 덮어쓰기")
+    p.add_argument("--no-batch", action="store_true",
+                   help="Batch API 대신 순차 호출 (소량·즉시 확인용, 비용 2배)")
+    args = p.parse_args()
+
+    cfg_all = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
+    cfg = dict(cfg_all.get("dart") or {})
+    cfg.setdefault("model", "claude-opus-5")
+    cfg.setdefault("max_tokens", 8000)
+    if args.model:
+        cfg["model"] = args.model
+
+    tickers = ([t.strip() for t in args.tickers.split(",") if t.strip()]
+               if args.tickers else _default_tickers(args.top_n, args.date))
+    asof = args.date or __import__("datetime").datetime.now().strftime("%Y%m%d")
+
+    report = run(tickers, cfg, asof, use_batch=not args.no_batch)
+    print(json.dumps(report, ensure_ascii=False, indent=2)[:1500])
+
+
+if __name__ == "__main__":
+    main()

@@ -13,6 +13,10 @@ on:
         description: "LLM 원인 분석까지 실행 (ANTHROPIC_API_KEY 필요, 비용 발생)"
         type: boolean
         default: false
+      check_dart:
+        description: "DART 문서 API 계약 검증 (DART_API_KEY 필요, LLM 비용 없음)"
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -93,6 +97,49 @@ jobs:
           if fail:
               raise SystemExit("외부 API 계약 위반:\n  - " + "\n  - ".join(fail))
           print("외부 API 계약 전부 만족")
+          PY
+
+      # DART 문서 API는 확장자가 .xml이지만 실제로는 ZIP을 준다. 인코딩도 EUC-KR과
+      # UTF-8이 섞인다. 단위 테스트는 우리가 만든 합성 ZIP만 보므로 이 가정들이
+      # 실제로 맞는지 확인하지 못한다 — 여기서 진짜 공시 한 건으로 검증한다.
+      - name: Verify DART contract
+        if: ${{ inputs.check_dart }}
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+        run: |
+          python - <<'PY'
+          import os, sys
+          if not os.getenv("DART_API_KEY"):
+              print("::warning::DART_API_KEY 미설정 — DART 계약 검증을 건너뜁니다")
+              sys.exit(0)
+          from src import dart
+
+          codes = dart.load_corp_codes()
+          print(f"corp_code 매핑 {len(codes)}건")
+          assert len(codes) > 2000, "상장사 매핑이 비정상적으로 적습니다"
+
+          ticker = "000720"        # 현대건설 — 사업의 내용이 충실한 대형 건설사
+          corp = codes.get(ticker)
+          assert corp, f"{ticker}의 corp_code가 없습니다"
+
+          report = dart.find_business_report(corp)
+          assert report, "최근 2년 정기보고서를 찾지 못했습니다"
+          print(f"보고서: {report['report_nm']} ({report['rcept_dt']})")
+
+          text = dart.fetch_document(report["rcept_no"])
+          assert len(text) > 20000, f"문서가 너무 짧습니다({len(text)}자) — ZIP/인코딩 처리 확인"
+          assert "&#" not in text, "수치 문자 참조가 디코딩되지 않았습니다"
+          assert "" not in text, "인코딩 오류(치환 문자)가 섞여 있습니다"
+
+          section = dart.extract_business_section(text)
+          assert section, "'사업의 내용' 절 경계를 찾지 못했습니다 — 제목 정규식 확인"
+          ratio = len(section) / len(text)
+          print(f"전체 {len(text):,}자 → 사업의 내용 {len(section):,}자 ({ratio:.0%})")
+          assert 0.02 < ratio < 0.9, f"절 비중이 비정상입니다({ratio:.0%}) — 목차나 통짜 문서를 잡았을 수 있습니다"
+          assert "재무제표" not in section[-2000:], "재무 파트까지 넘어갔습니다"
+          for kw in ("원재료", "매출"):
+              assert kw in section, f"'{kw}'가 절에 없습니다 — 잘못된 구간입니다"
+          print("DART 계약 전부 만족")
           PY
 
       - name: Run pipeline (smoke)
