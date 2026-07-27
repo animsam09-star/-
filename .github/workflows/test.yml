@@ -26,28 +26,9 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
 
+      # 설정·밸류체인 맵·별칭 검증은 tests/test_config.py에 있다.
+      # 예전에는 이 워크플로우에 인라인 스크립트로 있었는데, 그러면 로컬에서
+      # 돌려볼 방법이 없어 같은 규칙이 코드와 갈라져도 푸시 후에야 깨진다.
+      # 실제로 그렇게 깨졌다 — 규칙은 한 곳에만 둔다.
       - name: Run tests
         run: python -m pytest tests/ -v
-
-      - name: Validate config and value chain maps
-        run: |
-          python - <<'PY'
-          import pathlib, yaml
-
-          cfg = yaml.safe_load(open("config.yaml", encoding="utf-8"))
-          required = {"screener", "horizontal", "collect", "analyze", "report"}
-          missing = required - cfg.keys()
-          assert not missing, f"config.yaml에 누락된 섹션: {missing}"
-
-          for spec in cfg["horizontal"]["factors"]:
-              assert spec.get("name") and spec.get("keywords"), f"팩터 정의 오류: {spec}"
-
-          for f in pathlib.Path("valuechain").glob("*.yaml"):
-              data = yaml.safe_load(f.read_text(encoding="utf-8"))
-              assert data.get("industry"), f"{f}: industry 누락"
-
-          for f in pathlib.Path(".github/workflows").glob("*.yml"):
-              yaml.safe_load(f.read_text(encoding="utf-8"))
-
-          print("설정·밸류체인 맵·워크플로우 검증 통과")
-          PY
