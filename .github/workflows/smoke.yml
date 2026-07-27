@@ -95,8 +95,9 @@ jobs:
           dates = stock.get_previous_business_days(
               fromdate=begin, todate=today.strftime("%Y%m%d"))
           if not dates:
-              sys.exit(f"거래일 조회 결과가 비었습니다({begin}~). "
-                       "KRX 응답이나 자격 증명을 확인하세요.")
+              # 여기 도달했다는 건 자격 증명이 '있는데' 통하지 않았다는 뜻이다.
+              from src.screener import KRX_REJECTED_HINT
+              sys.exit(f"거래일 조회 결과가 비었습니다({begin}~).\n{KRX_REJECTED_HINT}")
           day = dates[-1].strftime("%Y%m%d")
           print(f"기준일 {day} (최근 {len(dates)}거래일)")
           fail = []
@@ -179,7 +180,11 @@ jobs:
           text = dart.fetch_document(report["rcept_no"])
           assert len(text) > 20000, f"문서가 너무 짧습니다({len(text)}자) — ZIP/인코딩 처리 확인"
           assert "&#" not in text, "수치 문자 참조가 디코딩되지 않았습니다"
-          assert "" not in text, "인코딩 오류(치환 문자)가 섞여 있습니다"
+          # 치환 문자는 코드 포인트로 쓴다. 리터럴로 적으면 편집·전송 과정에서
+          # 사라져 `"" not in text`가 되는데, 빈 문자열은 모든 문자열에 포함되므로
+          # 그 assertion은 문서와 무관하게 언제나 실패한다(실제로 그렇게 거짓 경보가 났다).
+          bad = text.count(chr(0xFFFD))
+          assert bad == 0, f"인코딩 오류(치환 문자) {bad}개 — 디코딩 후보 순서를 확인하세요"
 
           section = dart.extract_business_section(text)
           assert section, "'사업의 내용' 절 경계를 찾지 못했습니다 — 제목 정규식 확인"

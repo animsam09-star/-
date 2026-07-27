@@ -27,28 +27,38 @@ def _retry(fn, *args, retries=3, delay=2, **kwargs):
             time.sleep(delay * (attempt + 1))
 
 
-KRX_CREDENTIAL_HINT = (
+KRX_MISSING_HINT = (
     "KRX_ID / KRX_PW 환경 변수가 설정되지 않았습니다.\n"
     "  KRX가 대량 조회에 로그인을 요구하므로 이 자격 증명 없이는 가격 수집이 되지 않습니다.\n"
     "  로컬: .env 또는 셸 환경변수로 설정\n"
     "  GitHub Actions: Settings → Secrets and variables → Actions → New repository secret\n"
     "  계정 발급: https://data.krx.co.kr")
 
+KRX_REJECTED_HINT = (
+    "KRX_ID / KRX_PW는 설정돼 있으나 KRX가 로그인을 거부했습니다.\n"
+    "  (로그 위쪽의 'KRX 로그인 실패' 메시지가 pykrx가 받은 응답입니다.)\n"
+    "  가장 흔한 원인: KRX_ID에 **이메일이 아니라 가입 시 만든 아이디**를 넣어야 합니다.\n"
+    "    data.krx.co.kr 로그인 화면에서 실제로 입력하는 값과 같아야 합니다.\n"
+    "  그 외: 비밀번호 변경 후 Secret 미갱신, 휴면 계정, 약관 재동의 필요.\n"
+    "  확인: https://data.krx.co.kr 에서 그 ID/PW로 직접 로그인이 되는지 먼저 보세요.")
+
 
 def get_trading_dates(end_date: str, n_days: int) -> list[str]:
     """end_date(YYYYMMDD) 기준 최근 n_days 거래일 목록(오름차순).
 
     pykrx는 로그인에 실패해도 예외를 올리지 않고 **빈 목록을 돌려준다.** 그대로
-    두면 호출부에서 `dates[-1]`이 IndexError로 죽어, 진짜 원인(자격 증명 누락)이
-    스택트레이스 어디에도 나오지 않는다. 여기서 원인을 지목한다.
+    두면 호출부에서 `dates[-1]`이 IndexError로 죽어, 진짜 원인이 스택트레이스
+    어디에도 나오지 않는다. 여기서 원인을 지목한다.
+
+    '설정 안 됨'과 '설정됐는데 거부됨'은 조치가 전혀 다르므로 구분해서 안내한다.
     """
     start = (pd.Timestamp(end_date) - pd.Timedelta(days=int(n_days * 1.8) + 30)).strftime("%Y%m%d")
     dates = _retry(stock.get_previous_business_days, fromdate=start, todate=end_date)
     dates = [d.strftime("%Y%m%d") for d in (dates or [])]
     if not dates:
-        detail = (KRX_CREDENTIAL_HINT
-                  if not (os.getenv("KRX_ID") and os.getenv("KRX_PW"))
-                  else "KRX 응답이 비어 있습니다. 조회 구간과 서비스 상태를 확인하세요.")
+        detail = (KRX_REJECTED_HINT
+                  if (os.getenv("KRX_ID") and os.getenv("KRX_PW"))
+                  else KRX_MISSING_HINT)
         raise RuntimeError(f"거래일을 하나도 조회하지 못했습니다({start}~{end_date}).\n{detail}")
     return dates[-n_days:]
 

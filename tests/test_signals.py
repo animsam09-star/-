@@ -22,13 +22,20 @@ class TestCredentialDiagnostics:
         with pytest.raises(RuntimeError, match="KRX_ID"):
             screener.get_trading_dates("20260724", 130)
 
-    def test_empty_dates_with_credentials_blames_the_response(self, monkeypatch):
+    def test_credentials_present_but_rejected_gets_different_guidance(self, monkeypatch):
+        """'설정 안 됨'과 '설정됐는데 거부됨'은 조치가 전혀 다르다.
+
+        전자는 등록하라는 안내, 후자는 ID 형식(이메일이 아니라 가입 아이디)을
+        의심하라는 안내여야 한다. 하나로 뭉뚱그리면 사용자가 헛수고한다.
+        """
         monkeypatch.setenv("KRX_ID", "x")
         monkeypatch.setenv("KRX_PW", "y")
         monkeypatch.setattr(screener.stock, "get_previous_business_days",
                             lambda **kw: [])
-        with pytest.raises(RuntimeError, match="KRX 응답이 비어"):
+        with pytest.raises(RuntimeError, match="로그인을 거부") as exc:
             screener.get_trading_dates("20260724", 130)
+        assert "아이디" in str(exc.value), "ID 형식 힌트가 빠졌다"
+        assert "설정되지 않았습니다" not in str(exc.value), "미설정 안내가 섞였다"
 
     def test_empty_panel_is_not_reported_as_short_lookback(self, monkeypatch):
         """가격이 하나도 안 오는 것과 조회 기간이 짧은 것은 다른 문제다."""
