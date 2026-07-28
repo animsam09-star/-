@@ -19,10 +19,12 @@ import yaml
 
 from . import analyze as analyze_mod
 from . import collect as collect_mod
+from . import corr
 from . import factors as factors_mod
 from . import graph_build
 from . import groups as groups_mod
 from . import notify as notify_mod
+from . import prices
 from . import report as report_mod
 from . import screener
 from . import universe as universe_mod
@@ -67,6 +69,35 @@ def main():
     print("== 3/8 수직 그래프 ==")
     persistent, vc_report = graph_build.build_persistent(uni, base_date)
 
+    # 시가총액은 여기서 한 번만 만든다. 시장 요인·산업 수익률·팩터가 모두 쓴다.
+    caps = pd.Series({t: e["market_cap"] for t, e in uni.entries.items()
+                      if e.get("market_cap")}, dtype="float64")
+
+    # 3b. 가격이 그 관계를 뒷받침하는가 — **채점만 한다. 엣지를 만들지 않는다.**
+    #     상관으로 엣지를 만들면 같이 움직인 종목만 연결되고, 안 움직인 종목은
+    #     그룹에서 빠진다. 미반영 갭이 찾으려던 바로 그 종목이 사라진다.
+    #     점수는 저장하지 않는다(build_persistent가 이미 저장을 끝냈다) — 매일
+    #     다시 계산되는 값이라 영속 파일을 불릴 이유가 없다.
+    price_review: dict = {}
+    if not close.empty:
+        try:
+            members = {name[len("산업:"):]: tickers
+                       for name, tickers in groups_mod.fetch_industry_groups(
+                           min_members=corr.MIN_MEMBERS, edges=persistent).items()}
+            ind_ret = corr.residualize(
+                corr.industry_returns(close, caps, members),
+                prices.market_series(close, caps))
+            persistent = corr.score_edges(persistent, ind_ret)
+            price_review = {
+                "weak": corr.review_queue(persistent),
+                "candidates": corr.candidates(ind_ret, persistent),
+            }
+            scored = sum(1 for e in persistent if "price_corr" in e)
+            print(f"  가격 채점 {scored}개 / 근거 약한 엣지 {len(price_review['weak'])}개"
+                  f" / 발굴 후보 {len(price_review['candidates'])}개(공시 확인 필요)")
+        except Exception as e:
+            print(f"  가격 채점 건너뜀: {e}")
+
     # 4. 수평 그래프 (섹터 초월 그룹 + 매크로 팩터 노출 + 미반영 갭)
     print("== 4/8 수평 그래프 ==")
     hcfg = cfg["horizontal"]
@@ -76,10 +107,6 @@ def main():
             grp = groups_mod.build_groups(base_date, universe=set(close.columns),
                                           edges=persistent)
             group_ret = groups_mod.group_returns(close, grp["groups"])
-            # 시장 요인을 시총가중으로 만들려면 가중치가 필요하다. 종목 마스터에
-            # 이미 있으므로 추가 조회는 없다.
-            caps = pd.Series({t: e["market_cap"] for t, e in uni.entries.items()
-                              if e.get("market_cap")}, dtype="float64")
             fac = factors_mod.build(close, group_ret, grp["groups"], base_date, hcfg,
                                     market_caps=caps)
             horizontal = {**fac, "membership": grp["membership"], "groups": grp["groups"]}
@@ -112,6 +139,7 @@ def main():
         analysis = analyze_mod.analyze(candidates, evidence, base_date, acfg,
                                        horizontal, uni, relation_graph)
     analysis["valuechain_coverage"] = vc_report
+    analysis["price_review"] = price_review
 
     # 8. 리포트 생성 + 케이스 축적
     print("== 8/8 리포트 생성 ==")
