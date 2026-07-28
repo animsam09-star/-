@@ -251,3 +251,69 @@ class TestCycleLagCoversValueChainHorizons:
                              G.REL_UPSTREAM, "dart", origin="011200", asof="20260728")]
         out = corr.attach_cycle_lags(edges, {"조선→조선 기자재": {"lag_months": 6, "corr": 0.4}})
         assert "cycle_lag_months" not in out[0]
+
+
+class TestOverlappingMembershipIsNotAFinding:
+    """소속이 겹치는 산업 쌍의 상관은 시장 사실이 아니라 데이터 입력의 그림자다.
+
+    첫 라이브 실행에서 `철강 → 후판·강재`가 상관 +1.00으로 나왔다. 두 노드에
+    같은 회사 목록(POSCO홀딩스·현대제철·동국제강)이 들어 있어 산업 수익률이 문자
+    그대로 같은 시계열이었다. 더 나쁜 건 그 가짜 1.00이 상관 순 정렬 맨 위에
+    올라와 진짜 관계를 가린다는 점이다.
+    """
+
+    MEMBERS = {"철강": ["005490", "004020", "460860"],
+               "후판·강재": ["005490", "004020", "460860"],   # 완전 동일
+               "조선": ["009540", "010140", "042660"],
+               "조선 기자재": ["082740", "017960", "075580"]}
+
+    def _edges(self):
+        return [
+            G.make_edge(G.industry_node("철강"), G.industry_node("후판·강재"),
+                        G.REL_DOWNSTREAM, "valuechain", asof="20260728"),
+            G.make_edge(G.industry_node("조선"), G.industry_node("조선 기자재"),
+                        G.REL_UPSTREAM, "dart", origin="009540", asof="20260728"),
+        ]
+
+    def _ind(self, cycle_world):
+        ind = cycle_world.copy()
+        ind["철강"] = ind["조선"] * 0.9
+        ind["후판·강재"] = ind["철강"]          # 같은 시계열
+        ind = ind.rename(columns={"조선 기자재": "조선 기자재"})
+        return ind
+
+    def test_overlap_is_measured(self):
+        assert corr.member_overlap(["a", "b"], ["a", "b"]) == 1.0
+        assert corr.member_overlap(["a", "b"], ["c", "d"]) == 0.0
+        assert corr.member_overlap(["a", "b"], ["b", "c"]) == pytest.approx(1 / 3)
+        assert corr.member_overlap([], ["a"]) == 0.0
+
+    def test_identical_membership_pair_is_skipped(self, cycle_world):
+        out = corr.estimate_cycle_lags(self._ind(cycle_world), self._edges(),
+                                       members=self.MEMBERS)
+        hit = out["철강→후판·강재"]
+        assert "lag_months" not in hit, "구성이 같은 쌍에 시차가 붙었다"
+        assert hit["skipped"] == "구성 중복"
+        assert hit["overlap"] == 1.0
+
+    def test_distinct_membership_pair_is_still_measured(self, cycle_world):
+        out = corr.estimate_cycle_lags(self._ind(cycle_world), self._edges(),
+                                       members=self.MEMBERS)
+        hit = out["조선→조선 기자재"]
+        assert hit["lag_months"] == 6
+        assert hit["overlap"] == 0.0
+
+    def test_skipped_pairs_are_not_attached_to_edges(self, cycle_world):
+        table = corr.estimate_cycle_lags(self._ind(cycle_world), self._edges(),
+                                         members=self.MEMBERS)
+        out = corr.attach_cycle_lags(self._edges(), table)
+        steel = next(e for e in out if "후판" in e["dst"])
+        assert "cycle_lag_months" not in steel, "재지 못한 값이 엣지에 붙었다"
+
+    def test_markdown_explains_the_exclusion(self, cycle_world):
+        table = corr.estimate_cycle_lags(self._ind(cycle_world), self._edges(),
+                                         members=self.MEMBERS)
+        md = corr.render_markdown(table, "20260727", 924)
+        assert "가격으로 분리할 수 없는 쌍" in md
+        assert "철강 → 후판·강재" in md
+        assert "소속 겹침" in md

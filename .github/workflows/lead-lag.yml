@@ -17,6 +17,9 @@ on:
   schedule:
     - cron: "0 20 1 * *"   # 매월 1일 05:00 KST
 
+permissions:
+  contents: write        # 이게 없어 github-actions[bot]이 403을 받았다
+
 jobs:
   measure:
     runs-on: ubuntu-latest
@@ -45,9 +48,17 @@ jobs:
           git commit -m "chore: 밸류체인 사이클 시차 실측 $(date +%Y-%m)"
           # 수집이 오래 걸리는 사이 브랜치가 앞서 나갈 수 있다. 리베이스로 얹어 다시 민다.
           for i in 1 2 3 4 5; do
-            git push origin HEAD:${{ github.ref_name }} && exit 0
+            if git push origin HEAD:${{ github.ref_name }} 2>push.log; then exit 0; fi
+            cat push.log
+            # 403은 경쟁 상태가 아니라 권한 문제다. 리베이스를 반복해도 절대 안 풀린다.
+            if grep -qE '403|denied|Permission' push.log; then
+              echo "::error::쓰기 권한이 없습니다 — 워크플로의 permissions.contents 확인"
+              exit 1
+            fi
             echo "푸시 거부 — 리베이스 후 재시도 ($i/5)"
-            git pull --rebase origin ${{ github.ref_name }} || exit 1
+            # 파이프라인이 universe·edges 파일을 건드려 워킹트리가 더럽다.
+            # autostash 없이는 rebase가 'unstaged changes'로 죽는다.
+            git -c rebase.autoStash=true pull --rebase origin ${{ github.ref_name }} || exit 1
             sleep $((i * 3))
           done
           echo "::error::5회 재시도 후에도 푸시하지 못했습니다"; exit 1

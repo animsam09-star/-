@@ -7,5 +7,5 @@ upstream:
     companies: [아이쓰리시스템, 퍼스텍, 한화시스템]
 downstream:
   - segment: 방위산업
-    companies: [한화에어로스페이스, 한국항공우주, LIG넥스원]
+    companies: [한화에어로스페이스, 한국항공우주, LIG디펜스앤에어로스페이스]
 notes: 우주 예산은 방산 예산과 함께 움직이는 경우가 많아 두 축이 겹친다. 매출 인식이 사업 단위라 분기 변동이 크다

@@ -196,14 +196,43 @@ def cycle_lead_lag(a: pd.Series, b: pd.Series,
                     max_lag=max_lag_months, min_obs=min_obs_months)
 
 
+# 두 산업의 소속 종목이 이만큼 겹치면 시차를 재지 않는다. 재 봐야 자기 자신과의
+# 상관이라 언제나 lag 0, corr 1에 가깝게 나온다.
+MAX_MEMBER_OVERLAP = 0.5
+
+
+def member_overlap(a: list[str], b: list[str]) -> float:
+    """두 산업 소속의 자카드 겹침(0~1)."""
+    sa, sb = set(a or ()), set(b or ())
+    if not sa or not sb:
+        return 0.0
+    return len(sa & sb) / len(sa | sb)
+
+
 def estimate_cycle_lags(ind_ret_daily: pd.DataFrame, edges: list[dict], *,
+                        members: dict[str, list[str]] | None = None,
                         max_lag_months: int = MAX_LAG_MONTHS,
-                        min_obs_months: int = MIN_OBS_MONTHS) -> dict:
+                        min_obs_months: int = MIN_OBS_MONTHS,
+                        max_overlap: float = MAX_MEMBER_OVERLAP) -> dict:
     """산업 간 엣지별 사이클 시차 표. 별도 워크플로가 긴 패널로 돌려 저장한다.
 
     **엣지를 만들지 않는다.** 이미 있는 엣지에 대해서만 시차를 잰다.
+
+    ## 소속이 겹치는 쌍은 재지 않는다
+
+    첫 라이브 실행에서 `철강 → 후판·강재`가 상관 **+1.00**으로 나왔다. 발견이
+    아니라 두 노드에 같은 회사 목록(POSCO홀딩스·현대제철·동국제강)이 들어 있어서다.
+    산업 수익률이 문자 그대로 같은 시계열이니 상관이 1일 수밖에 없다.
+
+    이건 데이터 입력의 그림자이지 시장 사실이 아니다. 더 나쁜 건, 그 가짜 1.00이
+    상관 순 정렬에서 맨 위에 올라와 진짜 관계를 가린다는 점이다.
+
+    구조적으로 피할 수 없는 경우도 있다 — '후판·강재'는 '철강' 회사들의 제품
+    라인이라 소속이 겹치는 게 정상이다. 그런 쌍은 **가격으로 분리할 수 없다**는
+    사실을 기록으로 남기고(reason) 시차 추정에서 뺀다.
     """
     monthly = to_monthly(ind_ret_daily)
+    members = members or {}
     out: dict[str, dict] = {}
     seen = set()
     for e in edges:
@@ -214,11 +243,18 @@ def estimate_cycle_lags(ind_ret_daily: pd.DataFrame, edges: list[dict], *,
         if (sn, dn) in seen or sn not in monthly.columns or dn not in monthly.columns:
             continue
         seen.add((sn, dn))
+
+        ov = member_overlap(members.get(sn, []), members.get(dn, []))
+        if ov >= max_overlap:
+            out[f"{sn}→{dn}"] = {"skipped": "구성 중복", "overlap": round(ov, 2)}
+            continue
+
         lag, c, n = cycle_lead_lag(monthly[sn], monthly[dn],
                                    max_lag_months=max_lag_months,
                                    min_obs_months=min_obs_months)
         if n:
-            out[f"{sn}→{dn}"] = {"lag_months": lag, "corr": round(c, 3), "obs": n}
+            out[f"{sn}→{dn}"] = {"lag_months": lag, "corr": round(c, 3), "obs": n,
+                                 "overlap": round(ov, 2)}
     return out
 
 
@@ -230,7 +266,7 @@ def attach_cycle_lags(edges: list[dict], table: dict) -> list[dict]:
         sk, sn = G.split_node(e["src"])
         dk, dn = G.split_node(e["dst"])
         hit = table.get(f"{sn}→{dn}") if (sk == "I" and dk == "I") else None
-        if hit:
+        if hit and "lag_months" in hit:
             new["cycle_lag_months"] = hit["lag_months"]
             new["cycle_corr"] = hit["corr"]
         out.append(new)
@@ -379,15 +415,29 @@ def render_markdown(table: dict, asof: str, panel_days: int) -> str:
         head += ["측정된 시차가 없습니다. 패널이 짧거나 산업별 소속 종목이 부족합니다.", ""]
         return "\n".join(head)
 
-    head += ["| 선행 산업 | 후행 산업 | 시차 | 상관 | 관측(개월) |",
-             "|---|---|---:|---:|---:|"]
-    rows = sorted(table.items(), key=lambda kv: -abs(kv[1]["corr"]))
-    for key, v in rows:
+    measured = {k: v for k, v in table.items() if "lag_months" in v}
+    skipped = {k: v for k, v in table.items() if "lag_months" not in v}
+
+    head += ["| 선행 산업 | 후행 산업 | 시차 | 상관 | 소속 겹침 | 관측(개월) |",
+             "|---|---|---:|---:|---:|---:|"]
+    for key, v in sorted(measured.items(), key=lambda kv: -abs(kv[1]["corr"])):
         a, _, b = key.partition("→")
         lag = v["lag_months"]
         label = f"{lag:+d}개월" if lag else "동행"
-        head.append(f"| {a} | {b} | {label} | {v['corr']:+.2f} | {v['obs']} |")
-    head += ["", f"총 {len(table)}건. 상관 절대값이 큰 순.", ""]
+        head.append(f"| {a} | {b} | {label} | {v['corr']:+.2f} | "
+                    f"{v.get('overlap', 0):.0%} | {v['obs']} |")
+    head += ["", f"총 {len(measured)}건. 상관 절대값이 큰 순.", ""]
+
+    if skipped:
+        head += ["## 가격으로 분리할 수 없는 쌍", "",
+                 "두 산업의 소속 종목이 절반 넘게 겹치면 산업 수익률이 사실상 같은",
+                 "시계열이라 상관이 언제나 1에 가깝게 나온다. 그건 시장 사실이 아니라",
+                 "구성의 그림자다. 관계 자체는 유효하되(예: '후판·강재'는 '철강' 회사들의",
+                 "제품 라인이다) 시차를 가격으로 재는 것이 불가능하므로 제외했다.", "",
+                 "| 관계 | 소속 겹침 |", "|---|---:|"]
+        for key, v in sorted(skipped.items(), key=lambda kv: -kv[1]["overlap"]):
+            head.append(f"| {key.replace('→', ' → ')} | {v['overlap']:.0%} |")
+        head.append("")
     return "\n".join(head)
 
 
@@ -426,15 +476,21 @@ def main() -> None:
 
     ind = residualize(industry_returns(close, caps, members),
                       prices.market_series(close, caps))
-    table = estimate_cycle_lags(ind, edges)
+    table = estimate_cycle_lags(ind, edges, members=members)
     out = save_cycle_lags(table, base, len(dates))
     MD_FILE.write_text(render_markdown(table, base, len(dates)), encoding="utf-8")
 
     print(f"\n사이클 시차 {len(table)}건 → {out}, {MD_FILE}")
-    for k, v in sorted(table.items(), key=lambda kv: -abs(kv[1]["corr"]))[:25]:
+    measured = {k: v for k, v in table.items() if "lag_months" in v}
+    skipped = {k: v for k, v in table.items() if "lag_months" not in v}
+    for k, v in sorted(measured.items(), key=lambda kv: -abs(kv[1]["corr"]))[:25]:
         arrow = "선행" if v["lag_months"] > 0 else ("후행" if v["lag_months"] < 0 else "동행")
         print(f"  {k:44} {v['lag_months']:+3d}개월({arrow})  "
-              f"corr {v['corr']:+.2f}  n={v['obs']}")
+              f"corr {v['corr']:+.2f}  n={v['obs']}  겹침 {v.get('overlap', 0):.0%}")
+    if skipped:
+        print(f"\n  소속 중복으로 제외 {len(skipped)}쌍 (가격으로 분리 불가):")
+        for k, v in list(skipped.items())[:12]:
+            print(f"    {k}  겹침 {v['overlap']:.0%}")
     if not table:
         print("  ::warning:: 시차를 하나도 재지 못했습니다 — 패널이 짧거나 "
               "산업별 소속 종목이 부족합니다.")

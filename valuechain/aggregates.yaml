@@ -7,7 +7,7 @@ drivers: [건설 착공 물량, 바다모래·산림골재 채취 허가, 운반
 peers: []
 downstream:
   - segment: 시멘트·레미콘
-    companies: [쌍용C&E, 한일시멘트, 아세아시멘트, 유진기업]
+    companies: [한일시멘트, 아세아시멘트, 유진기업]
   - segment: 건설·EPC
     companies: [현대건설, 대우건설, GS건설, DL이앤씨]
 notes: 채취 허가 축소는 골재 단가 상승 → 레미콘 원가 상승(피해) → 건설 원가 상승(피해)으로 같은 부호가 두 단계 전파된다

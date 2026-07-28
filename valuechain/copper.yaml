@@ -12,7 +12,7 @@ downstream:
   - segment: 전력기기·전선
     companies: [HD현대일렉트릭, 효성중공업, LS ELECTRIC]
   - segment: 음극재·동박
-    companies: [SK넥실리스, 솔루스첨단소재]
+    companies: [솔루스첨단소재]
 notes: |
   구리 가격 상승의 부호가 노드마다 다르다 — 제련은 보유 재고 평가익으로 수혜,
   전선·가공은 원가 상승으로 피해다. 한 방향으로 퍼뜨리면 안 된다.

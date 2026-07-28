@@ -4,7 +4,7 @@ drivers: [메모리 가격(DRAM·NAND), HBM·AI 서버 수요, 팹 증설 CAPEX,
 peers: [삼성전자, SK하이닉스]
 upstream:
   - segment: 전공정 장비
-    companies: [세메스, 주성엔지니어링, 원익IPS, 유진테크, 피에스케이]
+    companies: [주성엔지니어링, 원익IPS, 유진테크, 피에스케이]
   - segment: 후공정·HBM 장비
     companies: [한미반도체, 이오테크닉스, 테크윙, 제우스]
   - segment: 소재(전구체·특수가스·CMP)
