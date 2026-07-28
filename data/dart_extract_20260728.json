@@ -1,0 +1,15 @@
+{
+  "asof": "20260728",
+  "documents": 7,
+  "missing": [
+    "004020"
+  ],
+  "extracted": 0,
+  "quote_kept": 0,
+  "quote_dropped": 0,
+  "drop_rate": 0.0,
+  "new_industries": {},
+  "alias_suggestions": {},
+  "edges": 0,
+  "total_edges": 0
+}
