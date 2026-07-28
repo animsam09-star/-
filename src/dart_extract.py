@@ -517,18 +517,32 @@ def collect_documents(tickers: list[str], cfg: dict | None = None
     slim = cfg.get("slim_sections", True)
     corp_codes = dart.load_corp_codes()
     docs, missing = [], []
+    started = time.monotonic()
     for i, t in enumerate(tickers, 1):
+        # 종목마다 한 줄씩 찍는다. 20건마다 찍던 때는 25종목 수집이 70분을 넘겨도
+        # 로그가 비어 있어서 '멈춤'과 '느림'을 구분할 수 없었다. 한 건이 최악
+        # 3분(타임아웃 60초 × 재시도 3회)까지 걸릴 수 있으니, 어디서 걸리는지가
+        # 보여야 한다.
+        t0 = time.monotonic()
         try:
             doc = dart.retry(dart.fetch_business_section, t, corp_codes,
                              max_chars=max_chars, slim=slim)
         except dart.DartError as e:
-            print(f"  {t}: {e}")
+            print(f"  [{i}/{len(tickers)}] {t} 실패 ({time.monotonic() - t0:.0f}s): {e}",
+                  flush=True)
             missing.append(t)
             continue
-        (docs.append(doc) if doc else missing.append(t))
-        if i % 20 == 0:
-            print(f"  ... 공시 수집 {i}/{len(tickers)} (확보 {len(docs)})")
+        if doc:
+            docs.append(doc)
+            print(f"  [{i}/{len(tickers)}] {t} {doc.get('corp_name') or '':12}"
+                  f" {len(doc['section']):>7,}자 ({time.monotonic() - t0:.0f}s)", flush=True)
+        else:
+            missing.append(t)
+            print(f"  [{i}/{len(tickers)}] {t} '사업의 내용' 없음"
+                  f" ({time.monotonic() - t0:.0f}s)", flush=True)
         time.sleep(0.15)   # DART 분당 호출 제한 배려
+    print(f"  수집 {len(docs)}건 / 미확보 {len(missing)}건, "
+          f"총 {time.monotonic() - started:.0f}초", flush=True)
     return docs, missing
 
 
