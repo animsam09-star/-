@@ -293,3 +293,64 @@ class TestBuildGoesThroughTheSwitchboard:
         exp = F.compute_exposures(close, factor_panel[["구리"]],
                                   window=120, min_abs_corr=0.15, market_ret=mkt)
         assert exp.get("exposures"), "시장 요인이 붙지 않아 노출이 비었다"
+
+
+class TestIndustryGroupsReplaceEtfConstituents:
+    """인증키만 있는 구성에서 그룹의 유일한 원천은 산업 노드다.
+
+    ETF PDF·테마지수 구성종목은 KRX OpenAPI에 없다. 그 경로가 조용히 비면
+    수평축이 통째로 죽는데, 리포트는 '수평 파급 없음'으로 멀쩡히 나온다.
+    """
+
+    def _edges(self):
+        from src import graph as G
+        return [
+            G.make_edge(G.ticker_node("005490"), G.industry_node("철강"),
+                        G.REL_MEMBER, "valuechain", asof="20260728"),
+            G.make_edge(G.ticker_node("004020"), G.industry_node("철강"),
+                        G.REL_MEMBER, "valuechain", asof="20260728"),
+            G.make_edge(G.ticker_node("001230"), G.industry_node("철강"),
+                        G.REL_MEMBER, "dart", origin="001230", asof="20260728"),
+            # 같은 소속을 두 원천이 각각 주장 — 한 종목으로 세어야 한다
+            G.make_edge(G.ticker_node("005490"), G.industry_node("철강"),
+                        G.REL_MEMBER, "dart", origin="005490", asof="20260728"),
+            G.make_edge(G.ticker_node("300720"), G.industry_node("시멘트·레미콘"),
+                        G.REL_MEMBER, "dart", origin="300720", asof="20260728"),
+            # 산업 간 관계는 그룹이 아니다
+            G.make_edge(G.industry_node("철강"), G.industry_node("건설·EPC"),
+                        G.REL_DOWNSTREAM, "valuechain", asof="20260728"),
+        ]
+
+    def test_members_are_deduped_across_sources(self):
+        from src import groups as gm
+        out = gm.fetch_industry_groups(min_members=3, edges=self._edges())
+        assert out["산업:철강"].count("005490") == 1, out["산업:철강"]
+        assert sorted(out["산업:철강"]) == ["001230", "004020", "005490"]
+
+    def test_thin_industries_are_dropped(self):
+        """소속이 1~2개면 동일가중 수익률이 그 종목 자체가 된다."""
+        from src import groups as gm
+        out = gm.fetch_industry_groups(min_members=3, edges=self._edges())
+        assert "산업:시멘트·레미콘" not in out
+
+    def test_industry_to_industry_edges_are_not_groups(self):
+        from src import groups as gm
+        out = gm.fetch_industry_groups(min_members=1, edges=self._edges())
+        assert "산업:건설·EPC" not in out
+
+    def test_openapi_source_skips_the_pykrx_only_paths(self, monkeypatch, tmp_path):
+        from src import groups as gm
+        from src import prices
+        monkeypatch.setattr(prices, "source", lambda: "openapi")
+        monkeypatch.setattr(gm, "DATA_DIR", tmp_path)
+        monkeypatch.setattr(gm, "fetch_theme_groups",
+                            lambda *a, **k: (_ for _ in ()).throw(
+                                AssertionError("pykrx 경로가 호출됐다")))
+        monkeypatch.setattr(gm, "fetch_etf_groups",
+                            lambda *a, **k: (_ for _ in ()).throw(
+                                AssertionError("pykrx 경로가 호출됐다")))
+        monkeypatch.setattr(gm, "fetch_industry_groups",
+                            lambda **k: {"산업:철강": ["005490", "004020", "001230"]})
+        out = gm.build_groups("20260728")
+        assert out["groups"]["산업:철강"]
+        assert set(out["membership"]["005490"]) == {"산업:철강"}

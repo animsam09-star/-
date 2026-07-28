@@ -51,23 +51,30 @@ def main():
     end_date = args.date or datetime.now(KST).strftime("%Y%m%d")
 
     # 1. 정량 스크리닝
-    print("== 1/7 스크리닝 ==")
+    print("== 1/8 스크리닝 ==")
     screen_result, close = screener.screen(end_date, cfg["screener"])
     base_date = screen_result["base_date"]
     candidates = screen_result["candidates"]
 
     # 2. 종목 마스터 (Layer 0) — 스크리닝 필터와 독립적인 전 종목 인덱스.
     #    이름→티커 해석의 단일 출처라 그래프보다 먼저 서야 한다.
-    print("== 2/7 종목 마스터 ==")
+    print("== 2/8 종목 마스터 ==")
     uni = universe_mod.build(base_date)
 
-    # 3. 수평 그래프 (섹터 초월 그룹 + 매크로 팩터 노출 + 미반영 갭)
-    print("== 3/7 수평 그래프 ==")
+    # 3. 수직축(영속 그래프) — 수평축의 그룹이 여기 산업 노드에서 나오므로 먼저 세운다.
+    #    저장된 edges.jsonl을 읽게 두면 밸류체인 YAML을 고쳐도 그룹이 한 실행 늦게
+    #    반영된다. 이번 실행의 소속 엣지를 그대로 넘긴다.
+    print("== 3/8 수직 그래프 ==")
+    persistent, vc_report = graph_build.build_persistent(uni, base_date)
+
+    # 4. 수평 그래프 (섹터 초월 그룹 + 매크로 팩터 노출 + 미반영 갭)
+    print("== 4/8 수평 그래프 ==")
     hcfg = cfg["horizontal"]
     horizontal: dict = {}
     if hcfg.get("enabled") and not args.skip_horizontal and not close.empty:
         try:
-            grp = groups_mod.build_groups(base_date, universe=set(close.columns))
+            grp = groups_mod.build_groups(base_date, universe=set(close.columns),
+                                          edges=persistent)
             group_ret = groups_mod.group_returns(close, grp["groups"])
             # 시장 요인을 시총가중으로 만들려면 가중치가 필요하다. 종목 마스터에
             # 이미 있으므로 추가 조회는 없다.
@@ -81,19 +88,18 @@ def main():
     else:
         print("건너뜀")
 
-    # 4. 관계 그래프 (Layer 1) — 수직축(영속)과 수평축(일자별)이 여기서 하나가 된다.
-    print("== 4/7 관계 그래프 ==")
-    persistent, vc_report = graph_build.build_persistent(uni, base_date)
+    # 5. 관계 그래프 (Layer 1) — 수직축(영속)과 수평축(일자별)이 여기서 하나가 된다.
+    print("== 5/8 관계 그래프 ==")
     daily = graph_build.build_daily(horizontal, base_date)
     relation_graph = graph_build.assemble(persistent, daily)
     print(f"통합 그래프 엣지 {len(relation_graph)}개")
 
-    # 5. 뉴스·공시 수집
-    print("== 5/7 근거 수집 ==")
+    # 6. 뉴스·공시 수집
+    print("== 6/8 근거 수집 ==")
     evidence = collect_mod.collect(candidates, base_date, cfg["collect"]) if candidates else {}
 
-    # 6. 원인 분석 + 파급 추론
-    print("== 6/7 원인 분석 ==")
+    # 7. 원인 분석 + 파급 추론
+    print("== 7/8 원인 분석 ==")
     gcfg = cfg.get("graph") or {}
     acfg = {**cfg["analyze"],
             "max_peers_per_group": hcfg.get("max_peers_per_group", 6),
@@ -107,8 +113,8 @@ def main():
                                        horizontal, uni, relation_graph)
     analysis["valuechain_coverage"] = vc_report
 
-    # 7. 리포트 생성 + 케이스 축적
-    print("== 7/7 리포트 생성 ==")
+    # 8. 리포트 생성 + 케이스 축적
+    print("== 8/8 리포트 생성 ==")
     report_mod.build(base_date, candidates, analysis, cfg["report"], horizontal)
     case_file = ROOT / "cases" / f"{base_date}.json"
     case_file.parent.mkdir(exist_ok=True)

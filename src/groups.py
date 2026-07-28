@@ -100,10 +100,57 @@ def fetch_etf_groups(base_date: str, min_members: int = 5,
     return groups
 
 
-def build_groups(base_date: str, universe: set[str] | None = None) -> dict:
-    """테마지수 + ETF 그룹을 합쳐 저장하고, 종목→그룹 역인덱스를 함께 반환한다."""
-    groups = fetch_theme_groups(base_date)
-    groups.update(fetch_etf_groups(base_date))
+def fetch_industry_groups(min_members: int = 3,
+                          edges: list[dict] | None = None) -> dict[str, list[str]]:
+    """산업 노드의 소속 종목을 그룹으로 쓴다.
+
+    테마지수 구성종목과 ETF PDF는 **KRX OpenAPI에 없다**(31개 엔드포인트가 전부
+    일별매매정보·종목기본정보·지수시세다). 인증키만 쓰는 구성에서 위의 두 경로는
+    통째로 비므로, 수직축이 이미 만들어 둔 `I:*` 노드를 대신 쓴다.
+
+    성격이 다르다는 점은 알고 써야 한다. ETF PDF는 '운용사가 같은 바구니에
+    담았다'는 시장의 판단이고, 여기는 '사업보고서가 같은 산업이라고 적었다'는
+    사업 실체다. 후자가 테마 순환매를 늦게 반영하는 대신, 근거에 인용이 붙는다.
+    """
+    from . import graph as G
+
+    if edges is None:
+        edges = G.load()
+    groups: dict[str, list[str]] = {}
+    for e in edges:
+        if e.get("rel") != G.REL_MEMBER:
+            continue
+        src_kind, ticker = G.split_node(e["src"])
+        dst_kind, industry = G.split_node(e["dst"])
+        if src_kind != "T" or dst_kind != "I":
+            continue
+        # 같은 소속을 밸류체인과 DART가 각각 주장하면 엣지가 둘이다. 그대로 넣으면
+        # 그룹 동일가중 수익률에서 그 종목만 두 번 세어진다.
+        members = groups.setdefault(f"산업:{industry}", [])
+        if ticker not in members:
+            members.append(ticker)
+    return {g: m for g, m in groups.items() if len(m) >= min_members}
+
+
+def build_groups(base_date: str, universe: set[str] | None = None,
+                 edges: list[dict] | None = None) -> dict:
+    """테마지수 + ETF + 산업 그룹을 합쳐 저장하고, 종목→그룹 역인덱스도 반환한다.
+
+    테마·ETF 경로는 pykrx(웹 로그인) 전용이다. 인증키만 있는 환경에서 호출하면
+    매번 실패 로그만 쌓이므로 아예 건너뛴다 — 실패가 아니라 부재다.
+    """
+    from . import prices
+
+    groups: dict[str, list[str]] = {}
+    if prices.source() == "pykrx":
+        groups.update(fetch_theme_groups(base_date))
+        groups.update(fetch_etf_groups(base_date))
+    else:
+        print("  테마지수·ETF 구성종목은 KRX OpenAPI에 없습니다 — 산업 그룹만 씁니다")
+
+    industry = fetch_industry_groups(edges=edges)
+    print(f"  산업 그룹 {len(industry)}개 (수직축 소속 엣지에서)")
+    groups.update(industry)
 
     if universe:
         groups = {g: [m for m in members if m in universe] for g, members in groups.items()}
