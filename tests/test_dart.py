@@ -424,3 +424,62 @@ class TestRateLimitDiagnostics:
 
     def test_no_retry_after_falls_back_to_none(self):
         assert dx._retry_after(self._Exc({})) is None
+
+
+class TestSectionSlimming:
+    """'사업의 내용'은 13만 자에 달한다. 통째로 넣으면 요청 하나가 분당 토큰
+    한도를 넘어 재시도로도 통과하지 못한다(실제로 5종목이 전부 그렇게 죽었다).
+
+    앞에서부터 자르면 안 되는 이유가 핵심이다 — '매출 및 수주상황'이 뒤쪽에
+    있는데, 그게 전방 관계(누구에게 파는가)의 유일한 근거다.
+    """
+
+    def _doc(self):
+        return ("II. 사업의 내용\n\n"
+                "1. 사업의 개요\n당사는 시멘트를 제조합니다. " + "개요 " * 100 + "\n\n"
+                "2. 주요 제품 및 서비스\n시멘트 | 62.0% | 레미콘 | 38.0%\n" + "제품 " * 100 + "\n\n"
+                "3. 원재료 및 생산설비\n석회석과 유연탄을 매입합니다. " + "원재료 " * 100 + "\n\n"
+                "4. 매출 및 수주상황\n주요 매출처는 건설사와 레미콘 업체입니다. " + "매출 " * 100 + "\n\n"
+                "5. 위험관리 및 파생거래\n" + "위험 " * 2000 + "\n\n"
+                "7. 연구개발활동\n" + "연구 " * 2000 + "\n\n"
+                "8. 기타 참고사항\n" + "기타 " * 2000 + "\n")
+
+    def test_forward_relation_evidence_survives(self):
+        """뒤쪽 '매출처'가 살아남지 않으면 이 기능은 의미가 없다."""
+        slim, _ = dart.slim_business_section(self._doc())
+        assert "주요 매출처는 건설사와 레미콘 업체입니다" in slim
+
+    def test_upstream_and_product_mix_survive(self):
+        slim, titles = dart.slim_business_section(self._doc())
+        assert "석회석과 유연탄" in slim
+        assert "레미콘 | 38.0%" in slim, "매출 비중 표가 날아가면 가중치를 못 준다"
+        assert "주요 제품 및 서비스" in titles
+
+    def test_bulk_without_valuechain_information_is_dropped(self):
+        slim, _ = dart.slim_business_section(self._doc())
+        assert "위험 위험" not in slim
+        assert "연구 연구" not in slim
+        assert "기타 기타" not in slim
+
+    def test_reduction_is_substantial(self):
+        doc = self._doc()
+        slim, _ = dart.slim_business_section(doc)
+        assert len(slim) < len(doc) * 0.4, f"{len(slim)}/{len(doc)} — 줄지 않았다"
+
+    def test_document_without_subsections_is_left_alone(self):
+        """절 구성은 산업마다 다르다. 잘못 걸러서 빈손이 되느니 크게 넣는 게 낫다."""
+        plain = "II. 사업의 내용\n" + "본문 " * 500
+        slim, titles = dart.slim_business_section(plain)
+        assert slim == plain and titles == []
+
+    def test_construction_style_document_without_raw_materials(self):
+        """건설사 보고서에는 '원재료' 절이 아예 없다 — 라이브에서 확인한 사실이다."""
+        doc = ("II. 사업의 내용\n\n"
+               "1. 사업의 개요\n건설업을 영위합니다. " + "개요 " * 100 + "\n\n"
+               "2. 주요 제품 및 서비스\n주택 | 55% | 토목 | 45%\n" + "제품 " * 100 + "\n\n"
+               "3. 수주상황\n관급 및 민간 발주처로부터 수주합니다. " + "수주 " * 100 + "\n\n"
+               "4. 기타 참고사항\n" + "기타 " * 2000 + "\n")
+        slim, titles = dart.slim_business_section(doc)
+        assert "관급 및 민간 발주처" in slim
+        assert "기타 기타" not in slim
+        assert titles, "원재료가 없다고 통째로 포기하면 안 된다"

@@ -484,12 +484,17 @@ def extract_batch(client: Anthropic, docs: list[dict], vocab: IndustryVocab,
 
 # ---- 파이프라인 ----------------------------------------------------------
 
-def collect_documents(tickers: list[str]) -> tuple[list[dict], list[str]]:
+def collect_documents(tickers: list[str], cfg: dict | None = None
+                      ) -> tuple[list[dict], list[str]]:
+    cfg = cfg or {}
+    max_chars = cfg.get("max_section_chars", 60000)
+    slim = cfg.get("slim_sections", True)
     corp_codes = dart.load_corp_codes()
     docs, missing = [], []
     for i, t in enumerate(tickers, 1):
         try:
-            doc = dart.retry(dart.fetch_business_section, t, corp_codes)
+            doc = dart.retry(dart.fetch_business_section, t, corp_codes,
+                             max_chars=max_chars, slim=slim)
         except dart.DartError as e:
             print(f"  {t}: {e}")
             missing.append(t)
@@ -506,10 +511,23 @@ def run(tickers: list[str], cfg: dict, asof: str, use_batch: bool = True) -> dic
         raise SystemExit(llm.MISSING_HINT)
 
     print(f"== 사업보고서 수집 ({len(tickers)}종목) ==")
-    docs, missing = collect_documents(tickers)
+    docs, missing = collect_documents(tickers, cfg)
     print(f"'사업의 내용' 확보 {len(docs)}건 / 미확보 {len(missing)}건")
     if not docs:
         return {"edges": 0, "documents": 0}
+
+    # 절 선별이 실제로 얼마나 줄였는지 드러낸다. 요청 크기가 곧 429의 원인이라
+    # 이 숫자가 다음 실행의 성패를 가른다.
+    full = sum(d.get("full_chars") or len(d["section"]) for d in docs)
+    kept = sum(len(d["section"]) for d in docs)
+    print(f"절 선별: {full:,}자 → {kept:,}자 ({kept / max(1, full):.0%}), "
+          f"평균 {kept // max(1, len(docs)):,}자/건")
+    sample = next((d for d in docs if d.get("kept_sections")), None)
+    if sample:
+        print(f"  예시({sample['ticker']}): {', '.join(sample['kept_sections'][:8])}")
+    no_slim = [d["ticker"] for d in docs if not d.get("kept_sections")]
+    if no_slim:
+        print(f"  ::warning:: 하위 절을 못 찾아 원문을 그대로 쓴 종목: {no_slim}")
 
     existing = G.load()
     vocab = IndustryVocab(

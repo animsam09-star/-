@@ -226,8 +226,57 @@ def extract_business_section(text: str) -> str:
     return best if len(best) >= MIN_SECTION_CHARS else ""
 
 
+# '사업의 내용' 안의 하위 절 제목. 번호 체계가 회사마다 달라(1./가./(1)) 번호가
+# 아니라 **제목 문구**로 찾는다.
+_SUBSECTION = re.compile(
+    r"(?:^|\n)[ \t|]*(?:[0-9]{1,2}|[가-힣]|[IVX]{1,4})?[.)]?\s*"
+    r"(사업의\s*개요|주요\s*제품[^\n]{0,20}|원재료[^\n]{0,20}|생산[^\n]{0,20}|"
+    r"매출[^\n]{0,20}|수주[^\n]{0,20}|시장[^\n]{0,20}|영업[^\n]{0,20}|"
+    r"파생상품[^\n]{0,20}|위험\s*관리[^\n]{0,20}|주요\s*계약[^\n]{0,20}|"
+    r"연구개발[^\n]{0,20}|지적재산권[^\n]{0,20}|환경[^\n]{0,20}|"
+    r"기타\s*참고[^\n]{0,20})[ \t|]*(?=\n)")
+
+# 수직축에 쓰이는 절만 남긴다.
+#   주요 제품 → 산업 분류와 매출 비중
+#   원재료·생산 → 후방(무엇을 사 오는가)
+#   매출·수주·시장 → 전방(누구에게 파는가)
+# 위험관리·연구개발·지적재산권·환경·기타참고는 분량은 크지만 밸류체인 정보가 없다.
+_KEEP = re.compile(r"사업의\s*개요|주요\s*제품|원재료|생산|매출|수주|시장|영업|주요\s*계약")
+MIN_KEPT_CHARS = 800
+
+
+def slim_business_section(section: str) -> tuple[str, list[str]]:
+    """'사업의 내용'에서 밸류체인에 쓰이는 하위 절만 남긴다.
+
+    사업보고서 한 건의 이 절은 13만 자에 달해, 통째로 넣으면 요청 하나가
+    분당 토큰 한도를 넘겨 **아무리 재시도해도 통과하지 못한다**(실제로 5종목이
+    전부 그렇게 실패했다). 앞에서부터 잘라내면 뒤쪽 '매출처'가 통째로 날아가는데,
+    그게 전방 관계의 유일한 근거다. 그래서 자르지 말고 **고른다.**
+
+    절 구성은 산업마다 다르다(건설사에는 '원재료'가 아예 없다). 하위 절을 하나도
+    못 찾거나 남은 분량이 너무 적으면 원문을 그대로 돌려준다 — 잘못 걸러서
+    빈손이 되느니 크게 넣는 편이 낫다.
+    """
+    marks = [(m.start(), m.group(1).strip()) for m in _SUBSECTION.finditer(section)]
+    if len(marks) < 3:
+        return section, []
+
+    kept, titles = [], []
+    for i, (pos, title) in enumerate(marks):
+        if not _KEEP.search(title):
+            continue
+        end = marks[i + 1][0] if i + 1 < len(marks) else len(section)
+        kept.append(section[pos:end])
+        titles.append(title)
+
+    slim = "\n".join(kept).strip()
+    if len(slim) < MIN_KEPT_CHARS:
+        return section, []
+    return slim, titles
+
+
 def fetch_business_section(ticker: str, corp_codes: dict[str, str],
-                           max_chars: int = 60000) -> dict | None:
+                           max_chars: int = 60000, slim: bool = True) -> dict | None:
     """종목 하나의 '사업의 내용'과 출처 메타데이터."""
     corp = corp_codes.get(ticker)
     if not corp:
@@ -239,9 +288,17 @@ def fetch_business_section(ticker: str, corp_codes: dict[str, str],
     section = extract_business_section(fetch_document(report["rcept_no"]))
     if not section:
         return None
+
+    full_len = len(section)
+    kept_titles: list[str] = []
+    if slim:
+        section, kept_titles = slim_business_section(section)
+
     return {"ticker": ticker, "corp_code": corp, **report,
             "section": section[:max_chars],
-            "truncated": len(section) > max_chars}
+            "truncated": len(section) > max_chars,
+            "full_chars": full_len, "kept_chars": len(section),
+            "kept_sections": kept_titles}
 
 
 def retry(fn, *args, retries: int = 3, delay: float = 2.0, **kwargs):
