@@ -142,3 +142,70 @@ def test_telegram_falls_back_without_analysis():
     tg = report.render_telegram("20260724", CANDIDATES,
                                 {"analyses": [], "synthesis": None}, None)
     assert "테스트리더" in tg
+
+
+# ---- 밸류체인 탭 ---------------------------------------------------------
+
+class TestValuechainTab:
+    """구축한 밸류체인을 눈으로 검증할 수 있어야 한다.
+
+    이 그래프의 값어치는 관계 개수가 아니라 근거다. 인용문이 화면에 없으면
+    사람은 그 관계를 믿을 근거가 없고, 그러면 그래프 자체가 무의미해진다.
+    """
+
+    def _edges(self):
+        from src import graph as G
+        return [
+            G.make_edge(G.ticker_node("009540"), G.industry_node("조선"),
+                        G.REL_MEMBER, "dart", origin="009540", asof="20260728",
+                        evidence="조 선 제품 선 박 外 25,036,454(83.6%)"),
+            G.make_edge(G.ticker_node("010140"), G.industry_node("조선"),
+                        G.REL_MEMBER, "valuechain", asof="20260728"),
+            G.make_edge(G.industry_node("조선"), G.industry_node("후판·강재"),
+                        G.REL_UPSTREAM, "dart", origin="009540", asof="20260728",
+                        evidence="〃 강 재 〃 2,156,875(19.2%)"),
+            G.make_edge(G.industry_node("조선"), G.industry_node("후판·강재"),
+                        G.REL_UPSTREAM, "dart", origin="010620", asof="20260728",
+                        evidence="철판, 형강 등 철강 제품은 POSCO, 현대제철 및 일본, 중국"),
+            G.make_edge(G.industry_node("조선"), G.industry_node("해운"),
+                        G.REL_DOWNSTREAM, "dart", origin="011200", asof="20260728",
+                        evidence="메탄올 연료 추진 9,000TEU 급 컨테이너선 9척을 발주"),
+        ]
+
+    NAMES = {"009540": "HD한국조선해양", "010140": "삼성중공업",
+             "010620": "HD현대미포", "011200": "HMM"}
+
+    def _html(self):
+        return report.render_valuechain(self._edges(), self.NAMES)
+
+    def test_quotes_are_visible(self):
+        """근거 문장이 화면에 없으면 관계를 믿을 방법이 없다."""
+        h = self._html()
+        assert "2,156,875(19.2%)" in h
+        assert "컨테이너선 9척을 발주" in h
+
+    def test_cross_validation_is_marked(self):
+        """두 회사가 독립적으로 같은 관계를 말한 것이 드러나야 한다."""
+        h = self._html()
+        assert "×2" in h
+        assert "HD한국조선해양" in h and "HD현대미포" in h
+
+    def test_membership_source_is_distinguishable(self):
+        """공시 근거가 있는 소속과 사람이 쓴 맵을 섞으면 신뢰도가 뭉개진다."""
+        h = self._html()
+        assert 'class="mchip m-dart" title="사업보고서 인용 근거 있음"' in h
+        assert 'class="mchip m-map"' in h
+
+    def test_upstream_and_downstream_are_separated(self):
+        h = self._html()
+        assert "후방(공급)" in h and "전방(수요)" in h
+
+    def test_no_external_resources(self):
+        """CDN을 부르면 그 호스트가 죽는 날 화면이 조용히 빈다."""
+        h = self._html()
+        for bad in ("http://", "https://", "src=", "@import"):
+            assert bad not in h, f"외부 리소스 참조: {bad}"
+
+    def test_empty_graph_does_not_crash(self):
+        h = report.render_valuechain([], {})
+        assert "밸류체인" in h

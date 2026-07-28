@@ -487,7 +487,8 @@ def render_html(base_date: str, candidates: list[dict], analysis: dict, site_tit
             ("#coverage", "커버리지", bool(sec_coverage))]
     nav = "".join(f'<a href="{h}">{t}</a>' for h, t, on in jump if on)
     head = (f'<header><div class="inner"><h1>{_esc(site_title)}</h1>'
-            f'<p class="sub">기준일 {date_fmt} · <a href="index.html">지난 리포트</a></p>'
+            f'<p class="sub">기준일 {date_fmt} · <a href="index.html">지난 리포트</a>'
+            f' · <a href="valuechain.html">밸류체인</a></p>'
             f'{render_kpis(candidates, analysis, horizontal)}'
             f'<nav class="jump">{nav}</nav></div></header>')
 
@@ -504,7 +505,8 @@ def render_index(site_title: str) -> str:
     return (f"<!doctype html><html lang='ko'><head><meta charset='utf-8'>{latest}"
             f"<meta name='viewport' content='width=device-width,initial-scale=1'>"
             f"<title>{_esc(site_title)}</title><style>{CSS}</style></head><body><main>"
-            f"<h1>{_esc(site_title)}</h1><p class='sub'>일자별 리포트</p>"
+            f"<h1>{_esc(site_title)}</h1><p class='sub'>일자별 리포트 · "
+            f"<a href='valuechain.html'>밸류체인</a></p>"
             f"<ul class='dates'>{items}</ul></main></body></html>")
 
 
@@ -559,5 +561,139 @@ def build(base_date: str, candidates: list[dict], analysis: dict, cfg: dict,
         render_html(base_date, candidates, analysis, cfg["site_title"], horizontal, names),
         encoding="utf-8")
     (REPORTS_DIR / "index.html").write_text(render_index(cfg["site_title"]), encoding="utf-8")
-    print(f"리포트 생성: {out}")
+
+    # 밸류체인 탭 — 날짜별이 아니라 항상 최신 그래프 한 장이다. 관계는 공시에서
+    # 나오므로 일자별로 바뀌지 않고, 여러 장으로 나누면 오히려 찾기 어려워진다.
+    from . import graph as G
+    (REPORTS_DIR / "valuechain.html").write_text(
+        render_valuechain(G.load(), names, cfg["site_title"]), encoding="utf-8")
+
+    print(f"리포트 생성: {out}, valuechain.html")
     return out
+
+
+# ---- 밸류체인 탭 ---------------------------------------------------------
+
+def _member_chip(ticker: str, names: dict, sourced: bool) -> str:
+    """소속 종목 칩. 공시 근거가 있는 것과 맵에만 있는 것을 시각적으로 가른다."""
+    nm = names.get(ticker) or ticker
+    cls = "m-dart" if sourced else "m-map"
+    title = "사업보고서 인용 근거 있음" if sourced else "밸류체인 맵(사람이 작성)"
+    return f'<span class="mchip {cls}" title="{title}">{_esc(nm)}</span>'
+
+
+def render_valuechain(edges: list[dict], names: dict[str, str],
+                      site_title: str = "밸류체인") -> str:
+    """구축된 밸류체인 전체를 훑어보는 페이지.
+
+    이 그래프의 값어치는 관계의 개수가 아니라 **근거**다. 그래서 화면의 중심에
+    인용문을 둔다 — 관계를 클릭하면 그 관계를 주장한 회사와 사업보고서 원문
+    문장이 그대로 나온다. 눈으로 검증할 수 없는 관계는 없는 것과 같다.
+    """
+    from . import graph as G
+
+    members: dict[str, set] = {}
+    sourced: set[tuple[str, str]] = set()      # (산업, 티커) 중 공시 근거가 있는 것
+    rel_rows: dict[tuple[str, str, str], list[dict]] = {}
+
+    for e in edges:
+        sk, sn = G.split_node(e["src"])
+        dk, dn = G.split_node(e["dst"])
+        if e["rel"] == G.REL_MEMBER and sk == "T" and dk == "I":
+            members.setdefault(dn, set()).add(sn)
+            if e.get("source") == "dart":
+                sourced.add((dn, sn))
+        elif sk == "I" and dk == "I" and e["rel"] in (G.REL_UPSTREAM, G.REL_DOWNSTREAM):
+            rel_rows.setdefault((sn, e["rel"], dn), []).append(e)
+
+    industries = sorted(members, key=lambda i: (-len(members[i]), i))
+    for (a, _r, b) in rel_rows:
+        for n in (a, b):
+            if n not in industries:
+                industries.append(n)
+
+    cross = sum(1 for v in rel_rows.values()
+                if len({e.get("origin") for e in v if e.get("origin")}) >= 2)
+    all_tickers = {t for v in members.values() for t in v}
+    quoted = sum(1 for v in rel_rows.values() if any(e.get("source") == "dart" for e in v))
+
+    kpis = "".join(
+        f'<div class="kpi"><div class="v">{v}</div><div class="l">{l}</div></div>'
+        for l, v in [("산업 노드", len(industries)), ("소속 종목", len(all_tickers)),
+                     ("산업 간 관계", len(rel_rows)), ("공시 인용 관계", quoted),
+                     ("교차 검증 관계", cross)])
+
+    cards = []
+    for ind in industries:
+        mem = sorted(members.get(ind, ()), key=lambda t: (names.get(t) or t))
+        chips = "".join(_member_chip(t, names, (ind, t) in sourced) for t in mem) or \
+            '<span class="muted">소속 종목 없음 — 상장된 순수 사업자가 없거나 아직 매핑되지 않음</span>'
+
+        def _rels(rel: str, label: str) -> str:
+            items = []
+            for (a, r, b), es in sorted(rel_rows.items()):
+                if a != ind or r != rel:
+                    continue
+                origins = sorted({e["origin"] for e in es if e.get("origin")})
+                badge = (f'<span class="xv">×{len(origins)}</span>' if len(origins) >= 2 else "")
+                lag = next((e.get("cycle_lag_months") for e in es
+                            if e.get("cycle_lag_months") is not None), None)
+                lagtxt = f'<span class="chip">{lag:+d}개월</span>' if lag else ""
+                quotes = "".join(
+                    f'<li><b>{_esc(names.get(e.get("origin")) or e.get("origin") or e.get("source"))}</b>'
+                    f' — <span class="q">{_esc(e.get("evidence"))}</span></li>'
+                    for e in es[:6] if e.get("evidence"))
+                body = (f'<details><summary>{_esc(b)} {badge}{lagtxt}</summary>'
+                        f'<ul class="quotes">{quotes}</ul></details>') if quotes else \
+                       f'<div class="norel">{_esc(b)} {badge}{lagtxt}</div>'
+                items.append(body)
+            if not items:
+                return ""
+            return f'<div class="rel"><span class="rl">{label}</span>{"".join(items)}</div>'
+
+        up = _rels(G.REL_UPSTREAM, "후방(공급)")
+        down = _rels(G.REL_DOWNSTREAM, "전방(수요)")
+        cards.append(
+            f'<div class="card vc" data-k="{_esc(ind)} {_esc(" ".join(names.get(t) or t for t in mem))}">'
+            f'<h3>{_esc(ind)} <span class="chip">{len(mem)}종목</span></h3>'
+            f'<div class="mchips">{chips}</div>{up}{down}</div>')
+
+    css_extra = """
+.mchips { margin:6px 0 10px; }
+.mchip { display:inline-block; border-radius:6px; padding:1px 8px; margin:2px 4px 2px 0;
+         font-size:.82rem; border:1px solid var(--line); }
+.mchip.m-dart { background:var(--chip); color:var(--accent); border-color:var(--accent); }
+.mchip.m-map { color:var(--muted); }
+.rel { margin-top:8px; padding-left:10px; border-left:2px solid var(--line); }
+.rl { display:block; font-size:.76rem; color:var(--muted); margin-bottom:3px; }
+details { margin:2px 0; } summary { cursor:pointer; font-size:.9rem; }
+.norel { font-size:.9rem; color:var(--muted); }
+.quotes { list-style:none; margin:4px 0 8px 4px; font-size:.8rem; }
+.quotes li { padding:3px 0; border-bottom:1px dashed var(--line); }
+.q { color:var(--muted); }
+.xv { background:var(--good); color:#fff; border-radius:99px; padding:0 6px;
+      font-size:.7rem; margin-left:4px; }
+#f { width:100%; padding:9px 12px; border-radius:9px; border:1px solid var(--line);
+     background:var(--card); color:var(--fg); font-size:.95rem; margin:12px 0 4px; }
+"""
+    js = ("<script>const f=document.getElementById('f');"
+          "f.addEventListener('input',()=>{const q=f.value.trim().toLowerCase();"
+          "document.querySelectorAll('.vc').forEach(c=>{"
+          "c.style.display=!q||c.dataset.k.toLowerCase().includes(q)?'':'none';});});</script>")
+
+    return (f"<!doctype html><html lang='ko'><head><meta charset='utf-8'>"
+            f"<meta name='viewport' content='width=device-width,initial-scale=1'>"
+            f"<title>{_esc(site_title)} — 밸류체인</title>"
+            f"<style>{CSS}{css_extra}</style></head><body>"
+            f'<header><div class="inner"><h1>밸류체인</h1>'
+            f'<p class="sub">사업보고서에서 인용과 함께 추출한 산업 관계 · '
+            f'<a href="index.html">리포트로</a></p>'
+            f'<div class="kpis">{kpis}</div></div></header><main>'
+            f'<input id="f" placeholder="산업명·종목명으로 거르기 (예: 조선, 시멘트, 포스코)">'
+            f'<p class="muted">관계를 펼치면 <b>그 관계를 주장한 회사와 사업보고서 원문 '
+            f'문장</b>이 나옵니다. <span class="xv">×2</span>는 서로 다른 회사가 독립적으로 '
+            f'같은 관계를 말했다는 뜻입니다. 진한 칩은 공시 근거가 있는 소속, '
+            f'흐린 칩은 사람이 작성한 맵입니다.</p>'
+            f'{"".join(cards)}'
+            f'<p class="muted">본 자료는 자동 생성된 참고 자료이며 투자 권유가 아닙니다.</p>'
+            f"</main>{js}</body></html>")
