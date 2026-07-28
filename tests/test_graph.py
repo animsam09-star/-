@@ -220,3 +220,42 @@ def test_unknown_relation_is_rejected():
     import pytest
     with pytest.raises(ValueError):
         G.make_edge("T:000001", "I:건설", "후방산업", "valuechain")
+
+
+class TestCrossValidationSurvivesDedup:
+    """DART 방식을 정당화하는 것은 '같은 관계가 독립된 두 문서에서 나온다'는 점이다.
+
+    source는 'valuechain'이냐 'dart'냐만 구분한다. 그것만으로 중복 키를 잡으면
+    시멘트사와 건설사가 각각 주장한 같은 관계가 하나로 합쳐지고 두 번째 근거가
+    사라진다 — 실제로 '건설·EPC ←후방← 시멘트·레미콘'이 그렇게 소실됐다.
+    """
+
+    def _edge(self, origin, evidence):
+        return G.make_edge(G.industry_node("건설·EPC"), G.industry_node("시멘트·레미콘"),
+                           G.REL_UPSTREAM, "dart", origin=origin,
+                           evidence=evidence, asof="20260728")
+
+    def test_two_filings_asserting_the_same_relation_both_survive(self):
+        merged = G.merge([self._edge("000720", "건설사 원재료: 레미콘"),
+                          self._edge("300720", "시멘트사 매출처: 건설")])
+        assert len(merged) == 2, "교차 검증 근거가 합쳐져 사라졌다"
+        assert {e["origin"] for e in merged} == {"000720", "300720"}
+
+    def test_same_filing_repeating_itself_is_still_deduped(self):
+        """같은 공시가 같은 관계를 다시 주장하면 그건 갱신이지 검증이 아니다."""
+        merged = G.merge([self._edge("300720", "구"), self._edge("300720", "신")])
+        assert len(merged) == 1
+
+    def test_origin_is_optional_and_defaults_to_empty(self):
+        """밸류체인 YAML 엣지는 origin이 없다. 기존 동작이 깨지면 안 된다."""
+        a = G.make_edge(G.industry_node("조선"), G.industry_node("후판·강재"),
+                        G.REL_UPSTREAM, "valuechain", asof="20260728")
+        assert a["origin"] == ""
+        assert len(G.merge([a, dict(a)])) == 1
+
+    def test_different_sources_still_both_survive(self):
+        vc = G.make_edge(G.industry_node("조선"), G.industry_node("후판·강재"),
+                         G.REL_UPSTREAM, "valuechain", asof="20260728")
+        dart = G.make_edge(G.industry_node("조선"), G.industry_node("후판·강재"),
+                           G.REL_UPSTREAM, "dart", origin="010140", asof="20260728")
+        assert len(G.merge([vc, dart])) == 2

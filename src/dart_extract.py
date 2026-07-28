@@ -341,7 +341,7 @@ def to_edges(ticker: str, extraction: dict, vocab: IndustryVocab,
     for p in products.values():
         edges.append(G.make_edge(
             G.ticker_node(ticker), G.industry_node(p["industry"]), G.REL_MEMBER, "dart",
-            weight=p["share"], confidence=p["confidence"],
+            weight=p["share"], confidence=p["confidence"], origin=ticker,
             evidence=f"{evidence_prefix}{str(p['quote'])[:150]}", asof=asof))
 
     if not products:
@@ -359,11 +359,13 @@ def to_edges(ticker: str, extraction: dict, vocab: IndustryVocab,
                 continue
             ev = f"{evidence_prefix}{str(item['quote'])[:150]}"
             # 산업 간 관계는 양방향 — 소형 소재주에서 전방을 찾을 수 있어야 한다
+            # origin=ticker — 어느 회사 공시에서 나왔는지가 키에 들어가야
+            # 같은 관계를 두 회사가 각각 주장한 것이 교차 검증으로 남는다.
             edges.append(G.make_edge(G.industry_node(primary), G.industry_node(target),
-                                     rel, "dart", weight=item["share"],
+                                     rel, "dart", weight=item["share"], origin=ticker,
                                      confidence=item["confidence"], evidence=ev, asof=asof))
             edges.append(G.make_edge(G.industry_node(target), G.industry_node(primary),
-                                     G._OPPOSITE[rel], "dart",
+                                     G._OPPOSITE[rel], "dart", origin=ticker,
                                      confidence=item["confidence"], evidence=ev, asof=asof))
     return edges
 

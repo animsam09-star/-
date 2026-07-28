@@ -74,18 +74,29 @@ def split_node(node: str) -> tuple[str, str]:
 
 def make_edge(src: str, dst: str, rel: str, source: str, *, sign: int = 0,
               weight: float | None = None, confidence: float = 0.5,
-              evidence: str = "", asof: str = "") -> dict:
+              evidence: str = "", asof: str = "", origin: str = "") -> dict:
     if rel not in RELATIONS:
         raise ValueError(f"알 수 없는 관계 유형: {rel} (허용: {RELATIONS})")
     return {"src": src, "dst": dst, "rel": rel, "sign": int(sign),
             "weight": None if weight is None else round(float(weight), 4),
-            "source": source, "confidence": round(float(confidence), 3),
+            "source": source, "origin": origin,
+            "confidence": round(float(confidence), 3),
             "evidence": evidence, "asof": asof}
 
 
 def edge_key(e: dict) -> tuple:
-    """중복 판정 키. 같은 출처가 같은 관계를 다시 주장하면 갱신으로 본다."""
-    return (e["src"], e["dst"], e["rel"], e["source"])
+    """중복 판정 키. 같은 출처가 같은 관계를 다시 주장하면 갱신으로 본다.
+
+    **origin이 키에 들어가는 이유** — source는 'valuechain'이냐 'dart'냐만
+    구분한다. 그것만으로 키를 잡으면 서로 다른 회사의 사업보고서가 같은 산업
+    관계를 주장했을 때 하나로 합쳐지고, 두 번째 근거가 사라진다.
+
+    그런데 그 두 번째 근거가 바로 DART 방식을 정당화하는 것이다. 시멘트사가
+    '매출처=건설'이라 적고 건설사가 '원재료=레미콘'이라 적으면, 같은 관계가
+    **독립된 두 문서에서** 나온 것이고 그게 교차 검증이다. 합쳐 버리면
+    "한 회사가 그렇다더라"와 구별할 수 없게 된다.
+    """
+    return (e["src"], e["dst"], e["rel"], e["source"], e.get("origin") or "")
 
 
 def merge(*edge_lists) -> list[dict]:
