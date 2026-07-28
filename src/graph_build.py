@@ -115,8 +115,18 @@ def from_valuechain(universe: Universe, asof: str,
     }
     if report["unresolved_count"]:
         flat = sorted({n for v in unresolved.values() for n in v})
-        print(f"  밸류체인 종목명 미해석 {len(flat)}건: {', '.join(flat[:15])}"
-              f"{' …' if len(flat) > 15 else ''}")
+        print(f"  밸류체인 종목명 미해석 {len(flat)}건:")
+        # 이름만 나열하면 원인을 알 수 없다. 사명 변경인지, 비상장인지,
+        # 상장폐지인지에 따라 조치가 전혀 다르고, 그 판단 재료가 후보 이름이다.
+        suggestions: dict[str, list[str]] = {}
+        for n in flat[:25]:
+            near = universe.near_misses(n)
+            suggestions[n] = near
+            print(f"    {n} → " + (", ".join(near) if near
+                                   else "상장 종목 중 유사 이름 없음(비상장·상장폐지 가능)"))
+        if len(flat) > 25:
+            print(f"    … 외 {len(flat) - 25}건")
+        report["unresolved_suggestions"] = suggestions
     return edges, report
 
 

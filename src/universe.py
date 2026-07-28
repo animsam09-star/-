@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import re
 import time
+import unicodedata
 from pathlib import Path
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
@@ -26,12 +27,34 @@ _NAME_NOISE = re.compile(r"\s|㈜|\(주\)|（주）|주식회사")
 
 
 def normalize_name(name: str) -> str:
-    """종목명 대조용 정규화. 공백·법인 표기·대소문자 차이를 흡수한다.
+    """종목명 대조용 정규화. 공백·법인 표기·대소문자·문자폭 차이를 흡수한다.
+
+    NFKC를 먼저 거는 이유: KRX 응답과 사람이 쓴 YAML 사이에 **전각/반각** 차이가
+    섞일 수 있다. 'ＬＩＧ넥스원'과 'LIG넥스원'은 눈으로는 같지만 코드포인트가
+    달라 정확 일치에 실패하고, 그 실패는 예외 없이 조용히 빠진다.
 
     우선주 접미('우', '우B')는 **지우지 않는다.** 보통주와 우선주는 다른 종목이고,
     합치면 엉뚱한 종목에 수혜가 귀속된다.
     """
-    return _NAME_NOISE.sub("", str(name)).upper()
+    folded = unicodedata.normalize("NFKC", str(name))
+    return _NAME_NOISE.sub("", folded).upper()
+
+
+def _longest_common_substring(a: str, b: str) -> int:
+    """두 이름이 공유하는 가장 긴 연속 구간의 길이."""
+    if not a or not b:
+        return 0
+    prev = [0] * (len(b) + 1)
+    best = 0
+    for i in range(1, len(a) + 1):
+        cur = [0] * (len(b) + 1)
+        for j in range(1, len(b) + 1):
+            if a[i - 1] == b[j - 1]:
+                cur[j] = prev[j - 1] + 1
+                if cur[j] > best:
+                    best = cur[j]
+        prev = cur
+    return best
 
 
 def _retry(fn, *args, retries=3, delay=2, **kwargs):
@@ -106,6 +129,36 @@ class Universe:
             else:
                 unmatched.append(n)
         return resolved, unmatched
+
+    def near_misses(self, name: str, limit: int = 3) -> list[str]:
+        """해석 실패한 이름의 후보를 찾는다. **자동으로 붙이지는 않는다.**
+
+        미해석 목록만 던져 놓으면 사람이 원인을 알 수 없다. 사명 변경(현대미포조선
+        → HD현대미포)인지, 비상장(세메스)인지, 상장폐지(쌍용C&E)인지에 따라
+        조치가 완전히 다른데, 그 판단에 필요한 재료가 바로 '비슷한 이름이 있는가'다.
+
+        유사도 매칭을 해석에 쓰지 않는 이유는 resolve()에 적어 둔 대로다 —
+        '한화'와 '한화솔루션'을 붙여 버리면 조용히 빠지는 것보다 나쁘다.
+        여기서는 사람이 보는 제안일 뿐이라 안전하다.
+        """
+        norm = normalize_name(name)
+        if len(norm) < 2:
+            return []
+
+        # 접두사만 보면 사명 변경을 놓친다: '현대미포조선' → 'HD현대미포'는
+        # 첫 글자부터 다르지만 '현대미포'를 공유한다. 실제 미해석 목록에 있던
+        # 사례라 최장 공통 부분문자열로 본다.
+        min_overlap = max(2, min(len(norm), 4) - 1)
+        hits = []
+        for other_norm, ticker in self._by_norm.items():
+            if other_norm == norm:
+                continue
+            overlap = _longest_common_substring(norm, other_norm)
+            if overlap >= min_overlap:
+                contained = norm in other_norm or other_norm in norm
+                hits.append((0 if contained else 1, -overlap, other_norm, ticker))
+        hits.sort(key=lambda h: (h[0], h[1], abs(len(h[2]) - len(norm))))
+        return [f"{self.name(t) or n}({t})" for _, _, n, t in hits[:limit]]
 
     def to_dict(self) -> dict:
         return {"base_date": self.base_date, "entries": self.entries}

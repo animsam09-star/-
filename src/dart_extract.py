@@ -384,12 +384,15 @@ RETRY_STATUS = (429, 500, 502, 503, 529)
 MAX_LLM_RETRIES = 5
 
 
+def _headers(exc) -> dict:
+    resp = getattr(exc, "response", None)
+    return getattr(resp, "headers", None) or {}
+
+
 def _retry_after(exc) -> float | None:
     """서버가 알려 준 대기 시간. 추측보다 이게 항상 낫다."""
-    resp = getattr(exc, "response", None)
-    headers = getattr(resp, "headers", None) or {}
     for key in ("retry-after", "anthropic-ratelimit-input-tokens-reset"):
-        raw = headers.get(key)
+        raw = _headers(exc).get(key)
         if not raw:
             continue
         try:
@@ -397,6 +400,27 @@ def _retry_after(exc) -> float | None:
         except (TypeError, ValueError):
             continue
     return None
+
+
+def rate_limit_detail(exc) -> str:
+    """429가 '어느' 한도인지 헤더에서 읽는다.
+
+    응답 본문은 {'type':'rate_limit_error','message':'Error'}뿐이라 아무것도
+    알려주지 않는다. 한도 종류를 모르면 조치가 갈린다 — 요청 **간격**을 늘릴지,
+    요청 **크기**를 줄일지가 정반대다. 한 요청이 이미 분당 토큰 한도를 넘으면
+    아무리 물러서도 통과하지 못한다(실제로 5종목이 전부 그렇게 실패했다).
+    """
+    h = _headers(exc)
+    parts = []
+    for kind in ("requests", "input-tokens", "output-tokens", "tokens"):
+        limit = h.get(f"anthropic-ratelimit-{kind}-limit")
+        remaining = h.get(f"anthropic-ratelimit-{kind}-remaining")
+        if limit or remaining:
+            parts.append(f"{kind}={remaining}/{limit}")
+    reset = h.get("retry-after") or h.get("anthropic-ratelimit-input-tokens-reset")
+    if reset:
+        parts.append(f"reset={reset}")
+    return " ".join(parts) or "한도 헤더 없음"
 
 
 def extract_one(client: Anthropic, doc: dict, vocab: IndustryVocab, cfg: dict) -> dict | None:
@@ -416,8 +440,9 @@ def extract_one(client: Anthropic, doc: dict, vocab: IndustryVocab, cfg: dict) -
             if status not in RETRY_STATUS or attempt == MAX_LLM_RETRIES:
                 raise
             wait = _retry_after(e) or delay
+            detail = f" [{rate_limit_detail(e)}]" if status == 429 else ""
             print(f"    {doc['ticker']} {status} — {wait:.0f}초 후 재시도 "
-                  f"({attempt}/{MAX_LLM_RETRIES - 1})")
+                  f"({attempt}/{MAX_LLM_RETRIES - 1}){detail}")
             time.sleep(min(wait, 120))
             delay *= 2
     return None
@@ -523,8 +548,11 @@ def run(tickers: list[str], cfg: dict, asof: str, use_batch: bool = True) -> dic
     if not raw:
         raise RuntimeError(
             f"공시 {len(docs)}건을 확보했으나 추출에 **전부 실패**했습니다.\n"
-            "  위의 실패 사유를 보세요. 429가 반복되면 요청 간격(dart.request_interval)을\n"
-            "  늘리거나 종목 수를 줄이세요.")
+            "  위의 실패 사유를 보세요. 429가 전부라면 조치는 둘 중 하나입니다.\n"
+            "  - 남은 한도가 0이 아닌데 걸린다면: 요청 간격(dart.request_interval)을 늘린다\n"
+            "  - 한 요청만으로 한도를 넘는다면: 간격을 늘려도 소용없다.\n"
+            "    dart.max_section_chars를 줄이거나 Batch API(--use-batch)를 쓴다.\n"
+            "    Batch는 한도 체계가 별도라 대량 추출에는 그쪽이 정석이다.")
 
     by_ticker = {d["ticker"]: d for d in docs}
     edges: list[dict] = []

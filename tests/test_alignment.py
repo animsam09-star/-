@@ -171,3 +171,44 @@ def test_synthesis_beneficiaries_get_tickers():
     assert stats["matched"] == 1
     assert b["ticker"] == "000009"
     assert b["gap"] == pytest.approx(0.04)
+
+
+class TestNameResolutionDiagnostics:
+    """미해석 목록만 던지면 사람이 원인을 알 수 없다.
+
+    사명 변경인지, 비상장인지, 전각/반각 차이인지에 따라 조치가 전혀 다르다.
+    실제 라이브 실행에서 밸류체인 이름 7건이 해석되지 않았는데, 로그만으로는
+    셋 중 무엇인지 구분할 수 없었다.
+    """
+
+    @pytest.fixture
+    def uni(self):
+        from src import universe as U
+        return U.Universe("20260727", {
+            "010620": {"name": "HD현대미포", "market_cap": 3},
+            "267270": {"name": "HD현대건설기계", "market_cap": 2},
+            "079550": {"name": "LIG넥스원", "market_cap": 5},
+            "009830": {"name": "한화솔루션", "market_cap": 9},
+            "005930": {"name": "삼성전자", "market_cap": 99},
+        })
+
+    def test_fullwidth_letters_still_match(self, uni):
+        """KRX 응답과 사람이 쓴 YAML 사이에 전각/반각이 섞이면 정확 일치가 깨진다."""
+        assert uni.resolve("ＬＩＧ넥스원") == "079550"
+
+    def test_renamed_company_gets_a_suggestion(self, uni):
+        """'현대미포조선'→'HD현대미포'는 첫 글자부터 다르다. 접두사 비교로는 못 잡는다."""
+        assert uni.near_misses("현대미포조선") == ["HD현대미포(010620)"]
+
+    def test_unlisted_company_gets_no_false_suggestion(self, uni):
+        """비상장(세메스)에 억지 후보를 붙이면 잘못된 조치로 이어진다."""
+        assert uni.near_misses("세메스") == []
+
+    def test_suggestions_never_become_resolutions(self, uni):
+        """'한화'는 '한화솔루션'과 다른 회사다. 제안은 하되 해석은 하지 않는다."""
+        assert uni.resolve("한화") is None
+        assert uni.near_misses("한화") == ["한화솔루션(009830)"]
+
+    def test_preferred_share_suffix_survives_normalization(self, uni):
+        from src.universe import normalize_name
+        assert normalize_name("삼성전자우") != normalize_name("삼성전자")

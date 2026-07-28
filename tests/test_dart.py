@@ -392,3 +392,35 @@ def test_schema_is_valid_for_structured_output():
 
     check(dx.EXTRACT_SCHEMA)
     assert json.dumps(dx.EXTRACT_SCHEMA)   # 직렬화 가능해야 한다
+
+
+class TestRateLimitDiagnostics:
+    """429 본문은 {'type':'rate_limit_error','message':'Error'}뿐이다.
+
+    어느 한도인지 모르면 조치가 정반대로 갈린다 — 요청 간격을 늘릴지, 요청
+    크기를 줄일지. 실제로 5종목이 전부 429로 죽었을 때 본문만으로는 구분할 수
+    없었다. 헤더에서 읽어 로그에 남긴다.
+    """
+
+    class _Exc(Exception):
+        def __init__(self, headers):
+            self.status_code = 429
+            self.response = type("R", (), {"headers": headers})()
+
+    def test_reads_which_limit_was_hit(self):
+        e = self._Exc({"anthropic-ratelimit-input-tokens-limit": "20000",
+                       "anthropic-ratelimit-input-tokens-remaining": "0",
+                       "retry-after": "38"})
+        detail = dx.rate_limit_detail(e)
+        assert "input-tokens=0/20000" in detail
+        assert "reset=38" in detail
+
+    def test_missing_headers_say_so_instead_of_pretending(self):
+        assert dx.rate_limit_detail(self._Exc({})) == "한도 헤더 없음"
+
+    def test_server_retry_after_beats_our_guess(self):
+        e = self._Exc({"retry-after": "45"})
+        assert dx._retry_after(e) == 45.0
+
+    def test_no_retry_after_falls_back_to_none(self):
+        assert dx._retry_after(self._Exc({})) is None
