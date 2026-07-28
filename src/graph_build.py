@@ -145,6 +145,15 @@ def from_groups(membership: dict[str, list[str]], asof: str,
     edges = []
     for ticker, group_names in (membership or {}).items():
         for g in group_names:
+            # '산업:*' 그룹은 여기서 노출 엣지를 만들지 않는다. 그 소속은 이미
+            # 수직축의 T→I 소속 엣지로 있고, 여기서 D:산업:철강을 또 만들면 같은
+            # 관계가 산업 노드와 동인 노드 두 네임스페이스로 쪼개진다. 그룹은
+            # 미반영 갭 회귀에만 쓴다.
+            #
+            # 접두를 안 보고 넘기면 출처가 'etf_pdf'로 찍혀, ETF 구성종목이라는
+            # 근거가 없는 엣지에 ETF 신뢰도가 붙는다.
+            if g.startswith("산업:"):
+                continue
             source = "theme_index" if g.startswith("테마:") else "etf_pdf"
             conf = THEME_CONFIDENCE if source == "theme_index" else ETF_CONFIDENCE
             edges.append(G.make_edge(

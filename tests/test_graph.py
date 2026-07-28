@@ -301,3 +301,24 @@ class TestAliasTableIsConsistentWithRealNodes:
         _, aliases = self._nodes()
         chained = {k: v for k, v in aliases.items() if v in aliases}
         assert not chained, f"별칭이 연쇄한다 — 한 번만 적용되므로 끝까지 접히지 않는다: {chained}"
+
+
+class TestIndustryGroupsDoNotBecomeDriverNodes:
+    """산업 그룹은 갭 회귀용이지 동인이 아니다.
+
+    소속은 이미 T→I 엣지로 있다. 여기서 D:산업:철강을 또 만들면 같은 관계가 두
+    네임스페이스로 쪼개지고, 게다가 출처가 'etf_pdf'로 찍혀 ETF 구성종목이라는
+    근거가 없는 엣지에 ETF 신뢰도가 붙는다.
+    """
+
+    MEMBERSHIP = {"005490": ["산업:철강", "테마:탄소중립"], "004020": ["산업:철강"]}
+
+    def test_industry_groups_make_no_exposure_edges(self):
+        edges = graph_build.from_groups(self.MEMBERSHIP, ASOF)
+        assert not [e for e in edges if "산업:" in e["dst"]]
+
+    def test_theme_groups_still_do(self):
+        edges = graph_build.from_groups(self.MEMBERSHIP, ASOF)
+        themes = [e for e in edges if e["dst"] == G.driver_node("테마:탄소중립")]
+        assert len(themes) == 1
+        assert themes[0]["source"] == "theme_index"
