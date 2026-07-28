@@ -14,9 +14,11 @@ KRX OpenAPI(openapi.krx.co.kr에서 발급, 호출은 data-dbg.krx.co.kr)는 인
 
 ## 이 API로 못 하는 것
 
-31개 엔드포인트가 전부 일별매매정보와 종목기본정보다. **ETF 구성종목(PDF)과
-지수 구성종목이 없다.** 그게 수평축 그룹의 원천이었으므로, OpenAPI만 쓰는 구성에서는
-그룹을 DART 산업 노드에서 만든다(graph_build.groups_from_industries).
+31개 엔드포인트가 전부 일별매매정보·종목기본정보·지수시세다. **ETF 구성종목(PDF)과
+테마지수 구성종목이 없다.** 그게 수평축 그룹(groups.py)의 원천이므로, 인증키만
+쓰는 구성에서는 그 경로가 비어 있다. 대안은 DART 산업 노드(`I:*`)의 소속 종목을
+그룹으로 쓰는 것인데 **아직 구현하지 않았다.** pykrx 자격 증명이 있으면 기존
+경로가 그대로 동작한다.
 
 **거래일 달력 엔드포인트도 없다.** 그래서 날짜를 하루씩 거슬러 올라가며 조회해
 '응답이 비었으면 휴장일'로 판정한다(iter_trading_days). 어차피 그 날의 시세가
@@ -61,6 +63,10 @@ EP_KOSPI_INFO = ("sto", "stk_isu_base_info")
 EP_KOSDAQ_INFO = ("sto", "ksq_isu_base_info")
 EP_ETF_OHLCV = ("etp", "etf_bydd_trd")
 EP_ETN_OHLCV = ("etp", "etn_bydd_trd")
+# 지수 — 시장수익률(β_시장)의 원천. '시리즈 일별시세정보'가 이 엔드포인트다.
+EP_KOSPI_INDEX = ("idx", "kospi_dd_trd")
+EP_KOSDAQ_INDEX = ("idx", "kosdaq_dd_trd")
+EP_KRX_INDEX = ("idx", "krx_dd_trd")
 
 MARKET_OHLCV = {"KOSPI": EP_KOSPI_OHLCV, "KOSDAQ": EP_KOSDAQ_OHLCV}
 MARKET_INFO = {"KOSPI": EP_KOSPI_INFO, "KOSDAQ": EP_KOSDAQ_INFO}
@@ -374,11 +380,17 @@ def describe_schema(bas_dd: str) -> dict[str, list[str]]:
     for label, (category, endpoint) in (
         ("KOSPI 시세", EP_KOSPI_OHLCV), ("KOSDAQ 시세", EP_KOSDAQ_OHLCV),
         ("KOSPI 기본정보", EP_KOSPI_INFO), ("ETF 시세", EP_ETF_OHLCV),
-        ("ETN 시세", EP_ETN_OHLCV),
+        ("ETN 시세", EP_ETN_OHLCV), ("KOSPI 지수", EP_KOSPI_INDEX),
+        ("KOSDAQ 지수", EP_KOSDAQ_INDEX), ("KRX 지수", EP_KRX_INDEX),
     ):
         try:
             records = fetch_raw(category, endpoint, bas_dd)
-            out[f"{label} ({endpoint})"] = sorted(records[0]) if records else []
+            # 지수는 종목코드가 없고 지수명으로 식별한다. 필드 구성이 시세와
+            # 다르므로 샘플 한 건을 그대로 보여 준다.
+            out[f"{label} ({endpoint})"] = (
+                sorted(records[0]) if records else ["(응답 0건)"])
+            if records and category == "idx":
+                out[f"{label} 샘플"] = [f"{k}={v}" for k, v in list(records[0].items())[:12]]
         except KrxApiError as e:
             out[f"{label} ({endpoint})"] = [f"조회 실패: {e}"]
     return out
