@@ -99,14 +99,29 @@ def fetch_raw(category: str, endpoint: str, bas_dd: str,
         try:
             resp = requests.get(url, params=params, timeout=timeout)
             _last_call = time.monotonic()
-            if resp.status_code == 401:
+
+            if resp.status_code >= 400:
+                # 응답 본문에 KRX가 적어 보낸 사유가 들어 있다. 버리면 원인을
+                # 영영 모른 채 상태 코드만 보고 추측하게 된다.
+                body = (resp.text or "").strip()[:400]
+                if resp.status_code == 401:
+                    raise KrxApiError(
+                        f"인증 실패(401) — {ENV_KEY}가 유효하지 않습니다.\n"
+                        f"  응답: {body}")
+                if resp.status_code == 403:
+                    raise KrxApiError(
+                        f"접근 거부(403) — 키는 인식되지만 '{endpoint}'에 접근할 수 없습니다.\n"
+                        f"  응답: {body}\n"
+                        "  가능한 원인:\n"
+                        "   1. 해당 API 이용신청이 아직 '승인 대기' 상태\n"
+                        "   2. 호출 IP 제한 — KRX가 해외/클라우드 IP를 막는 경우\n"
+                        "      (GitHub Actions 러너는 해외 IP입니다)\n"
+                        "   3. 일일 호출 한도 소진")
+                if resp.status_code == 429:
+                    raise KrxApiError(f"요청 한도 초과(429)\n  응답: {body}")
                 raise KrxApiError(
-                    f"인증 실패(401) — {ENV_KEY}가 유효하지 않거나 "
-                    f"'{endpoint}' 서비스 이용 신청이 되어 있지 않습니다.\n"
-                    "  openapi.krx.co.kr에서 API별로 별도 신청이 필요합니다.")
-            if resp.status_code == 429:
-                raise KrxApiError("요청 한도 초과(429)")
-            resp.raise_for_status()
+                    f"HTTP {resp.status_code} — {endpoint}\n  응답: {body}")
+
             payload = resp.json()
         except KrxApiError:
             raise

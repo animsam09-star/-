@@ -102,19 +102,39 @@ class TestRequestShape:
         assert seen["params"] == {"AUTH_KEY": "test-key", "basDd": "20260724"}
         assert len(out) == 2
 
-    def test_401_explains_per_service_application(self, monkeypatch):
-        """KRX는 인증키와 별개로 API별 이용신청이 필요하다.
-        키가 맞는데 401이 나는 흔한 원인이라 메시지에 담아야 한다."""
+    @pytest.mark.parametrize("code", [400, 401, 403, 429, 500])
+    def test_error_body_is_always_surfaced(self, monkeypatch, code):
+        """KRX가 적어 보낸 사유를 버리면 상태 코드만 보고 추측하게 된다.
+
+        실제로 403이 났을 때 본문을 안 보여줘서 원인을 좁히지 못했다.
+        """
         monkeypatch.setenv(api.ENV_KEY, "test-key")
 
         class Resp:
-            status_code = 401
-            def raise_for_status(self): pass
+            status_code = code
+            text = '{"errMsg":"서비스 승인 대기중","errCode":"E403"}'
             def json(self): return {}
 
         monkeypatch.setattr(api.requests, "get", lambda *a, **k: Resp())
-        with pytest.raises(api.KrxApiError, match="이용 신청"):
-            api.fetch_raw("sto", "stk_bydd_trd", "20260724")
+        with pytest.raises(api.KrxApiError) as exc:
+            api.fetch_raw("sto", "stk_bydd_trd", "20260724", retries=1)
+        assert "서비스 승인 대기중" in str(exc.value), f"{code}에서 본문이 누락됐다"
+
+    def test_403_lists_the_plausible_causes(self, monkeypatch):
+        """403은 키가 인식된 상태라 401과 조치가 다르다.
+        승인 대기 / IP 제한 / 한도 소진을 구분해 안내해야 한다."""
+        monkeypatch.setenv(api.ENV_KEY, "test-key")
+
+        class Resp:
+            status_code = 403
+            text = "forbidden"
+            def json(self): return {}
+
+        monkeypatch.setattr(api.requests, "get", lambda *a, **k: Resp())
+        with pytest.raises(api.KrxApiError) as exc:
+            api.fetch_raw("sto", "stk_bydd_trd", "20260724", retries=1)
+        msg = str(exc.value)
+        assert "승인 대기" in msg and "IP" in msg
 
     def test_missing_outblock_reports_actual_keys(self, monkeypatch):
         monkeypatch.setenv(api.ENV_KEY, "test-key")
