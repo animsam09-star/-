@@ -31,9 +31,20 @@ KRX OpenAPI(openapi.krx.co.kr에서 발급, 호출은 data-dbg.krx.co.kr)는 인
       TDD_CLSPRC TDD_OPNPRC TDD_HGPRC TDD_LWPRC CMPPREVDD_PRC FLUC_RT
       ACC_TRDVOL ACC_TRDVAL MKTCAP LIST_SHRS
 
+    etf_bydd_trd:
+      BAS_DD ISU_CD ISU_NM IDX_IND_NM NAV OBJ_STKPRC_IDX
+      TDD_CLSPRC TDD_OPNPRC TDD_HGPRC TDD_LWPRC CMPPREVDD_PRC FLUC_RT
+      CMPPREVDD_IDX FLUC_RT_IDX ACC_TRDVOL ACC_TRDVAL MKTCAP LIST_SHRS
+      INVSTASST_NETASST_TOTAMT
+
 종목명(ISU_NM)과 시가총액(MKTCAP)이 시세 응답에 함께 들어 있다. 그래서 종목
 마스터를 만드는 데 종목기본정보(stk_isu_base_info) 엔드포인트가 필요 없다 —
 그쪽은 별도 이용신청 대상이라, 안 써도 되는 편이 낫다.
+
+**ETN(etn_bydd_trd)은 401**이다(2026-07-28 라이브). 이용신청이 따로다. 설정의
+팩터 6종(달러·구리·유가·금·미국채·국고채)은 전부 ETF 대용치가 있으므로 수평축을
+ETF만으로 세운다. 지수 엔드포인트(idx/*)의 필드명은 **아직 라이브로 확인하지
+못했다** — 스모크의 스키마 탐색이 그 줄이 추가되기 전 커밋에서 돌았다.
 
 여전히 후보 목록으로 해석한다. 잘못 짚으면 KeyError가 아니라 **빈 컬럼**이 되어
 조용히 틀리므로, 실패하면 **실제 필드 목록을 담아 예외**를 올린다.
@@ -86,7 +97,15 @@ FIELD_CANDIDATES = {
     "market_cap": ["MKTCAP", "MKT_CAP"],
     "sector": ["IDX_IND_NM", "SECT_TP_NM", "IND_TP_NM", "KRX_IND_NM"],
     "listed_shares": ["LIST_SHRS", "LISTED_SHRS"],
+    # ETF 응답에만 있는 기초지수명. 'sector'로 받으면 안 된다 — 후보 목록의 맨
+    # 앞이 IDX_IND_NM이라 종목 시세에서는 업종을, ETF에서는 기초지수를 집어
+    # 같은 컬럼명에 뜻이 다른 값이 섞인다.
+    "index_name": ["IDX_IND_NM"],
+    "nav": ["NAV"],
 }
+
+# 숫자로 바꾸면 안 되는 컬럼. 여기 빠뜨리면 그 컬럼이 통째로 NaN이 된다.
+TEXT_FIELDS = frozenset({"ticker", "name", "sector", "index_name"})
 
 _RATE_MIN_INTERVAL = 0.12   # 초당 10회 제한에 여유를 둔다
 _last_call = 0.0
@@ -228,8 +247,12 @@ def to_frame(records: list[dict], fields: list[str],
 
     # 수치 컬럼은 문자열로 온다('1,234' 형태 포함). 안 바꾸면 종가 비교가
     # 사전순으로 이뤄져 수익률이 통째로 엉킨다.
+    #
+    # 문자 컬럼 목록은 TEXT_FIELDS 한 곳에서만 관리한다. 예전엔 여기 튜플로
+    # 박혀 있었는데, 새 문자 컬럼(index_name)을 추가하자 **예외 없이 전 행이
+    # NaN**이 됐다. 그게 이 함수가 원래 막으려던 실패 방식 그대로다.
     for col in out.columns:
-        if col in ("ticker", "name", "sector"):
+        if col in TEXT_FIELDS:
             continue
         out[col] = pd.to_numeric(
             out[col].astype(str).str.replace(",", "", regex=False).str.strip(),
@@ -405,6 +428,88 @@ def fetch_panel(end_date: str, n_days: int, use_cache: bool = True
     volume = pd.DataFrame(volumes).T.sort_index()
     value = pd.DataFrame(values).T.sort_index()
     return dates, close, volume, value, (latest if latest is not None else pd.DataFrame())
+
+
+# ---- ETF (수평축 팩터 대용치) ---------------------------------------
+
+ETF_COLUMNS = ["name", "close", "volume", "value", "market_cap", "index_name", "nav"]
+
+
+def _etf_cache_path(bas_dd: str) -> Path:
+    return CACHE_DIR / f"etf_{bas_dd}.json"
+
+
+def etf_snapshot(bas_dd: str, use_cache: bool = True) -> pd.DataFrame:
+    """하루치 전 ETF 시세. 휴장일이면 빈 DataFrame.
+
+    ETN(etn_bydd_trd)은 **이용신청이 별도**다. 2026-07-28 라이브에서 401을 받았다.
+    설정의 팩터(달러·구리·유가·금·금리)는 전부 ETF 대용치가 존재하므로 ETF만으로
+    수평축을 세운다. ETN이 승인되면 여기에 kind를 붙이면 된다.
+    """
+    cache = _etf_cache_path(bas_dd)
+    if use_cache and cache.exists():
+        try:
+            records = json.loads(cache.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            records = None
+        if records is not None:
+            return _etf_frame(records)
+
+    category, endpoint = EP_ETF_OHLCV
+    records = fetch_raw(category, endpoint, bas_dd)
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    cache.write_text(json.dumps(records, ensure_ascii=False), encoding="utf-8")
+    return _etf_frame(records)
+
+
+def _etf_frame(records: list[dict]) -> pd.DataFrame:
+    if not records:
+        return pd.DataFrame(columns=ETF_COLUMNS)
+    df = to_frame(records,
+                  ["ticker", "name", "close", "volume", "value",
+                   "market_cap", "index_name", "nav"],
+                  optional=("volume", "value", "market_cap", "index_name", "nav"))
+    return df[~df.index.duplicated(keep="first")]
+
+
+def fetch_etf_panel(dates: list[str], use_cache: bool = True
+                    ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """이미 확정된 거래일 목록에 대한 ETF 종가 패널.
+
+    거래일을 **다시 탐색하지 않는다.** 종목 패널이 이미 확정한 날짜를 그대로
+    받는다. 그래야 두 패널의 인덱스가 문자 그대로 같아진다 — 날짜 라벨이
+    어긋나면 pandas는 예외 대신 전부 NaN을 만들고, 팩터 회귀가 조용히 0이 된다.
+
+    반환: (종가 패널 index=날짜 오름차순 columns=ETF 티커, 최신일 카탈로그)
+    """
+    closes: dict[str, pd.Series] = {}
+    catalog = pd.DataFrame(columns=ETF_COLUMNS)
+
+    def fetch(bas_dd):
+        try:
+            return bas_dd, etf_snapshot(bas_dd, use_cache=use_cache)
+        except KrxApiError as e:
+            print(f"  ETF {bas_dd} 조회 실패(건너뜀): {e}")
+            return bas_dd, pd.DataFrame(columns=ETF_COLUMNS)
+
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
+        results = list(pool.map(fetch, sorted(dates, reverse=True)))
+
+    for bas_dd, snap in results:
+        if snap.empty:
+            continue
+        if catalog.empty:
+            catalog = snap            # 최신순이라 첫 비지 않은 것이 최신 카탈로그
+        live = snap[snap["close"] > 0]
+        closes[bas_dd] = live["close"]
+
+    if not closes:
+        raise KrxApiError(
+            f"거래일 {len(dates)}일에 대해 ETF 시세가 한 건도 오지 않았습니다.\n"
+            "  openapi.krx.co.kr에서 'ETF 일별매매정보' 이용신청 상태를 확인하세요.")
+
+    close = pd.DataFrame(closes).T.sort_index()
+    return close, catalog
 
 
 def describe_schema(bas_dd: str) -> dict[str, list[str]]:

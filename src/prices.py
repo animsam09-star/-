@@ -112,6 +112,79 @@ def fetch_panel(end_date: str, n_days: int, use_cache: bool = True):
     return _pykrx_panel(end_date, n_days)
 
 
+def resolve_factor_proxies(specs: list[dict], dates: list[str],
+                           use_cache: bool = True
+                           ) -> tuple[dict[str, dict], pd.DataFrame]:
+    """팩터 이름 → 대용 ETF, 그리고 그 ETF들의 종가 패널.
+
+    티커를 하드코딩하지 않고 **상품명 키워드로 런타임에 해석**한다. ETF는 신규
+    상장·상장폐지가 잦아 티커를 박아 두면 조용히 빈 컬럼이 된다.
+
+    OpenAPI 경로에서는 ETN을 쓰지 않는다 — etn_bydd_trd가 401(이용신청 별도)이다.
+    설정의 팩터 6종은 전부 ETF 대용치가 있으므로 손실이 없지만, 어떤 팩터가
+    해석되지 않았는지는 **반드시 찍는다.** 조용히 빠지면 그 팩터의 노출도가
+    '0'이 아니라 '없음'인데도 리포트는 똑같아 보인다.
+    """
+    src = require_source()
+    if src != "openapi":
+        from . import factors                     # pykrx 경로는 기존 구현 그대로
+        base = dates[-1] if dates else ""
+        resolved = factors.resolve_factor_tickers(specs, base)
+        return resolved, factors.fetch_factor_panel(resolved, dates)
+
+    close, catalog = krx_api.fetch_etf_panel(dates, use_cache=use_cache)
+    names = catalog["name"].dropna().astype(str)
+
+    resolved: dict[str, dict] = {}
+    for spec in specs:
+        keywords = spec.get("keywords") or []
+        exclude = spec.get("exclude") or []
+        hits = [(t, n) for t, n in names.items()
+                if any(k in n for k in keywords) and not any(x in n for x in exclude)]
+        # 종가가 실제로 있는 것만 남긴다. 신규 상장이라 이력이 짧으면 회귀가 못 돈다.
+        hits = [(t, n) for t, n in hits if t in close.columns and close[t].notna().sum() >= 2]
+        if not hits:
+            print(f"  팩터 '{spec['name']}' 대용 ETF를 찾지 못해 건너뜁니다"
+                  f" (키워드 {keywords})")
+            continue
+        # 수식어(레버리지·헤지형 등)가 붙지 않은 기본 상품일 가능성이 높은 쪽
+        ticker, name = min(hits, key=lambda e: len(e[1]))
+        resolved[spec["name"]] = {"ticker": ticker, "proxy_name": name, "kind": "etf"}
+
+    panel = pd.DataFrame({fac: close[meta["ticker"]]
+                          for fac, meta in resolved.items()})
+    return resolved, panel
+
+
+def market_series(close: pd.DataFrame, snapshot_caps: pd.Series | None = None
+                  ) -> pd.Series:
+    """시장 수익률 대용 — 시가총액 가중 종합 지수.
+
+    지수 엔드포인트(idx/*)는 필드명을 라이브로 확인하지 못했고 이용신청 상태도
+    불확실하다. 확인되지 않은 엔드포인트에 기대는 대신, **이미 받아 둔 전 종목
+    패널로 직접 만든다.** KOSPI가 정의상 전 종목 시총가중 지수이므로 이건 대용이
+    아니라 재구성에 가깝다. 추가 호출도 0회다.
+
+    가중치가 없으면 동일가중으로 떨어진다. 그건 소형주에 과대 가중이 실려
+    시장 요인을 왜곡하므로, 그렇게 될 때는 로그로 알린다.
+    """
+    ret = close.pct_change()
+    if snapshot_caps is None or snapshot_caps.dropna().empty:
+        print("  시가총액이 없어 시장 수익률을 동일가중으로 계산합니다"
+              " — 소형주 쪽으로 치우칩니다")
+        return ret.mean(axis=1)
+    w = snapshot_caps.reindex(close.columns).astype(float)
+    w = w.where(w > 0).fillna(0.0)
+    if w.sum() <= 0:
+        return ret.mean(axis=1)
+    w = w / w.sum()
+    # 결측 종목이 있는 날은 남은 종목들 사이에서 가중치를 다시 정규화한다.
+    # 안 하면 상장 전 구간에서 시장 수익률이 통째로 축소된다.
+    mask = ret.notna()
+    denom = mask.mul(w, axis=1).sum(axis=1)
+    return ret.mul(w, axis=1).sum(axis=1).where(denom > 0).div(denom.replace(0, pd.NA))
+
+
 def entries_from_snapshot(snapshot: pd.DataFrame, base_date: str) -> dict[str, dict]:
     """기준일 스냅샷 → 종목 마스터 엔트리.
 
