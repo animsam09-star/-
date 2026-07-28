@@ -515,3 +515,49 @@ class TestBatchScopeGuard:
         monkeypatch.setenv("CLAUDE_CODE_OAUTH_TOKEN", "tok")
         monkeypatch.setattr(dx, "collect_documents", lambda *a, **k: ([], []))
         assert dx.run(["005930"], {}, "20260728", use_batch=False)["documents"] == 0
+
+
+class TestSubsectionHeaderIsNotATableRow:
+    """라이브에서 절 제목으로 '매출액, 영업이익, 매출액, 영업이익'이 잡혔다.
+
+    재무제표 표의 셀이다. 문구만으로 찾으면 표에 걸려 선별이 무력화되고,
+    168,442자가 그대로 상한에 걸린다. 제목의 '형태'를 함께 요구해야 한다.
+    """
+
+    def _doc(self, body_marker="본문"):
+        return ("II. 사업의 내용\n\n"
+                "1. 사업의 개요\n" + f"{body_marker} " * 100 + "\n\n"
+                "2. 주요 제품 및 서비스\n"
+                "| 구분 | 매출액 | 비중 |\n"
+                "매출액 | 1,234,567 | 55.0%\n"
+                "영업이익 | 98,765 | 4.4%\n" + f"{body_marker} " * 100 + "\n\n"
+                "3. 매출 및 수주상황\n주요 매출처는 건설사입니다.\n"
+                + f"{body_marker} " * 100 + "\n\n"
+                "4. 기타 참고사항\n매출액\n영업이익\n" + "기타 " * 2000 + "\n")
+
+    def test_table_cells_are_not_treated_as_headers(self):
+        _, titles = dart.slim_business_section(self._doc())
+        assert "매출액" not in titles and "영업이익" not in titles, titles
+
+    def test_numbered_headers_are_found(self):
+        _, titles = dart.slim_business_section(self._doc())
+        assert "사업의 개요" in titles
+        assert "매출 및 수주상황" in titles
+
+    def test_bulk_section_is_actually_removed(self):
+        """이게 실패하면 선별이 이름만 선별이다."""
+        doc = self._doc()
+        slim, _ = dart.slim_business_section(doc)
+        assert "기타 기타" not in slim
+        assert len(slim) < len(doc) * 0.5, f"{len(slim)}/{len(doc)}"
+
+    def test_korean_letter_enumerators_work(self):
+        """회사에 따라 '가. 나. 다.'를 쓴다."""
+        doc = ("II. 사업의 내용\n\n"
+               "가. 사업의 개요\n" + "개요 " * 300 + "\n\n"
+               "나. 원재료 및 생산설비\n석회석을 매입합니다.\n" + "원재료 " * 300 + "\n\n"
+               "다. 기타 참고사항\n" + "기타 " * 2000 + "\n")
+        slim, titles = dart.slim_business_section(doc)
+        assert "원재료 및 생산설비" in titles
+        assert "석회석을 매입합니다" in slim
+        assert "기타 기타" not in slim
