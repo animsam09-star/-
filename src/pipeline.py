@@ -14,6 +14,7 @@ import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+import pandas as pd
 import yaml
 
 from . import analyze as analyze_mod
@@ -68,7 +69,12 @@ def main():
         try:
             grp = groups_mod.build_groups(base_date, universe=set(close.columns))
             group_ret = groups_mod.group_returns(close, grp["groups"])
-            fac = factors_mod.build(close, group_ret, grp["groups"], base_date, hcfg)
+            # 시장 요인을 시총가중으로 만들려면 가중치가 필요하다. 종목 마스터에
+            # 이미 있으므로 추가 조회는 없다.
+            caps = pd.Series({t: e["market_cap"] for t, e in uni.entries.items()
+                              if e.get("market_cap")}, dtype="float64")
+            fac = factors_mod.build(close, group_ret, grp["groups"], base_date, hcfg,
+                                    market_caps=caps)
             horizontal = {**fac, "membership": grp["membership"], "groups": grp["groups"]}
         except Exception as e:
             print(f"수평 그래프 생성 실패(건너뜀): {e}")

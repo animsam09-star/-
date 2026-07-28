@@ -244,3 +244,52 @@ class TestMarketSeriesFromPanel:
         s = prices.market_series(close, caps)
         # B가 없는 날은 A 혼자 100%가 되어야 한다 — 0.9로 축소되면 안 된다
         assert s.loc["20260724"] == pytest.approx(0.10)
+
+
+class TestBuildGoesThroughTheSwitchboard:
+    """factors.build이 pykrx를 직접 부르지 않고 prices를 거치는지 고정한다.
+
+    이게 깨지면 인증키만 있는 환경에서 수평축이 통째로 죽는데, build은 예외를
+    삼키고 빈 dict를 돌려주므로 리포트는 '수평 파급 없음'으로 멀쩡히 나온다.
+    """
+
+    def test_factor_panel_and_market_come_from_prices(self, market, monkeypatch, tmp_path):
+        close, factor_panel, _ = market
+        from src import factors as F
+        from src import prices
+
+        calls = {}
+
+        def fake_resolve(specs, dates, use_cache=True):
+            calls["dates"] = list(dates)
+            return ({"구리": {"ticker": "999999", "proxy_name": "TIGER 구리실물",
+                              "kind": "etf"}},
+                    factor_panel[["구리"]])
+
+        monkeypatch.setattr(prices, "resolve_factor_proxies", fake_resolve)
+        monkeypatch.setattr(F, "DATA_DIR", tmp_path)
+        # pykrx를 건드리면 즉시 터지게 해 둔다 — 우회 경로가 남아 있으면 잡힌다
+        monkeypatch.setattr(F, "stock", None)
+
+        caps = pd.Series({t: 1e12 for t in close.columns})
+        out = F.build(close, groups.group_returns(close, GROUP), GROUP,
+                      close.index[-1], {"beta_window": 120, "gap_window": 5,
+                                        "min_abs_corr": 0.15, "min_group_corr": 0.2,
+                                        "max_peers_per_group": 6, "factors": []},
+                      market_caps=caps)
+
+        assert calls["dates"] == list(close.index)
+        assert out["factor_proxies"]["구리"]["proxy_name"] == "TIGER 구리실물"
+        # 시장 요인이 실제로 걸려야 부호가 갈린다(제련 +, 전선 −)
+        betas = {t: v["구리"]["beta"] for t, v in out["exposures"].items() if "구리" in v}
+        assert betas["000001"] > 0.3 and betas["000002"] < -0.2, betas
+
+    def test_market_series_replaces_the_index_alignment_failure(self, market):
+        """외부 지수 대신 패널에서 만든 시장 요인은 정렬 실패 검사에 걸리지 않는다."""
+        from src import factors as F
+        from src import prices
+        close, factor_panel, _ = market
+        mkt = prices.market_series(close, pd.Series({t: 1e12 for t in close.columns}))
+        exp = F.compute_exposures(close, factor_panel[["구리"]],
+                                  window=120, min_abs_corr=0.15, market_ret=mkt)
+        assert exp.get("exposures"), "시장 요인이 붙지 않아 노출이 비었다"

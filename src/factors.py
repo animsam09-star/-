@@ -162,7 +162,8 @@ def _beta_vs(returns: pd.DataFrame, x: pd.Series) -> tuple[pd.Series, pd.Series]
 
 
 def compute_exposures(close: pd.DataFrame, factor_panel: pd.DataFrame,
-                      window: int = 120, min_abs_corr: float = 0.2) -> dict:
+                      window: int = 120, min_abs_corr: float = 0.2,
+                      market_ret: pd.Series | None = None) -> dict:
     """시장 조정 후 팩터 노출도(베타·상관)를 계산한다.
 
     시장 요인을 먼저 제거하고 잔차에 각 팩터를 회귀하므로,
@@ -178,9 +179,14 @@ def compute_exposures(close: pd.DataFrame, factor_panel: pd.DataFrame,
     stock_ret = close.pct_change(fill_method=None).iloc[-window:]
     factor_ret = factor_panel.pct_change(fill_method=None).reindex(stock_ret.index)
 
-    if "시장" not in factor_ret.columns:
+    # 시장 요인은 밖에서 받는 쪽이 우선이다. 가격 패널로 직접 만든 것이라
+    # 인덱스가 정의상 어긋날 수 없다 — 아래 정렬 실패 검사에 걸릴 일이 없다.
+    if market_ret is not None:
+        mkt = as_date_index(market_ret).reindex(stock_ret.index)
+    elif "시장" in factor_ret.columns:
+        mkt = factor_ret["시장"]
+    else:
         return {}
-    mkt = factor_ret["시장"]
     if mkt.notna().sum() < window * MIN_VALID_RATIO:
         # 시장 시계열이 가격 패널과 정렬되지 않은 상태. 여기서 진행하면 시장 요인이
         # 0으로 취급되어 조용히 틀린 결과가 나오므로 중단한다.
@@ -327,20 +333,25 @@ def compute_group_gaps(close: pd.DataFrame, group_ret: pd.DataFrame,
 
 
 def build(close: pd.DataFrame, group_ret: pd.DataFrame, groups: dict[str, list[str]],
-          base_date: str, cfg: dict) -> dict:
-    """팩터 노출 + 그룹 갭을 계산해 저장한다."""
+          base_date: str, cfg: dict, market_caps: pd.Series | None = None) -> dict:
+    """팩터 노출 + 그룹 갭을 계산해 저장한다.
+
+    데이터 원천은 prices가 고른다(OpenAPI면 ETF, 아니면 pykrx). 시장 요인은
+    **양쪽 모두 가격 패널에서 직접 만든다** — 외부 지수 시계열을 끌어오면
+    날짜 라벨이 어긋났을 때 예외가 아니라 전부 NaN이 되고, 시장 요인이 0으로
+    취급되어 팩터 노출이 조용히 부풀려진다. 그 실패 경로 자체를 없앤다.
+    """
+    from . import prices                       # 순환 import 회피
     dates = list(close.index)
-    resolved = resolve_factor_tickers(cfg["factors"], base_date)
+    resolved, panel = prices.resolve_factor_proxies(cfg["factors"], dates)
     if resolved:
         print("  팩터 대용: " + ", ".join(f"{k}={v['proxy_name']}" for k, v in resolved.items()))
-    panel = fetch_factor_panel(resolved, dates)
 
-    market_ret = None
-    if not panel.empty and "시장" in panel.columns:
-        market_ret = panel["시장"].pct_change(fill_method=None).reindex(close.index)
+    market_ret = prices.market_series(close, market_caps)
 
     exposure = compute_exposures(close, panel, window=cfg["beta_window"],
-                                 min_abs_corr=cfg["min_abs_corr"])
+                                 min_abs_corr=cfg["min_abs_corr"],
+                                 market_ret=market_ret)
     gaps = compute_group_gaps(close, group_ret, groups, market_ret,
                               window=cfg["beta_window"], recent=cfg["gap_window"],
                               min_beta_corr=cfg["min_group_corr"])

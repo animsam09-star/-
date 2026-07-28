@@ -182,7 +182,10 @@ def market_series(close: pd.DataFrame, snapshot_caps: pd.Series | None = None
     # 안 하면 상장 전 구간에서 시장 수익률이 통째로 축소된다.
     mask = ret.notna()
     denom = mask.mul(w, axis=1).sum(axis=1)
-    return ret.mul(w, axis=1).sum(axis=1).where(denom > 0).div(denom.replace(0, pd.NA))
+    # NaN은 float로 넣는다. pd.NA를 쓰면 시리즈가 object dtype이 되고, 그때부터
+    # 산술이 조용히 파이썬 객체 연산으로 떨어진다.
+    num = ret.mul(w, axis=1).sum(axis=1)
+    return (num / denom.where(denom > 0)).astype("float64")
 
 
 def entries_from_snapshot(snapshot: pd.DataFrame, base_date: str) -> dict[str, dict]:
