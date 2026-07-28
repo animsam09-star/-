@@ -88,13 +88,23 @@ def main():
                 corr.industry_returns(close, caps, members),
                 prices.market_series(close, caps))
             persistent = corr.score_edges(persistent, ind_ret)
+            # 사이클 시차(월 단위)는 별도 워크플로가 긴 패널로 재서 남긴 값이다.
+            # 여기 lookback(130거래일)으로는 6~12개월 시차를 잴 수 없다.
+            cycle = corr.load_cycle_lags()
+            if cycle:
+                persistent = corr.attach_cycle_lags(persistent, cycle)
             price_review = {
+                "cycle_lags": cycle,
                 "weak": corr.review_queue(persistent),
                 "candidates": corr.candidates(ind_ret, persistent),
             }
             scored = sum(1 for e in persistent if "price_corr" in e)
             print(f"  가격 채점 {scored}개 / 근거 약한 엣지 {len(price_review['weak'])}개"
                   f" / 발굴 후보 {len(price_review['candidates'])}개(공시 확인 필요)")
+            if cycle:
+                print(f"  사이클 시차 {len(cycle)}건 적용 (별도 실측, python -m src.corr)")
+            else:
+                print("  사이클 시차 표 없음 — lead-lag 워크플로를 돌리면 채워진다")
         except Exception as e:
             print(f"  가격 채점 건너뜀: {e}")
 

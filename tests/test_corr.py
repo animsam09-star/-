@@ -170,3 +170,84 @@ class TestIndustryReturnsAreCapWeighted:
         out = corr.industry_returns(close, caps, {"조선": ["000001", "000002"]})
         assert pd.isna(out.loc[DATES[100], "조선"]), \
             "남은 한 종목의 등락이 산업 수익률로 둔갑했다"
+
+
+# ---- 사이클 시차(월 단위) ------------------------------------------------
+
+MONTHS = 21          # 거래일/월
+LONG_N = MONTHS * 48  # 4년치
+
+
+@pytest.fixture
+def cycle_world():
+    """수주 사이클: 조선의 월간 고유 충격이 **6개월 뒤** 기자재에 실린다.
+
+    일간 창(20거래일)으로는 절대 못 잡는 시차다. 그게 이 축이 따로 있는 이유다.
+    """
+    rng = np.random.default_rng(23)
+    dates = pd.date_range("2022-01-03", periods=LONG_N, freq="B").strftime("%Y%m%d")
+
+    # 월 단위 사이클 충격을 만들어 그 달의 거래일에 고르게 퍼뜨린다.
+    n_months = LONG_N // MONTHS
+    cycle = rng.normal(0, 0.05, n_months)
+    ship_daily = np.repeat(cycle, MONTHS) / MONTHS + rng.normal(0, 0.006, LONG_N)
+
+    lagged_cycle = np.concatenate([np.zeros(6), cycle[:-6]])       # 6개월 후행
+    parts_daily = np.repeat(lagged_cycle, MONTHS) / MONTHS + rng.normal(0, 0.006, LONG_N)
+
+    ind = pd.DataFrame({"조선": ship_daily, "조선 기자재": parts_daily}, index=dates)
+    return ind
+
+
+class TestCycleLagCoversValueChainHorizons:
+    """'기자재 6~12개월 후행'을 실측한다. 일간 창으로는 범위 밖이다."""
+
+    def test_daily_window_cannot_reach_six_months(self):
+        assert corr.MAX_LAG < 6 * MONTHS, \
+            "단기 창이 6개월을 덮으면 두 축을 나눈 의미가 없다"
+        assert corr.MAX_LAG_MONTHS >= 12, \
+            "밸류체인 주석의 6~12개월을 덮지 못한다"
+
+    def test_recovers_a_six_month_lag(self, cycle_world):
+        monthly = corr.to_monthly(cycle_world)
+        lag, c, n = corr.cycle_lead_lag(monthly["조선"], monthly["조선 기자재"])
+        assert lag == 6, f"심어 둔 6개월 시차를 찾지 못했다(lag={lag}, corr={c:.2f}, n={n})"
+        assert abs(c) > 0.3
+
+    def test_daily_lead_lag_misses_it(self, cycle_world):
+        """같은 데이터를 일간 창으로 보면 6개월 시차가 안 나온다 — 축을 나눈 근거."""
+        lag, c, n = corr.lead_lag(cycle_world["조선"], cycle_world["조선 기자재"],
+                                  max_lag=corr.MAX_LAG)
+        assert abs(lag) < 6 * MONTHS
+
+    def test_short_history_returns_nothing_rather_than_a_guess(self):
+        """표본이 모자라면 억지 숫자보다 '못 쟀다'가 낫다.
+
+        손으로 적어 둔 '6~12개월'이 잡음으로 만든 '3개월'보다 정확할 수 있다.
+        """
+        short = pd.Series(np.random.default_rng(1).normal(0, 0.05, 12))
+        lag, c, n = corr.cycle_lead_lag(short, short.shift(2).fillna(0))
+        assert (lag, c, n) == (0, 0.0, 0)
+
+    def test_monthly_blocks_do_not_overlap(self):
+        """겹치면 자기상관이 생겨 유효 표본이 부풀고, 우연한 시차가 유의해 보인다."""
+        daily = pd.Series(1.0, index=[f"d{i:03d}" for i in range(MONTHS * 5)])
+        monthly = corr.to_monthly(daily)
+        assert len(monthly) == 5
+        assert monthly.iloc[0] == pytest.approx(MONTHS)
+
+    def test_estimate_and_attach_do_not_create_edges(self, cycle_world):
+        edges = [G.make_edge(G.industry_node("조선"), G.industry_node("조선 기자재"),
+                             G.REL_UPSTREAM, "dart", origin="009540", asof="20260728")]
+        table = corr.estimate_cycle_lags(cycle_world, edges)
+        assert table["조선→조선 기자재"]["lag_months"] == 6
+        out = corr.attach_cycle_lags(edges, table)
+        assert len(out) == len(edges)
+        assert out[0]["cycle_lag_months"] == 6
+        assert "cycle_lag_months" not in edges[0], "원본이 변형됐다"
+
+    def test_unknown_pair_is_left_alone(self):
+        edges = [G.make_edge(G.industry_node("해운"), G.industry_node("정유"),
+                             G.REL_UPSTREAM, "dart", origin="011200", asof="20260728")]
+        out = corr.attach_cycle_lags(edges, {"조선→조선 기자재": {"lag_months": 6, "corr": 0.4}})
+        assert "cycle_lag_months" not in out[0]

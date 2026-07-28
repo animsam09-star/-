@@ -1,0 +1,60 @@
+# 밸류체인 사이클 시차 실측
+#
+# 밸류체인 YAML에 '기자재 6~12개월 후행'처럼 손으로 적어 둔 값을 교차상관으로 잰다.
+# 파이프라인에서 매일 돌리지 않는 이유가 둘이다.
+#   1. 4년치 패널이 필요해 KRX 조회가 무겁다(약 2,000회).
+#   2. 시차는 구조적 상수에 가깝지 매일 바뀌는 신호가 아니다.
+# 월 1회 돌려 data/lead_lag.json으로 남기고, 파이프라인은 그 파일을 읽는다.
+name: lead-lag
+
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: 패널 거래일 수 (기본 924 = 약 44개월)
+        required: false
+        default: "924"
+  schedule:
+    - cron: "0 20 1 * *"   # 매월 1일 05:00 KST
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Measure cycle lags
+        env:
+          KRX_OPENAPI_KEY: ${{ secrets.KRX_OPENAPI_KEY }}
+          KRX_ID: ${{ secrets.KRX_ID }}
+          KRX_PW: ${{ secrets.KRX_PW }}
+        run: python -m src.corr --days "${{ inputs.days || 924 }}"
+
+      - name: Commit lag table
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f data/lead_lag.json
+          if git diff --staged --quiet; then echo "변경 없음"; exit 0; fi
+          git commit -m "chore: 밸류체인 사이클 시차 실측 $(date +%Y-%m)"
+          # 수집이 오래 걸리는 사이 브랜치가 앞서 나갈 수 있다. 리베이스로 얹어 다시 민다.
+          for i in 1 2 3 4 5; do
+            git push origin HEAD:${{ github.ref_name }} && exit 0
+            echo "푸시 거부 — 리베이스 후 재시도 ($i/5)"
+            git pull --rebase origin ${{ github.ref_name }} || exit 1
+            sleep $((i * 3))
+          done
+          echo "::error::5회 재시도 후에도 푸시하지 못했습니다"; exit 1
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: lead-lag
+          path: data/lead_lag.json
+          if-no-files-found: warn
