@@ -516,6 +516,36 @@ BATCH_SCOPE_HINT = (
     "   2. ANTHROPIC_API_KEY를 따로 발급해 등록 (Batch는 요금 50%)")
 
 
+def preflight(model: str) -> bool:
+    """가장 작은 요청 하나로 '호출 자체가 되는가'를 판별한다.
+
+    429가 났을 때 원인이 둘로 갈리는데, 조치가 정반대다.
+      (가) 요청이 커서 분당 토큰 한도를 넘는다 → 문서를 더 줄인다
+      (나) 이 자격 증명으로는 Messages API를 못 쓴다 → 줄여도 소용없다
+
+    입력 10토큰짜리 요청이 통과하면 (가), 이것도 429면 (나)다. 사업보고서
+    5건을 12분간 태워 가며 알아낼 일이 아니다.
+    """
+    client = llm.build_client()
+    print(f"사전 점검: 최소 요청 1건 ({model}, 인증={llm.credential_kind()})")
+    try:
+        resp = client.messages.create(
+            model=model, max_tokens=8,
+            messages=[{"role": "user", "content": "ping"}])
+    except Exception as e:
+        status = getattr(e, "status_code", None)
+        print(f"  실패 — HTTP {status}: {str(e)[:300]}")
+        if status == 429:
+            print("  최소 요청조차 429입니다. 요청 크기 문제가 아닙니다.\n"
+                  "  이 자격 증명으로는 Messages API 호출이 불가하거나, 구독\n"
+                  "  사용량이 소진된 상태입니다. 문서를 더 줄여도 통과하지 않습니다.")
+        return False
+    text = "".join(b.text for b in resp.content if b.type == "text")[:60]
+    print(f"  통과 — 응답 {resp.usage.input_tokens}입력/"
+          f"{resp.usage.output_tokens}출력 토큰: {text!r}")
+    return True
+
+
 def run(tickers: list[str], cfg: dict, asof: str, use_batch: bool = True) -> dict:
     if not llm.has_credentials():
         raise SystemExit(llm.MISSING_HINT)
@@ -654,6 +684,8 @@ def main():
     p.add_argument("--model", help="config.yaml의 dart.model 덮어쓰기")
     p.add_argument("--no-batch", action="store_true",
                    help="Batch API 대신 순차 호출 (소량·즉시 확인용, 비용 2배)")
+    p.add_argument("--preflight", action="store_true",
+                   help="최소 요청 1건만 보내 호출 가능 여부를 확인하고 끝낸다")
     args = p.parse_args()
 
     cfg_all = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
@@ -662,6 +694,11 @@ def main():
     cfg.setdefault("max_tokens", 8000)
     if args.model:
         cfg["model"] = args.model
+
+    if not llm.has_credentials():
+        raise SystemExit(llm.MISSING_HINT)
+    if args.preflight:
+        raise SystemExit(0 if preflight(cfg["model"]) else 1)
 
     tickers = ([t.strip() for t in args.tickers.split(",") if t.strip()]
                if args.tickers else _default_tickers(args.top_n, args.date))

@@ -61,6 +61,16 @@ jobs:
           print(f"DART_API_KEY 확인 / Claude 인증: {kind}")
           PY
 
+      # 429가 났을 때 원인이 둘로 갈리고 조치가 정반대다. 최소 요청 1건이면
+      # 판별된다 — 사업보고서 5건을 12분간 태워 가며 알아낼 일이 아니다.
+      # 실패해도 계속 진행한다. 판별 결과와 본 실행 결과를 한 번에 봐야 한다.
+      - name: Preflight (LLM 호출 가능 여부)
+        continue-on-error: true
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: python -m src.dart_extract --preflight
+
       - name: Extract
         env:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
