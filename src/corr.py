@@ -353,6 +353,44 @@ def save_cycle_lags(table: dict, asof: str, panel_days: int,
     return path
 
 
+MD_FILE = ROOT / "data" / "lead_lag.md"
+
+
+def render_markdown(table: dict, asof: str, panel_days: int) -> str:
+    """사람이 읽는 표. JSON만 남기면 실제로 아무도 안 본다.
+
+    GitHub에서 파일을 클릭하면 그대로 렌더링되므로, 코드를 몰라도 확인할 수 있다.
+    """
+    months = panel_days / TRADING_DAYS_PER_MONTH
+    head = [
+        f"# 밸류체인 사이클 시차 (기준일 {asof})",
+        "",
+        f"패널 {panel_days:,}거래일(약 {months:.0f}개월) · 월간 누적 수익률 · 시장 요인 제거 후",
+        "",
+        "**읽는 법** — `+6개월`이면 왼쪽 산업이 오른쪽보다 6개월 **먼저** 움직였다는 뜻이다.",
+        "왼쪽이 오르면 오른쪽은 대략 그만큼 뒤에 따라올 여지가 있다.",
+        "",
+        "**주의** — 이건 관계의 *타이밍*이지 *존재*가 아니다. 관계 자체는 사업보고서에서",
+        "인용과 함께 확인된 것만 그래프에 있다. 상관이 낮다고 관계가 없는 게 아니라,",
+        "아직 가격에 안 실렸거나 소속 종목이 적어 잡음이 큰 것일 수 있다.",
+        "",
+    ]
+    if not table:
+        head += ["측정된 시차가 없습니다. 패널이 짧거나 산업별 소속 종목이 부족합니다.", ""]
+        return "\n".join(head)
+
+    head += ["| 선행 산업 | 후행 산업 | 시차 | 상관 | 관측(개월) |",
+             "|---|---|---:|---:|---:|"]
+    rows = sorted(table.items(), key=lambda kv: -abs(kv[1]["corr"]))
+    for key, v in rows:
+        a, _, b = key.partition("→")
+        lag = v["lag_months"]
+        label = f"{lag:+d}개월" if lag else "동행"
+        head.append(f"| {a} | {b} | {label} | {v['corr']:+.2f} | {v['obs']} |")
+    head += ["", f"총 {len(table)}건. 상관 절대값이 큰 순.", ""]
+    return "\n".join(head)
+
+
 def main() -> None:
     """긴 패널로 사이클 시차를 재서 파일로 남긴다 (python -m src.corr).
 
@@ -390,8 +428,9 @@ def main() -> None:
                       prices.market_series(close, caps))
     table = estimate_cycle_lags(ind, edges)
     out = save_cycle_lags(table, base, len(dates))
+    MD_FILE.write_text(render_markdown(table, base, len(dates)), encoding="utf-8")
 
-    print(f"\n사이클 시차 {len(table)}건 → {out}")
+    print(f"\n사이클 시차 {len(table)}건 → {out}, {MD_FILE}")
     for k, v in sorted(table.items(), key=lambda kv: -abs(kv[1]["corr"]))[:25]:
         arrow = "선행" if v["lag_months"] > 0 else ("후행" if v["lag_months"] < 0 else "동행")
         print(f"  {k:44} {v['lag_months']:+3d}개월({arrow})  "
