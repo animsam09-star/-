@@ -649,3 +649,42 @@ class TestIndustryVocabulary:
         names = dx.known_industries([edge])
         assert "탄소복합재" in names
         assert "조선" in names, "YAML 어휘가 사라졌다"
+
+
+class TestCrossReferenceTrap:
+    """뒤쪽 절의 "Ⅱ. 사업의 내용 - 5. …를 참조하시기 바랍니다" 문장에서 시작하면
+    이미 III을 지난 뒤라 종료 경계가 없고, 그 후보가 문서 끝까지 이어져 가장
+    길어진다. '가장 긴 후보를 고른다'는 목차 대책이 정반대로 작동한 것이다.
+    실제로 현대건설·LS의 '사업의 내용'이 회계감사인 절로 잘렸다.
+    """
+
+    def _doc(self):
+        return ("목차\nⅡ. 사업의 내용\nⅢ. 재무에 관한 사항\n\n"
+                "Ⅱ. 사업의 내용\n1. 사업의 개요\n" + "본문 " * 200 + "\n"
+                "4. 매출 및 수주상황\n주요 매출처는 관급 발주처입니다.\n" + "본문 " * 200 + "\n"
+                "Ⅲ. 재무에 관한 사항\n" + "재무 " * 500 + "\n"
+                "IV. 이사의 경영진단\n"
+                "Ⅱ. 사업의 내용 - 5. 위험관리 및 파생거래를 참조하시기 바랍니다.\n"
+                "V. 회계감사인의 감사의견 등\n" + "감사 " * 5000)
+
+    def test_picks_the_real_section_not_the_longest(self):
+        sec = dart.extract_business_section(self._doc())
+        assert "주요 매출처는 관급 발주처입니다" in sec
+        assert "감사 감사" not in sec, "회계감사인 절이 통째로 딸려 왔다"
+        assert "재무 재무" not in sec, "재무 절이 딸려 왔다"
+
+    def test_table_of_contents_still_loses(self):
+        """상호참조 대책이 원래의 목차 대책을 깨뜨리면 안 된다."""
+        sec = dart.extract_business_section(self._doc())
+        assert len(sec) > dart.MIN_SECTION_CHARS
+        assert "1. 사업의 개요" in sec
+
+    def test_heading_with_trailing_sentence_is_not_a_heading(self):
+        ref = "Ⅱ. 사업의 내용 중 7. 기타 참고사항을 참조하시길 바랍니다.\n" + "잡음 " * 500
+        assert dart.extract_business_section(ref) == ""
+
+    def test_unbounded_candidate_used_only_when_nothing_is_bounded(self):
+        """종료 경계가 아예 없는 보고서도 있다. 그때까지 포기하면 안 된다."""
+        doc = "Ⅱ. 사업의 내용\n1. 사업의 개요\n" + "본문 " * 200
+        sec = dart.extract_business_section(doc)
+        assert "1. 사업의 개요" in sec

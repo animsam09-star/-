@@ -56,6 +56,9 @@ _SECTION_END = re.compile(
 
 # 절을 못 찾았다고 볼 하한. 목차 항목은 수십 자에 그치므로 이보다 훨씬 짧다.
 MIN_SECTION_CHARS = 200
+# 제목 줄에서 제목 뒤에 허용하는 글자 수. 실제 상호참조는 "- 5. 위험관리 및
+# 파생거래를 참조하시기 바랍니다."처럼 길다. 목차의 점선·쪽번호는 짧아서 통과한다.
+MAX_HEADING_TAIL = 12
 
 _TAG = re.compile(r"<[^>]+>")
 _WS = re.compile(r"[ \t ]+")
@@ -207,22 +210,41 @@ def extract_business_section(text: str) -> str:
     전체 문서는 수십만 자라 그대로 LLM에 넣으면 비싸고 정확도도 떨어진다.
     필요한 정보(주요 제품, 원재료, 매출처)는 전부 이 절에 있다.
 
-    **목차 함정** — 문서 앞머리 목차에도 같은 제목이 있어서, 첫 매치를 쓰면
-    목차 몇 줄만 잘라 놓고 성공한 것처럼 보인다. 예외도 경고도 나지 않는다.
-    목차에서는 'III. 재무에 관한 사항'이 바로 다음 줄에 오므로 잘린 길이가
-    수십 자에 그친다. 그래서 **가장 긴 후보를 고른다** — 임계값을 맞출 필요 없이
-    본문이 항상 이긴다.
+    **목차 함정** — 문서 앞머리 목차에도 같은 제목이 있다. 첫 매치를 쓰면 목차
+    몇 줄만 잘라 놓고 성공한 것처럼 보인다. 목차에서는 'III. 재무에 관한 사항'이
+    바로 다음 줄에 오므로 길이가 수십 자에 그쳐, 더 긴 후보가 이긴다.
+
+    **상호참조 함정** — 뒤쪽 절에 "Ⅱ. 사업의 내용 - 5. 위험관리를 참조하시기
+    바랍니다" 같은 문장이 있다. 여기서 시작하면 이미 III을 지난 뒤라 **종료
+    경계가 없고**, 그 후보가 문서 끝까지 이어져 가장 길어진다. 길이만 보면
+    상호참조가 항상 이긴다 — 실제로 현대건설과 LS가 그렇게 잘못 잘렸다.
+
+    그래서 두 가지를 요구한다.
+      1. 제목 줄에는 제목만 있어야 한다. 뒤에 문장이 붙어 있으면 상호참조다.
+      2. 종료 경계를 찾은 후보를 우선한다. 못 찾은 후보(문서 끝까지)는 길이가
+         아무리 길어도 뒤로 밀린다.
 
     경계를 못 찾으면 빈 문자열을 돌려준다 — 통짜 문서를 넘기면 비용만 커지고
     엉뚱한 절을 읽는다.
     """
-    best = ""
+    bounded, unbounded = "", ""
     for start in _SECTION_START.finditer(text):
+        # 제목 줄의 나머지. "- 5. 위험관리를 참조하시기 바랍니다" 같은 꼬리가
+        # 붙어 있으면 제목이 아니라 본문 속 상호참조다.
+        line_end = text.find("\n", start.end())
+        tail = text[start.end():line_end if line_end != -1 else len(text)].strip()
+        if len(tail) > MAX_HEADING_TAIL:
+            continue
+
         body = text[start.start():]
         end = _SECTION_END.search(body, 1)
         section = (body[:end.start()] if end else body).strip()
-        if len(section) > len(best):
-            best = section
+        if end:
+            bounded = max(bounded, section, key=len)
+        else:
+            unbounded = max(unbounded, section, key=len)
+
+    best = bounded or unbounded
     return best if len(best) >= MIN_SECTION_CHARS else ""
 
 
