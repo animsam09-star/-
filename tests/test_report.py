@@ -1,5 +1,7 @@
 """리포트·프롬프트 렌더링 검증: 부호·갭·축 표기가 출력에 실제로 반영되는지 확인."""
 
+import re
+
 import pytest
 
 from src import analyze, report, universe
@@ -146,59 +148,72 @@ def test_telegram_falls_back_without_analysis():
 
 # ---- 밸류체인 탭 ---------------------------------------------------------
 
-class TestValuechainTab:
-    """구축한 밸류체인을 눈으로 검증할 수 있어야 한다.
+class TestValuechainTabIsADiagram:
+    """밸류체인은 방향이 있는 흐름이라 글보다 그림이 빠르게 읽힌다.
 
-    이 그래프의 값어치는 관계 개수가 아니라 근거다. 인용문이 화면에 없으면
-    사람은 그 관계를 믿을 근거가 없고, 그러면 그래프 자체가 무의미해진다.
+    이전 판은 표와 인용문이었다. 정보는 다 있었지만 '무엇이 무엇으로 흐르는가'가
+    한눈에 안 들어왔다. 인용문은 화면에서 뺐다 — 근거는 그래프 파일에 그대로
+    남아 있고, 매일 보는 화면에서는 오히려 시야를 가린다.
     """
 
     def _edges(self):
         from src import graph as G
         return [
             G.make_edge(G.ticker_node("009540"), G.industry_node("조선"),
-                        G.REL_MEMBER, "dart", origin="009540", asof="20260728",
-                        evidence="조 선 제품 선 박 外 25,036,454(83.6%)"),
+                        G.REL_MEMBER, "dart", origin="009540", asof="20260728"),
             G.make_edge(G.ticker_node("010140"), G.industry_node("조선"),
                         G.REL_MEMBER, "valuechain", asof="20260728"),
+            G.make_edge(G.ticker_node("005490"), G.industry_node("후판·강재"),
+                        G.REL_MEMBER, "valuechain", asof="20260728"),
+            G.make_edge(G.ticker_node("011200"), G.industry_node("해운"),
+                        G.REL_MEMBER, "dart", origin="011200", asof="20260728"),
             G.make_edge(G.industry_node("조선"), G.industry_node("후판·강재"),
                         G.REL_UPSTREAM, "dart", origin="009540", asof="20260728",
                         evidence="〃 강 재 〃 2,156,875(19.2%)"),
             G.make_edge(G.industry_node("조선"), G.industry_node("후판·강재"),
                         G.REL_UPSTREAM, "dart", origin="010620", asof="20260728",
-                        evidence="철판, 형강 등 철강 제품은 POSCO, 현대제철 및 일본, 중국"),
+                        evidence="철판, 형강 등 철강 제품은 POSCO, 현대제철"),
             G.make_edge(G.industry_node("조선"), G.industry_node("해운"),
                         G.REL_DOWNSTREAM, "dart", origin="011200", asof="20260728",
-                        evidence="메탄올 연료 추진 9,000TEU 급 컨테이너선 9척을 발주"),
+                        evidence="컨테이너선 9척을 발주"),
         ]
 
     NAMES = {"009540": "HD한국조선해양", "010140": "삼성중공업",
-             "010620": "HD현대미포", "011200": "HMM"}
+             "005490": "POSCO홀딩스", "011200": "HMM"}
 
     def _html(self):
         return report.render_valuechain(self._edges(), self.NAMES)
 
-    def test_quotes_are_visible(self):
-        """근거 문장이 화면에 없으면 관계를 믿을 방법이 없다."""
+    def test_renders_svg_not_tables(self):
         h = self._html()
-        assert "2,156,875(19.2%)" in h
-        assert "컨테이너선 9척을 발주" in h
+        assert "<svg" in h
+        assert "<details>" not in h, "펼쳐 읽는 방식은 그림 우선과 어긋난다"
 
-    def test_cross_validation_is_marked(self):
-        """두 회사가 독립적으로 같은 관계를 말한 것이 드러나야 한다."""
+    def test_flow_direction_is_labelled(self):
+        """방향이 없으면 후방과 전방이 뒤집혀도 알 수 없다."""
         h = self._html()
-        assert "×2" in h
-        assert "HD한국조선해양" in h and "HD현대미포" in h
+        assert "공급(후방)" in h and "수요(전방)" in h
 
-    def test_membership_source_is_distinguishable(self):
-        """공시 근거가 있는 소속과 사람이 쓴 맵을 섞으면 신뢰도가 뭉개진다."""
+    def test_member_stocks_are_on_the_diagram(self):
+        """산업만 보이면 '그래서 뭘 사야 하나'에 답이 안 된다."""
         h = self._html()
-        assert 'class="mchip m-dart" title="사업보고서 인용 근거 있음"' in h
-        assert 'class="mchip m-map"' in h
+        assert "HD한국조선해양" in h
+        assert "POSCO홀딩스" in h
+        assert "HMM" in h
 
-    def test_upstream_and_downstream_are_separated(self):
+    def test_cross_validation_shows_as_line_weight(self):
+        """숫자를 읽지 않아도 신뢰도가 눈에 들어와야 한다."""
+        from src import report as R
+        thin = R._vc_link(0, 0, 10, 10, 1)
+        thick = R._vc_link(0, 0, 10, 10, 5)
+        def w(s): return float(re.search(r'stroke-width="([\d.]+)"', s).group(1))
+        assert w(thick) > w(thin)
+
+    def test_quotes_are_not_rendered(self):
+        """근거는 그래프에 남기고 화면에서는 뺀다."""
         h = self._html()
-        assert "후방(공급)" in h and "전방(수요)" in h
+        assert "2,156,875" not in h
+        assert "컨테이너선 9척" not in h
 
     def test_no_external_resources(self):
         """CDN을 부르면 그 호스트가 죽는 날 화면이 조용히 빈다."""
@@ -207,5 +222,4 @@ class TestValuechainTab:
             assert bad not in h, f"외부 리소스 참조: {bad}"
 
     def test_empty_graph_does_not_crash(self):
-        h = report.render_valuechain([], {})
-        assert "밸류체인" in h
+        assert "밸류체인" in report.render_valuechain([], {})

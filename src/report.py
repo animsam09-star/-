@@ -573,127 +573,161 @@ def build(base_date: str, candidates: list[dict], analysis: dict, cfg: dict,
 
 
 # ---- 밸류체인 탭 ---------------------------------------------------------
+#
+# 그림 우선이다. 표와 인용문으로 된 이전 판은 정보는 다 있었지만 '무엇이 무엇으로
+# 흐르는가'가 한눈에 안 들어왔다. 밸류체인은 본질적으로 방향이 있는 흐름이라
+# 왼쪽(공급) → 가운데(산업) → 오른쪽(수요) 배치가 글보다 빠르게 읽힌다.
+#
+# 인용문은 화면에서 뺐다. 근거는 그래프 파일에 그대로 남아 있고 필요할 때
+# 꺼내 볼 수 있다 — 매일 보는 화면에서는 그게 오히려 시야를 가린다.
 
-def _member_chip(ticker: str, names: dict, sourced: bool) -> str:
-    """소속 종목 칩. 공시 근거가 있는 것과 맵에만 있는 것을 시각적으로 가른다."""
-    nm = names.get(ticker) or ticker
-    cls = "m-dart" if sourced else "m-map"
-    title = "사업보고서 인용 근거 있음" if sourced else "밸류체인 맵(사람이 작성)"
-    return f'<span class="mchip {cls}" title="{title}">{_esc(nm)}</span>'
+_VC_BOX_W = 168
+_VC_ROW_H = 62
+_VC_GAP = 232
+
+
+def _vc_box(x: float, y: float, name: str, members: list[str], *,
+            accent: bool = False) -> str:
+    """산업 상자 하나. 이름 아래에 소속 종목을 적는다.
+
+    종목명이 없으면 산업만 보이는데, 그러면 '그래서 뭘 사야 하나'에 답이 안 된다.
+    이 그래프의 쓸모는 산업이 아니라 종목까지 내려가는 데 있다.
+    """
+    shown = members[:3]
+    more = len(members) - len(shown)
+    label = ", ".join(shown) + (f" 외 {more}" if more > 0 else "")
+    fill = "var(--chip)" if accent else "var(--card)"
+    stroke = "var(--accent)" if accent else "var(--line)"
+    weight = "700" if accent else "500"
+    out = [f'<rect x="{x}" y="{y}" width="{_VC_BOX_W}" height="46" rx="8" '
+           f'fill="{fill}" stroke="{stroke}" stroke-width="{2 if accent else 1}"/>',
+           f'<text x="{x + _VC_BOX_W / 2}" y="{y + 19}" text-anchor="middle" '
+           f'font-size="12.5" font-weight="{weight}" fill="var(--fg)">'
+           f'{_esc(name[:13])}</text>']
+    if label:
+        out.append(f'<text x="{x + _VC_BOX_W / 2}" y="{y + 35}" text-anchor="middle" '
+                   f'font-size="9.5" fill="var(--muted)">{_esc(label[:24])}</text>')
+    elif not accent:
+        out.append(f'<text x="{x + _VC_BOX_W / 2}" y="{y + 35}" text-anchor="middle" '
+                   f'font-size="9.5" fill="var(--muted)">상장 종목 없음</text>')
+    return "".join(out)
+
+
+def _vc_link(x1: float, y1: float, x2: float, y2: float, strength: int) -> str:
+    """관계 선. 굵기가 교차 검증 횟수다.
+
+    몇 개 회사가 독립적으로 같은 말을 했는지가 이 그래프에서 가장 믿을 만한
+    품질 신호라, 그걸 굵기로 드러낸다. 숫자를 읽지 않아도 눈에 들어온다.
+    """
+    w = min(4.0, 1.0 + strength * 0.7)
+    op = min(0.85, 0.35 + strength * 0.15)
+    mx = (x1 + x2) / 2
+    return (f'<path d="M{x1} {y1} C {mx} {y1}, {mx} {y2}, {x2} {y2}" fill="none" '
+            f'stroke="var(--accent)" stroke-width="{w:.1f}" opacity="{op:.2f}"/>')
+
+
+def _vc_diagram(industry: str, members: dict, ups: list, downs: list) -> str:
+    """한 산업의 후방 → 산업 → 전방 흐름 그림."""
+    rows = max(len(ups), len(downs), 1)
+    h = rows * _VC_ROW_H + 24
+    w = _VC_GAP * 2 + _VC_BOX_W
+    mid = h / 2 - 23
+
+    out = [f'<svg viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img" '
+           f'aria-label="{_esc(industry)} 밸류체인">']
+
+    def col(items, x, anchor_x):
+        for i, (name, strength) in enumerate(items):
+            y = 12 + i * _VC_ROW_H + (rows - len(items)) * _VC_ROW_H / 2
+            out.append(_vc_link(anchor_x, mid + 23,
+                                x + (_VC_BOX_W if x < _VC_GAP else 0), y + 23, strength))
+            out.append(_vc_box(x, y, name, sorted(members.get(name, ()))))
+
+    col(ups, 0, _VC_GAP)                       # 왼쪽: 공급(후방)
+    col(downs, _VC_GAP * 2, _VC_GAP + _VC_BOX_W)   # 오른쪽: 수요(전방)
+    out.append(_vc_box(_VC_GAP, mid, industry, sorted(members.get(industry, ())),
+                       accent=True))
+    out.append("</svg>")
+    return "".join(out)
 
 
 def render_valuechain(edges: list[dict], names: dict[str, str],
                       site_title: str = "밸류체인") -> str:
-    """구축된 밸류체인 전체를 훑어보는 페이지.
-
-    이 그래프의 값어치는 관계의 개수가 아니라 **근거**다. 그래서 화면의 중심에
-    인용문을 둔다 — 관계를 클릭하면 그 관계를 주장한 회사와 사업보고서 원문
-    문장이 그대로 나온다. 눈으로 검증할 수 없는 관계는 없는 것과 같다.
-    """
+    """구축된 밸류체인을 그림으로 훑어보는 페이지."""
     from . import graph as G
 
     members: dict[str, set] = {}
-    sourced: set[tuple[str, str]] = set()      # (산업, 티커) 중 공시 근거가 있는 것
-    rel_rows: dict[tuple[str, str, str], list[dict]] = {}
+    ups: dict[str, dict[str, set]] = {}
+    downs: dict[str, dict[str, set]] = {}
 
     for e in edges:
         sk, sn = G.split_node(e["src"])
         dk, dn = G.split_node(e["dst"])
         if e["rel"] == G.REL_MEMBER and sk == "T" and dk == "I":
-            members.setdefault(dn, set()).add(sn)
-            if e.get("source") == "dart":
-                sourced.add((dn, sn))
-        elif sk == "I" and dk == "I" and e["rel"] in (G.REL_UPSTREAM, G.REL_DOWNSTREAM):
-            rel_rows.setdefault((sn, e["rel"], dn), []).append(e)
+            members.setdefault(dn, set()).add(names.get(sn) or sn)
+        elif sk == "I" and dk == "I":
+            bucket = ups if e["rel"] == G.REL_UPSTREAM else (
+                downs if e["rel"] == G.REL_DOWNSTREAM else None)
+            if bucket is None:
+                continue
+            who = e.get("origin") or e.get("source") or "?"
+            bucket.setdefault(sn, {}).setdefault(dn, set()).add(who)
 
-    industries = sorted(members, key=lambda i: (-len(members[i]), i))
-    for (a, _r, b) in rel_rows:
-        for n in (a, b):
-            if n not in industries:
-                industries.append(n)
+    industries = sorted(set(members) | set(ups) | set(downs),
+                        key=lambda i: (-(len(members.get(i, ())) * 2
+                                         + len(ups.get(i, {})) + len(downs.get(i, {}))), i))
 
-    cross = sum(1 for v in rel_rows.values()
-                if len({e.get("origin") for e in v if e.get("origin")}) >= 2)
-    all_tickers = {t for v in members.values() for t in v}
-    quoted = sum(1 for v in rel_rows.values() if any(e.get("source") == "dart" for e in v))
+    all_stocks = {s for v in members.values() for s in v}
+    rel_count = sum(len(v) for v in ups.values()) + sum(len(v) for v in downs.values())
+    cross = sum(1 for v in ups.values() for w in v.values() if len(w) >= 2)
 
     kpis = "".join(
         f'<div class="kpi"><div class="v">{v}</div><div class="l">{l}</div></div>'
-        for l, v in [("산업 노드", len(industries)), ("소속 종목", len(all_tickers)),
-                     ("산업 간 관계", len(rel_rows)), ("공시 인용 관계", quoted),
-                     ("교차 검증 관계", cross)])
+        for l, v in [("산업", len(industries)), ("소속 종목", len(all_stocks)),
+                     ("산업 간 관계", rel_count), ("교차 검증", cross)])
 
     cards = []
     for ind in industries:
-        mem = sorted(members.get(ind, ()), key=lambda t: (names.get(t) or t))
-        chips = "".join(_member_chip(t, names, (ind, t) in sourced) for t in mem) or \
-            '<span class="muted">소속 종목 없음 — 상장된 순수 사업자가 없거나 아직 매핑되지 않음</span>'
-
-        def _rels(rel: str, label: str) -> str:
-            items = []
-            for (a, r, b), es in sorted(rel_rows.items()):
-                if a != ind or r != rel:
-                    continue
-                origins = sorted({e["origin"] for e in es if e.get("origin")})
-                badge = (f'<span class="xv">×{len(origins)}</span>' if len(origins) >= 2 else "")
-                lag = next((e.get("cycle_lag_months") for e in es
-                            if e.get("cycle_lag_months") is not None), None)
-                lagtxt = f'<span class="chip">{lag:+d}개월</span>' if lag else ""
-                quotes = "".join(
-                    f'<li><b>{_esc(names.get(e.get("origin")) or e.get("origin") or e.get("source"))}</b>'
-                    f' — <span class="q">{_esc(e.get("evidence"))}</span></li>'
-                    for e in es[:6] if e.get("evidence"))
-                body = (f'<details><summary>{_esc(b)} {badge}{lagtxt}</summary>'
-                        f'<ul class="quotes">{quotes}</ul></details>') if quotes else \
-                       f'<div class="norel">{_esc(b)} {badge}{lagtxt}</div>'
-                items.append(body)
-            if not items:
-                return ""
-            return f'<div class="rel"><span class="rl">{label}</span>{"".join(items)}</div>'
-
-        up = _rels(G.REL_UPSTREAM, "후방(공급)")
-        down = _rels(G.REL_DOWNSTREAM, "전방(수요)")
+        u = sorted(((k, len(w)) for k, w in ups.get(ind, {}).items()),
+                   key=lambda kv: -kv[1])[:4]
+        d = sorted(((k, len(w)) for k, w in downs.get(ind, {}).items()),
+                   key=lambda kv: -kv[1])[:4]
+        if not u and not d and len(members.get(ind, ())) < 2:
+            continue          # 연결도 소속도 없는 노드는 그림이 될 게 없다
+        key = " ".join([ind] + [x for x, _ in u + d] + sorted(members.get(ind, ())))
         cards.append(
-            f'<div class="card vc" data-k="{_esc(ind)} {_esc(" ".join(names.get(t) or t for t in mem))}">'
-            f'<h3>{_esc(ind)} <span class="chip">{len(mem)}종목</span></h3>'
-            f'<div class="mchips">{chips}</div>{up}{down}</div>')
+            f'<div class="card vc" data-k="{_esc(key)}">'
+            f'<h3>{_esc(ind)} <span class="chip">{len(members.get(ind, ()))}종목</span></h3>'
+            f'<div class="scroll">{_vc_diagram(ind, members, u, d)}</div></div>')
 
     css_extra = """
-.mchips { margin:6px 0 10px; }
-.mchip { display:inline-block; border-radius:6px; padding:1px 8px; margin:2px 4px 2px 0;
-         font-size:.82rem; border:1px solid var(--line); }
-.mchip.m-dart { background:var(--chip); color:var(--accent); border-color:var(--accent); }
-.mchip.m-map { color:var(--muted); }
-.rel { margin-top:8px; padding-left:10px; border-left:2px solid var(--line); }
-.rl { display:block; font-size:.76rem; color:var(--muted); margin-bottom:3px; }
-details { margin:2px 0; } summary { cursor:pointer; font-size:.9rem; }
-.norel { font-size:.9rem; color:var(--muted); }
-.quotes { list-style:none; margin:4px 0 8px 4px; font-size:.8rem; }
-.quotes li { padding:3px 0; border-bottom:1px dashed var(--line); }
-.q { color:var(--muted); }
-.xv { background:var(--good); color:#fff; border-radius:99px; padding:0 6px;
-      font-size:.7rem; margin-left:4px; }
-#f { width:100%; padding:9px 12px; border-radius:9px; border:1px solid var(--line);
-     background:var(--card); color:var(--fg); font-size:.95rem; margin:12px 0 4px; }
+.vc h3 { margin-bottom:2px; }
+.legend2 { display:flex; gap:18px; flex-wrap:wrap; align-items:center;
+           font-size:.78rem; color:var(--muted); margin:10px 0 4px; }
+#f { width:100%; padding:10px 13px; border-radius:9px; border:1px solid var(--line);
+     background:var(--card); color:var(--fg); font-size:.95rem; margin:14px 0 2px; }
 """
     js = ("<script>const f=document.getElementById('f');"
           "f.addEventListener('input',()=>{const q=f.value.trim().toLowerCase();"
           "document.querySelectorAll('.vc').forEach(c=>{"
           "c.style.display=!q||c.dataset.k.toLowerCase().includes(q)?'':'none';});});</script>")
 
+    legend = (
+        '<div class="legend2">'
+        '<span>← 왼쪽 = 공급(후방)</span>'
+        '<span>가운데 = 해당 산업</span>'
+        '<span>오른쪽 = 수요(전방) →</span>'
+        '<span>선이 굵을수록 여러 회사가 같은 관계를 말함</span></div>')
+
     return (f"<!doctype html><html lang='ko'><head><meta charset='utf-8'>"
             f"<meta name='viewport' content='width=device-width,initial-scale=1'>"
             f"<title>{_esc(site_title)} — 밸류체인</title>"
             f"<style>{CSS}{css_extra}</style></head><body>"
             f'<header><div class="inner"><h1>밸류체인</h1>'
-            f'<p class="sub">사업보고서에서 인용과 함께 추출한 산업 관계 · '
+            f'<p class="sub">사업보고서에서 추출한 산업 간 흐름 · '
             f'<a href="index.html">리포트로</a></p>'
             f'<div class="kpis">{kpis}</div></div></header><main>'
             f'<input id="f" placeholder="산업명·종목명으로 거르기 (예: 조선, 시멘트, 포스코)">'
-            f'<p class="muted">관계를 펼치면 <b>그 관계를 주장한 회사와 사업보고서 원문 '
-            f'문장</b>이 나옵니다. <span class="xv">×2</span>는 서로 다른 회사가 독립적으로 '
-            f'같은 관계를 말했다는 뜻입니다. 진한 칩은 공시 근거가 있는 소속, '
-            f'흐린 칩은 사람이 작성한 맵입니다.</p>'
-            f'{"".join(cards)}'
+            f'{legend}{"".join(cards)}'
             f'<p class="muted">본 자료는 자동 생성된 참고 자료이며 투자 권유가 아닙니다.</p>'
             f"</main>{js}</body></html>")
