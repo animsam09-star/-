@@ -10,3 +10,8 @@ data/dart_docs/
 # 수평축 엣지는 매일 재계산되는 산출물 — 커밋하면 diff만 더럽힌다.
 # 수직축 엣지(graph/edges.jsonl)는 누적 자산이므로 커밋 대상이다.
 data/edges_*.jsonl
+# KRX 일별 스냅샷 캐시 — 재조회 방지용. 크고, 언제든 다시 받을 수 있다
+data/krx_cache/
+# 추출 실행 리포트 — 매 실행 산출물이라 아티팩트로만 남긴다
+data/dart_extract_*.json
+.pytest_cache/

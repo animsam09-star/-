@@ -380,8 +380,47 @@ def _parse(response) -> dict | None:
     return None
 
 
+RETRY_STATUS = (429, 500, 502, 503, 529)
+MAX_LLM_RETRIES = 5
+
+
+def _retry_after(exc) -> float | None:
+    """서버가 알려 준 대기 시간. 추측보다 이게 항상 낫다."""
+    resp = getattr(exc, "response", None)
+    headers = getattr(resp, "headers", None) or {}
+    for key in ("retry-after", "anthropic-ratelimit-input-tokens-reset"):
+        raw = headers.get(key)
+        if not raw:
+            continue
+        try:
+            return float(raw)
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
 def extract_one(client: Anthropic, doc: dict, vocab: IndustryVocab, cfg: dict) -> dict | None:
-    return _parse(client.messages.create(**_request_params(doc, vocab, cfg)))
+    """한 건 추출. 429/일시 오류는 물러섰다가 다시 시도한다.
+
+    한 요청이 입력 6만 자(≈2.5만 토큰)라, 연속으로 쏘면 분당 입력 토큰 한도에
+    바로 걸린다. 실제로 8종목을 한 번에 돌렸을 때 **전부 429**로 실패했다.
+    SDK 기본 재시도(2회)는 간격이 짧아 이 한도에는 소용이 없다.
+    """
+    params = _request_params(doc, vocab, cfg)
+    delay = 8.0
+    for attempt in range(1, MAX_LLM_RETRIES + 1):
+        try:
+            return _parse(client.messages.create(**params))
+        except Exception as e:
+            status = getattr(e, "status_code", None)
+            if status not in RETRY_STATUS or attempt == MAX_LLM_RETRIES:
+                raise
+            wait = _retry_after(e) or delay
+            print(f"    {doc['ticker']} {status} — {wait:.0f}초 후 재시도 "
+                  f"({attempt}/{MAX_LLM_RETRIES - 1})")
+            time.sleep(min(wait, 120))
+            delay *= 2
+    return None
 
 
 def extract_batch(client: Anthropic, docs: list[dict], vocab: IndustryVocab,
@@ -461,15 +500,31 @@ def run(tickers: list[str], cfg: dict, asof: str, use_batch: bool = True) -> dic
         raw = extract_batch(client, docs, vocab, cfg)
     else:
         raw = {}
+        failures: list[str] = []
         for i, d in enumerate(docs, 1):
+            if i > 1:
+                # 요청 간 간격. 한 건이 입력 6만 자라 붙여 쏘면 분당 토큰 한도에 걸린다.
+                time.sleep(cfg.get("request_interval", 5))
             try:
                 r = extract_one(client, d, vocab, cfg)
             except Exception as e:
                 print(f"  {d['ticker']} 추출 실패: {e}")
+                failures.append(d["ticker"])
                 continue
             if r:
                 raw[d["ticker"]] = r
             print(f"  {i}/{len(docs)} {d['ticker']}")
+        if failures:
+            print(f"  ::warning:: 추출 실패 {len(failures)}건 — {failures}")
+
+    # 공시는 다 받았는데 추출이 0건이면 그건 '결과 없음'이 아니라 고장이다.
+    # 여기서 멈추지 않으면 빈 리포트가 커밋되고 워크플로는 초록불로 끝난다 —
+    # 실제로 429로 8건이 전부 실패했을 때 그렇게 됐다.
+    if not raw:
+        raise RuntimeError(
+            f"공시 {len(docs)}건을 확보했으나 추출에 **전부 실패**했습니다.\n"
+            "  위의 실패 사유를 보세요. 429가 반복되면 요청 간격(dart.request_interval)을\n"
+            "  늘리거나 종목 수를 줄이세요.")
 
     by_ticker = {d["ticker"]: d for d in docs}
     edges: list[dict] = []

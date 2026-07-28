@@ -1,8 +1,10 @@
 """KRX OpenAPI 어댑터 검증.
 
-실제 응답 필드명을 문서 없이 단정할 수 없으므로, 여기서 고정하는 것은
-**모르는 것을 모른다고 말하는 동작**이다. 잘못 짚은 필드가 조용히 빈 컬럼이
-되면 수익률이 전부 NaN이 되고, 예외 없이 틀린 결과가 나온다.
+잘못 짚은 필드가 조용히 빈 컬럼이 되면 수익률이 전부 NaN이 되고, 예외 없이
+틀린 결과가 나온다. 그래서 여기서 고정하는 것은 **모르는 것을 모른다고 말하는
+동작**이다.
+
+LIVE_RECORD는 2026-07-27 실제 응답에서 가져온 필드 구성이다. 가정이 아니다.
 """
 
 import pandas as pd
@@ -19,6 +21,17 @@ RECORDS = [
      "TDD_CLSPRC": 180000.0, "ACC_TRDVOL": 3000000, "ACC_TRDVAL": 540000000000.0,
      "MKTCAP": 131000000000000.0},
 ]
+
+# 2026-07-27 stk_bydd_trd 라이브 응답의 실제 필드 구성.
+# 수치가 쉼표 낀 문자열로 온다는 점이 핵심이다.
+LIVE_RECORD = {
+    "BAS_DD": "20260727", "ISU_CD": "005930", "ISU_NM": "삼성전자",
+    "MKT_NM": "KOSPI", "SECT_TP_NM": "", "TDD_CLSPRC": "71,000",
+    "CMPPREVDD_PRC": "1,000", "FLUC_RT": "1.43", "TDD_OPNPRC": "70,200",
+    "TDD_HGPRC": "71,500", "TDD_LWPRC": "70,100", "ACC_TRDVOL": "12,000,000",
+    "ACC_TRDVAL": "850,000,000,000", "MKTCAP": "423,000,000,000,000",
+    "LIST_SHRS": "5,969,782,550",
+}
 
 
 class TestFieldResolution:
@@ -158,3 +171,88 @@ def test_market_ohlcv_returns_canonical_frame(monkeypatch):
     assert {"close", "volume", "value"} <= set(df.columns)
     assert not isinstance(df.index, pd.DatetimeIndex), "티커 인덱스여야 한다"
     assert df.index.tolist() == ["005930", "000660"]
+
+
+class TestLiveSchema:
+    """라이브 응답으로 확정한 계약. 이게 깨지면 조용히 틀리는 대신 여기서 터진다."""
+
+    def test_live_fields_resolve(self):
+        for canonical, expected in (("ticker", "ISU_CD"), ("name", "ISU_NM"),
+                                    ("close", "TDD_CLSPRC"), ("volume", "ACC_TRDVOL"),
+                                    ("value", "ACC_TRDVAL"), ("market_cap", "MKTCAP")):
+            assert api.resolve_field([LIVE_RECORD], canonical) == expected
+
+    def test_comma_separated_numbers_become_numeric(self):
+        """'71,000'이 문자열로 남으면 종가 비교가 사전순이 되어 수익률이 엉킨다."""
+        df = api.to_frame([LIVE_RECORD], ["ticker", "name", "close", "market_cap"])
+        assert df.loc["005930", "close"] == 71000
+        assert df.loc["005930", "market_cap"] == 423_000_000_000_000
+        assert df.loc["005930", "name"] == "삼성전자"
+
+    def test_snapshot_has_the_columns_the_universe_needs(self):
+        """종목명·시총이 시세 응답에 있으므로 종목기본정보 API가 필요 없다."""
+        snap = api._snapshot_frame([dict(LIVE_RECORD, _MARKET="KOSPI")])
+        for col in ("name", "close", "volume", "value", "market_cap", "market"):
+            assert col in snap.columns, col
+
+
+class TestTickerNormalization:
+    def test_short_code_keeps_leading_zeros(self):
+        assert api.normalize_ticker("005930") == "005930"
+
+    def test_numeric_type_is_zero_padded(self):
+        """JSON이 숫자로 오면 5930이 되어 다른 소스와의 조인이 통째로 어긋난다."""
+        assert api.normalize_ticker(5930) == "005930"
+
+    def test_standard_code_is_reduced_to_short_code(self):
+        """zfill(6)만으로는 12자리 표준코드가 그대로 남는다 — 조용히 틀린다."""
+        assert api.normalize_ticker("KR7005930003") == "005930"
+
+    def test_preferred_share_standard_code(self):
+        assert api.normalize_ticker("KR7005931001") == "005931"
+
+    def test_unexpected_code_shape_raises_with_samples(self):
+        odd = [{"ISU_CD": f"XX{i}", "TDD_CLSPRC": "1"} for i in range(10)]
+        with pytest.raises(api.KrxApiError, match="6자리"):
+            api.to_frame(odd, ["ticker", "close"])
+
+
+class TestTradingDayWalk:
+    """거래일 달력 API가 없으므로 '빈 응답 = 휴장일'로 판정한다."""
+
+    def _stub(self, monkeypatch, trading: set[str]):
+        def fake(bas_dd, use_cache=True, markets=("KOSPI", "KOSDAQ")):
+            if bas_dd not in trading:
+                return pd.DataFrame(columns=api.SNAPSHOT_COLUMNS)
+            return pd.DataFrame({"close": [100.0], "volume": [1.0], "value": [1.0]},
+                                index=["005930"])
+        monkeypatch.setattr(api, "daily_snapshot", fake)
+
+    def test_skips_holidays_and_collects_requested_count(self, monkeypatch):
+        trading = {"20260727", "20260724", "20260723"}   # 25·26은 주말
+        self._stub(monkeypatch, trading)
+        days = [d for d, _ in api.iter_trading_days("20260727", 3, progress_every=0)]
+        assert days == ["20260727", "20260724", "20260723"]
+
+    def test_weekends_are_never_requested(self, monkeypatch):
+        asked = []
+
+        def fake(bas_dd, use_cache=True, markets=("KOSPI", "KOSDAQ")):
+            asked.append(bas_dd)
+            return pd.DataFrame({"close": [100.0], "volume": [1.0], "value": [1.0]},
+                                index=["005930"])
+        monkeypatch.setattr(api, "daily_snapshot", fake)
+        list(api.iter_trading_days("20260727", 3, progress_every=0))
+        assert "20260725" not in asked and "20260726" not in asked
+
+    def test_running_out_of_days_raises_instead_of_returning_short(self, monkeypatch):
+        self._stub(monkeypatch, set())
+        with pytest.raises(api.KrxApiError, match="거래일"):
+            list(api.iter_trading_days("20260727", 3, max_lookback=10, progress_every=0))
+
+    def test_panel_is_ascending_by_date(self, monkeypatch):
+        self._stub(monkeypatch, {"20260727", "20260724", "20260723"})
+        dates, close, _, _, latest = api.fetch_panel("20260727", 3)
+        assert dates == ["20260723", "20260724", "20260727"]
+        assert list(close.index) == dates, "패널이 오름차순이 아니면 수익률 부호가 뒤집힌다"
+        assert not latest.empty, "기준일 스냅샷이 있어야 종목 마스터를 만든다"

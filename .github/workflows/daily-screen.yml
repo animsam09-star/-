@@ -40,6 +40,7 @@ jobs:
 
       - name: Run pipeline
         env:
+          KRX_OPENAPI_KEY: ${{ secrets.KRX_OPENAPI_KEY }}
           KRX_ID: ${{ secrets.KRX_ID }}
           KRX_PW: ${{ secrets.KRX_PW }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

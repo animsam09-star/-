@@ -16,8 +16,6 @@ import re
 import time
 from pathlib import Path
 
-from pykrx import stock
-
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
 # 개별 종목명 조회는 1건당 1회 요청이라, 일괄 조회가 실패했을 때 전 종목을 개별로
@@ -118,7 +116,9 @@ def from_entries(base_date: str, entries: dict[str, dict]) -> Universe:
 
 
 def _fetch_market(base_date: str, market: str) -> dict[str, dict]:
-    """한 시장의 전 종목 엔트리. 상장 목록을 기준으로 삼고 이름·시총을 붙인다."""
+    """한 시장의 전 종목 엔트리(pykrx 경로). 상장 목록을 기준으로 이름·시총을 붙인다."""
+    from pykrx import stock
+
     tickers = _retry(stock.get_market_ticker_list, base_date, market=market)
     if not tickers:
         return {}
@@ -157,21 +157,20 @@ def _fetch_market(base_date: str, market: str) -> dict[str, dict]:
     }
 
 
-def build(base_date: str, use_cache: bool = True) -> Universe:
-    """전 종목 마스터를 구성한다(캐시 우선)."""
-    if use_cache:
-        cached = load(base_date)
-        if cached is not None:
-            print(f"종목 마스터 캐시 사용: {len(cached)}종목")
-            return cached
-
+def fetch_entries_pykrx(base_date: str) -> dict[str, dict]:
     entries: dict[str, dict] = {}
     for market in ("KOSPI", "KOSDAQ"):
         entries.update(_fetch_market(base_date, market))
+    return entries
 
+
+def _finalize(base_date: str, entries: dict[str, dict]) -> Universe:
     uni = Universe(base_date, entries)
     named = sum(1 for e in entries.values() if e.get("name"))
     print(f"종목 마스터 {len(uni)}종목 (이름 확보 {named}종목)")
+    if named < len(uni) * 0.9:
+        print(f"  ::warning:: 이름 없는 종목이 {len(uni) - named}건입니다. "
+              "이름으로 오는 수혜 후보가 그만큼 티커 해석에 실패합니다.")
     if uni.collisions:
         sample = list(uni.collisions.items())[:5]
         print(f"  ::warning:: 이름 충돌 {len(uni.collisions)}건 — {sample}")
@@ -180,6 +179,38 @@ def build(base_date: str, use_cache: bool = True) -> Universe:
     (DATA_DIR / f"universe_{base_date}.json").write_text(
         json.dumps(uni.to_dict(), ensure_ascii=False), encoding="utf-8")
     return uni
+
+
+def save_from_snapshot(base_date: str, snapshot) -> Universe:
+    """스크리너가 이미 받아 둔 기준일 스냅샷으로 마스터를 만든다.
+
+    시세 응답에 종목명·시가총액이 함께 오므로 **추가 조회가 0회**다. 스크리닝
+    필터를 적용하기 전의 스냅샷을 넘겨야 한다는 점이 중요하다 — 필터 후를 넘기면
+    이 모듈이 존재하는 이유(소형 후방주 해석)가 사라진다.
+    """
+    from . import prices
+    return _finalize(base_date, prices.entries_from_snapshot(snapshot, base_date))
+
+
+def build(base_date: str, use_cache: bool = True) -> Universe:
+    """전 종목 마스터를 구성한다(캐시 우선).
+
+    보통은 스크리너가 save_from_snapshot으로 이미 만들어 둔 캐시를 읽는다.
+    캐시가 없을 때만 직접 조회한다.
+    """
+    if use_cache:
+        cached = load(base_date)
+        if cached is not None:
+            print(f"종목 마스터 캐시 사용: {len(cached)}종목")
+            return cached
+
+    from . import krx_api, prices
+    if prices.source() == "openapi":
+        snap = krx_api.daily_snapshot(base_date)
+        if snap.empty:
+            raise RuntimeError(f"{base_date}는 거래일이 아니거나 응답이 비었습니다.")
+        return save_from_snapshot(base_date, snap)
+    return _finalize(base_date, fetch_entries_pykrx(base_date))
 
 
 def load(base_date: str) -> Universe | None:

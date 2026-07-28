@@ -18,17 +18,30 @@ KRX OpenAPI(openapi.krx.co.kr에서 발급, 호출은 data-dbg.krx.co.kr)는 인
 지수 구성종목이 없다.** 그게 수평축 그룹의 원천이었으므로, OpenAPI만 쓰는 구성에서는
 그룹을 DART 산업 노드에서 만든다(graph_build.groups_from_industries).
 
-## 필드명을 하드코딩하지 않는 이유
+**거래일 달력 엔드포인트도 없다.** 그래서 날짜를 하루씩 거슬러 올라가며 조회해
+'응답이 비었으면 휴장일'로 판정한다(iter_trading_days). 어차피 그 날의 시세가
+필요하므로 헛된 호출이 아니고, 응답은 캐시해 재사용한다.
 
-응답 필드는 영문 대문자 코드(BAS_DD, ISU_CD, TDD_CLSPRC …)인데, 정확한 이름을
-문서 없이 단정할 수 없다. 잘못 짚으면 KeyError가 아니라 **빈 컬럼**이 되어 조용히
-틀린다. 그래서 후보 목록으로 해석하고, 실패하면 **실제 필드 목록을 담아 예외**를
-올린다. 첫 라이브 실행이 스키마를 알려주는 구조다.
+## 필드명 (2026-07-27 라이브 응답으로 확정)
+
+    stk_bydd_trd / ksq_bydd_trd:
+      BAS_DD ISU_CD ISU_NM MKT_NM SECT_TP_NM
+      TDD_CLSPRC TDD_OPNPRC TDD_HGPRC TDD_LWPRC CMPPREVDD_PRC FLUC_RT
+      ACC_TRDVOL ACC_TRDVAL MKTCAP LIST_SHRS
+
+종목명(ISU_NM)과 시가총액(MKTCAP)이 시세 응답에 함께 들어 있다. 그래서 종목
+마스터를 만드는 데 종목기본정보(stk_isu_base_info) 엔드포인트가 필요 없다 —
+그쪽은 별도 이용신청 대상이라, 안 써도 되는 편이 낫다.
+
+여전히 후보 목록으로 해석한다. 잘못 짚으면 KeyError가 아니라 **빈 컬럼**이 되어
+조용히 틀리므로, 실패하면 **실제 필드 목록을 담아 예외**를 올린다.
 """
 
 from __future__ import annotations
 
+import json
 import os
+import re
 import time
 from pathlib import Path
 
@@ -36,6 +49,7 @@ import pandas as pd
 import requests
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+CACHE_DIR = DATA_DIR / "krx_cache"
 
 BASE_URL = "https://data-dbg.krx.co.kr/svc/apis"
 ENV_KEY = "KRX_OPENAPI_KEY"
@@ -161,6 +175,26 @@ def resolve_field(records: list[dict], canonical: str, required: bool = True) ->
         f"  → src/krx_api.py의 FIELD_CANDIDATES에 실제 이름을 추가하세요.")
 
 
+_STANDARD_CODE = re.compile(r"^KR[A-Z0-9]([0-9]{6})[0-9]{3}$")
+_SIX_DIGITS = re.compile(r"^\d{5}[0-9A-Z]$")   # 005930, 종류주 08104K 등
+
+
+def normalize_ticker(raw) -> str:
+    """응답의 종목코드를 6자리 단축코드로 맞춘다.
+
+    KRX는 자리에 따라 단축코드('005930')와 표준코드('KR7005930003')를 섞어 쓴다.
+    표준코드가 그대로 인덱스가 되면 예외 없이 **DART·밸류체인과의 조인이 전부
+    빗나간다.** 조용히 틀리느니 여기서 형태를 확정한다.
+
+    zfill만 쓰면 안 되는 이유: 표준코드는 12자리라 zfill(6)이 아무 일도 하지 않는다.
+    """
+    s = str(raw).strip().upper()
+    m = _STANDARD_CODE.match(s)
+    if m:
+        return m.group(1)
+    return s.zfill(6)
+
+
 def to_frame(records: list[dict], fields: list[str],
              optional: tuple[str, ...] = ()) -> pd.DataFrame:
     """원본 레코드를 캐논컬 컬럼명의 DataFrame으로. 인덱스는 티커(문자열)."""
@@ -174,10 +208,25 @@ def to_frame(records: list[dict], fields: list[str],
 
     df = pd.DataFrame(records)
     out = pd.DataFrame({c: df[a] for c, a in mapping.items()})
+
+    # 수치 컬럼은 문자열로 온다('1,234' 형태 포함). 안 바꾸면 종가 비교가
+    # 사전순으로 이뤄져 수익률이 통째로 엉킨다.
+    for col in out.columns:
+        if col in ("ticker", "name", "sector"):
+            continue
+        out[col] = pd.to_numeric(
+            out[col].astype(str).str.replace(",", "", regex=False).str.strip(),
+            errors="coerce")
+
     if "ticker" in out.columns:
-        # 티커는 반드시 6자리 문자열이어야 한다. 숫자로 변환되면 앞자리 0이 사라져
-        # '005930'이 5930이 되고, 다른 소스와의 조인이 통째로 어긋난다.
-        out["ticker"] = out["ticker"].astype(str).str.strip().str.zfill(6)
+        out["ticker"] = out["ticker"].map(normalize_ticker)
+        odd = [t for t in out["ticker"] if not _SIX_DIGITS.match(t)]
+        if len(odd) > len(out) * 0.05:
+            raise KrxApiError(
+                f"종목코드 {len(odd)}/{len(out)}건이 6자리 형태가 아닙니다. "
+                f"샘플: {odd[:5]}\n"
+                "  → 응답의 코드 체계가 바뀌었을 수 있습니다. "
+                "src/krx_api.py의 normalize_ticker를 확인하세요.")
         out = out.set_index("ticker")
     return out
 
@@ -206,6 +255,113 @@ def get_etp_ohlcv(bas_dd: str, kind: str = "ETF") -> pd.DataFrame:
     records = fetch_raw(category, endpoint, bas_dd)
     return to_frame(records, ["ticker", "name", "close", "volume", "value"],
                     optional=("volume", "value"))
+
+
+# ---- 일별 스냅샷 · 거래일 --------------------------------------------
+
+SNAPSHOT_COLUMNS = ["name", "close", "open", "high", "low",
+                    "volume", "value", "market_cap", "sector"]
+
+
+def _cache_path(bas_dd: str) -> Path:
+    return CACHE_DIR / f"snapshot_{bas_dd}.json"
+
+
+def daily_snapshot(bas_dd: str, use_cache: bool = True,
+                   markets: tuple[str, ...] = ("KOSPI", "KOSDAQ")) -> pd.DataFrame:
+    """하루치 전 종목 스냅샷(KOSPI+KOSDAQ). 휴장일이면 빈 DataFrame.
+
+    응답을 디스크에 캐시한다. 130거래일 패널을 만들려면 260회 넘게 호출해야 하는데,
+    실패해서 다시 돌릴 때마다 처음부터 두드리면 한도만 태운다.
+    """
+    cache = _cache_path(bas_dd)
+    if use_cache and cache.exists():
+        try:
+            records = json.loads(cache.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            records = None
+        if records is not None:
+            return _snapshot_frame(records)
+
+    records: list[dict] = []
+    for market in markets:
+        category, endpoint = MARKET_OHLCV[market]
+        rows = fetch_raw(category, endpoint, bas_dd)
+        for r in rows:
+            r.setdefault("_MARKET", market)
+        records.extend(rows)
+
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    cache.write_text(json.dumps(records, ensure_ascii=False), encoding="utf-8")
+    return _snapshot_frame(records)
+
+
+def _snapshot_frame(records: list[dict]) -> pd.DataFrame:
+    if not records:
+        return pd.DataFrame(columns=SNAPSHOT_COLUMNS)
+    df = to_frame(records,
+                  ["ticker", "name", "close", "open", "high", "low",
+                   "volume", "value", "market_cap", "sector"],
+                  optional=("name", "open", "high", "low",
+                            "market_cap", "sector"))
+    df["market"] = [r.get("_MARKET") for r in records][:len(df)]
+    # 같은 코드가 두 시장에 동시에 있을 수는 없지만, 재상장 등으로 중복 행이
+    # 오면 인덱스가 중복돼 이후 join이 행을 부풀린다.
+    return df[~df.index.duplicated(keep="first")]
+
+
+def iter_trading_days(end_date: str, n_days: int, *, max_lookback: int = 500,
+                      use_cache: bool = True, progress_every: int = 20):
+    """end_date에서 거슬러 올라가며 (날짜, 스냅샷)을 최신순으로 내놓는다.
+
+    거래일 달력 API가 없으므로 **응답이 비었으면 휴장일**로 본다. 주말은 조회하지
+    않는다(호출 낭비). 임시휴장·데이터 지연도 똑같이 '빈 응답'이라 구분되지 않지만,
+    어느 쪽이든 그 날은 패널에서 빠지는 게 맞다.
+    """
+    day = pd.Timestamp(end_date)
+    found = 0
+    for _ in range(max_lookback):
+        if found >= n_days:
+            return
+        if day.weekday() < 5:      # 월~금만
+            bas_dd = day.strftime("%Y%m%d")
+            snap = daily_snapshot(bas_dd, use_cache=use_cache)
+            if not snap.empty:
+                found += 1
+                if progress_every and found % progress_every == 0:
+                    print(f"  ... 가격 수집 {found}/{n_days}일 ({bas_dd})")
+                yield bas_dd, snap
+        day -= pd.Timedelta(days=1)
+
+    if found < n_days:
+        raise KrxApiError(
+            f"{end_date}에서 {max_lookback}일을 거슬러 올라갔으나 거래일이 "
+            f"{found}일뿐입니다(요청 {n_days}일).")
+
+
+def fetch_panel(end_date: str, n_days: int, use_cache: bool = True
+                ) -> tuple[list[str], pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """가격 패널을 만든다.
+
+    반환: (거래일 오름차순, close, volume, value, 기준일 스냅샷)
+    패널의 index=날짜, columns=티커 — pykrx 경로가 만들던 것과 같은 형태다.
+    """
+    closes, volumes, values = {}, {}, {}
+    latest: pd.DataFrame | None = None
+    for bas_dd, snap in iter_trading_days(end_date, n_days, use_cache=use_cache):
+        if latest is None:
+            latest = snap
+        # 거래정지 등으로 종가 0인 행은 제외한다. 0을 그대로 두면 수익률이 -100%가 된다.
+        live = snap[snap["close"] > 0]
+        closes[bas_dd] = live["close"]
+        volumes[bas_dd] = live["volume"]
+        values[bas_dd] = live["value"]
+
+    dates = sorted(closes)
+    close = pd.DataFrame(closes).T.sort_index()
+    volume = pd.DataFrame(volumes).T.sort_index()
+    value = pd.DataFrame(values).T.sort_index()
+    return dates, close, volume, value, (latest if latest is not None else pd.DataFrame())
 
 
 def describe_schema(bas_dd: str) -> dict[str, list[str]]:

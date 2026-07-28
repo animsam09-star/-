@@ -4,46 +4,57 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src import screener
+from src import krx_api, prices, screener
 
 
-class TestCredentialDiagnostics:
-    """pykrx는 로그인 실패 시 예외 없이 빈 목록을 준다.
+class TestDataSourceSelection:
+    """어느 원천을 쓰는지가 조용히 결정되면 안 된다.
 
-    그대로 두면 호출부에서 IndexError가 나고 진짜 원인(자격 증명 누락)이
-    스택트레이스 어디에도 남지 않는다. 실제로 프로덕션 실행이 그렇게 죽었다.
+    둘 다 없는데 진행하면 '후보 0종목'이라는 그럴듯한 빈 결과가 나온다.
+    실제로 프로덕션 실행이 pykrx 자격 증명 없이 그렇게 죽었다.
     """
 
-    def test_empty_dates_names_the_missing_credentials(self, monkeypatch):
-        monkeypatch.delenv("KRX_ID", raising=False)
-        monkeypatch.delenv("KRX_PW", raising=False)
-        monkeypatch.setattr(screener.stock, "get_previous_business_days",
-                            lambda **kw: [])
-        with pytest.raises(RuntimeError, match="KRX_ID"):
-            screener.get_trading_dates("20260724", 130)
+    def _clear(self, monkeypatch):
+        for env in (krx_api.ENV_KEY, "KRX_ID", "KRX_PW"):
+            monkeypatch.delenv(env, raising=False)
 
-    def test_credentials_present_but_rejected_gets_different_guidance(self, monkeypatch):
-        """'설정 안 됨'과 '설정됐는데 거부됨'은 조치가 전혀 다르다.
+    def test_no_credentials_names_both_options(self, monkeypatch):
+        self._clear(monkeypatch)
+        with pytest.raises(RuntimeError) as exc:
+            prices.require_source()
+        assert krx_api.ENV_KEY in str(exc.value)
+        assert "KRX_ID" in str(exc.value)
 
-        전자는 등록하라는 안내, 후자는 ID 형식(이메일이 아니라 가입 아이디)을
-        의심하라는 안내여야 한다. 하나로 뭉뚱그리면 사용자가 헛수고한다.
-        """
+    def test_openapi_key_wins_over_login(self, monkeypatch):
+        """인증키가 있으면 로그인 경로를 쓰지 않는다 — 계정이 막혀도 돌아야 한다."""
+        self._clear(monkeypatch)
+        monkeypatch.setenv(krx_api.ENV_KEY, "k")
         monkeypatch.setenv("KRX_ID", "x")
         monkeypatch.setenv("KRX_PW", "y")
-        monkeypatch.setattr(screener.stock, "get_previous_business_days",
-                            lambda **kw: [])
-        with pytest.raises(RuntimeError, match="로그인을 거부") as exc:
-            screener.get_trading_dates("20260724", 130)
-        assert "아이디" in str(exc.value), "ID 형식 힌트가 빠졌다"
-        assert "설정되지 않았습니다" not in str(exc.value), "미설정 안내가 섞였다"
+        assert prices.source() == "openapi"
+
+    def test_partial_login_credentials_are_not_a_source(self, monkeypatch):
+        """ID만 있고 PW가 없으면 '있는 것'으로 세면 안 된다."""
+        self._clear(monkeypatch)
+        monkeypatch.setenv("KRX_ID", "x")
+        assert prices.source() == ""
 
     def test_empty_panel_is_not_reported_as_short_lookback(self, monkeypatch):
         """가격이 하나도 안 오는 것과 조회 기간이 짧은 것은 다른 문제다."""
-        monkeypatch.setattr(screener, "get_trading_dates", lambda *a: ["20260724"])
-        monkeypatch.setattr(screener, "fetch_panel",
-                            lambda dates: (pd.DataFrame(), pd.DataFrame(), pd.DataFrame()))
+        monkeypatch.setattr(prices, "fetch_panel", lambda *a, **kw: (
+            [], pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), pd.DataFrame()))
         with pytest.raises(RuntimeError, match="가격 스냅샷이 하나도"):
             screener.screen("20260724", {"lookback_days": 130})
+
+    def test_missing_market_cap_stops_instead_of_skipping_the_filter(self, monkeypatch):
+        """시총 컬럼이 없다고 필터를 건너뛰면 유니버스가 통째로 달라진다."""
+        dates = pd.date_range("2026-01-01", periods=130, freq="B").strftime("%Y%m%d")
+        close = pd.DataFrame(10000.0, index=dates, columns=["000001"])
+        snap = pd.DataFrame({"name": ["가나"], "market_cap": [None]}, index=["000001"])
+        monkeypatch.setattr(prices, "fetch_panel", lambda *a, **kw: (
+            list(dates), close, close, close, snap))
+        with pytest.raises(RuntimeError, match="시가총액이 없습니다"):
+            screener.screen("20260724", dict(CFG, lookback_days=130))
 
 from src.screener import compute_signals
 
