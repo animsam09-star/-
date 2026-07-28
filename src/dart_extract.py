@@ -35,6 +35,7 @@ import yaml
 from anthropic import Anthropic
 
 from . import dart
+from . import llm
 from . import graph as G
 from . import graph_build
 
@@ -437,8 +438,8 @@ def collect_documents(tickers: list[str]) -> tuple[list[dict], list[str]]:
 
 
 def run(tickers: list[str], cfg: dict, asof: str, use_batch: bool = True) -> dict:
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        raise SystemExit("ANTHROPIC_API_KEY가 필요합니다.")
+    if not llm.has_credentials():
+        raise SystemExit(llm.MISSING_HINT)
 
     print(f"== 사업보고서 수집 ({len(tickers)}종목) ==")
     docs, missing = collect_documents(tickers)
@@ -453,7 +454,8 @@ def run(tickers: list[str], cfg: dict, asof: str, use_batch: bool = True) -> dic
         aliases=load_aliases())
     print(f"기존 산업 어휘 {len(vocab.known)}개, 별칭 {len(vocab.aliases)}개")
 
-    client = Anthropic()
+    client = llm.build_client()
+    print(f"Claude 인증: {llm.credential_kind()}")
     print(f"== 추출 ({'배치' if use_batch else '순차'}, {cfg['model']}) ==")
     if use_batch:
         raw = extract_batch(client, docs, vocab, cfg)

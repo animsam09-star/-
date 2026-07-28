@@ -19,6 +19,7 @@ from pathlib import Path
 from anthropic import Anthropic
 
 from . import graph as G
+from . import llm
 from .universe import Universe, normalize_name  # noqa: F401  (이름 정규화 단일 출처)
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -396,15 +397,15 @@ def synthesize(client: Anthropic, analyses: list[dict], cfg: dict) -> dict | Non
 def analyze(candidates: list[dict], evidence_all: dict, base_date: str, cfg: dict,
             horizontal: dict | None = None, universe: Universe | None = None,
             relation_graph: G.Graph | None = None) -> dict:
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        print("ANTHROPIC_API_KEY 미설정 — 원인 분석을 건너뜁니다.")
+    if not llm.has_credentials():
+        print("Claude 인증 정보 미설정 — 원인 분석을 건너뜁니다.\n" + llm.MISSING_HINT)
         return {"analyses": [], "synthesis": None}
     if universe is None:
         raise ValueError(
             "universe가 필요합니다. 종목명→티커 해석의 단일 출처이며, 없으면 "
             "수혜 후보의 갭 주입과 사후 채점이 통째로 비게 됩니다.")
 
-    client = Anthropic()
+    client = llm.build_client()
     horizontal = horizontal or {}
     relation_graph = relation_graph or G.Graph([])
 

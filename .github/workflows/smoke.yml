@@ -57,7 +57,9 @@ jobs:
               ("DART_API_KEY", bool(os.getenv("DART_API_KEY")),
                "공시 수집 + 수직축 자동 구축"),
               ("NAVER_CLIENT_ID", bool(os.getenv("NAVER_CLIENT_ID")), "뉴스 수집"),
-              ("ANTHROPIC_API_KEY", bool(os.getenv("ANTHROPIC_API_KEY")), "원인 분석"),
+              ("Claude 인증(API키 또는 OAuth 토큰)",
+               bool(os.getenv("ANTHROPIC_API_KEY") or os.getenv("CLAUDE_CODE_OAUTH_TOKEN")),
+               "원인 분석"),
           ]
           width = max(len(n) for n, _, _ in checks)
           for name, ok, purpose in checks:
@@ -271,6 +273,7 @@ jobs:
           KRX_ID: ${{ secrets.KRX_ID }}
           KRX_PW: ${{ secrets.KRX_PW }}
           ANTHROPIC_API_KEY: ${{ inputs.with_llm && secrets.ANTHROPIC_API_KEY || '' }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ inputs.with_llm && secrets.CLAUDE_CODE_OAUTH_TOKEN || '' }}
           NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
           NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
           DART_API_KEY: ${{ secrets.DART_API_KEY }}

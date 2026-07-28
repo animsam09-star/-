@@ -48,21 +48,24 @@ jobs:
         env:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: |
           python - <<'PY'
           import os, sys
-          missing = [k for k in ("DART_API_KEY", "ANTHROPIC_API_KEY") if not os.getenv(k)]
-          if missing:
-              sys.exit(f"필수 Secret 누락: {missing}\n"
-                       "  DART_API_KEY: opendart.fss.or.kr (무료)\n"
-                       "  ANTHROPIC_API_KEY: 추출에 LLM이 필요합니다")
-          print("자격 증명 확인 완료")
+          from src import llm
+          if not os.getenv("DART_API_KEY"):
+              sys.exit("DART_API_KEY 누락 — opendart.fss.or.kr에서 무료 발급")
+          kind = llm.credential_kind()
+          if not kind:
+              sys.exit(llm.MISSING_HINT)
+          print(f"DART_API_KEY 확인 / Claude 인증: {kind}")
           PY
 
       - name: Extract
         env:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: |
           # 기본 세트: 한 밸류체인의 양쪽을 모두 담아 교차 검증이 되게 한다.
           # 건설(수요) ↔ 시멘트·철강(공급), 조선(수요) ↔ 기자재(공급).
