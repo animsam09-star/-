@@ -335,3 +335,38 @@ class TestParallelFetch:
                           range(12)))
         gaps = [b - a for a, b in zip(sorted(stamps), sorted(stamps)[1:])]
         assert min(gaps) >= api._RATE_MIN_INTERVAL * 0.8, f"간격 {min(gaps):.3f}s가 너무 촘촘하다"
+
+
+class TestLongPanelIsNotTruncatedByTheLookbackCap:
+    """상한이 고정값이면 긴 패널을 조용히 잘라 낸다.
+
+    실제로 그렇게 실패했다. max_lookback이 500으로 고정돼 있어 924거래일을
+    요청했는데 평일 후보를 500개만 훑고 '거래일이 460일뿐'이라며 멈췄다.
+    130일 패널에서는 절대 안 걸리다가, 사이클 시차용 긴 패널에서 처음 드러났다.
+    상한의 목적은 장기 휴장 때 폭주를 막는 것이지 요청을 잘라내는 게 아니다.
+    """
+
+    def _all_weekdays(self, monkeypatch):
+        """모든 평일이 거래일인 세계 — 상한 말고는 막을 게 없다."""
+        def fake(bas_dd, use_cache=True, markets=("KOSPI", "KOSDAQ")):
+            return pd.DataFrame({"close": [100.0], "volume": [1.0], "value": [1.0]},
+                                index=["005930"])
+        monkeypatch.setattr(api, "daily_snapshot", fake)
+
+    def test_long_request_is_fully_served(self, monkeypatch):
+        self._all_weekdays(monkeypatch)
+        got = list(api.iter_trading_days("20260727", 924, progress_every=0))
+        assert len(got) == 924, f"{len(got)}일에서 잘렸다"
+
+    def test_cap_still_scales_with_the_request(self):
+        """상한이 요청량에 비례해야 한다 — 없애 버리면 폭주 방지가 사라진다."""
+        assert api.weekdays_back("20260727", 924)[:int(924 * 1.5) + 40] != []
+        # 짧은 요청에서는 후보가 상한보다 적어 상한이 무의미해야 한다
+        assert len(api.weekdays_back("20260727", 130)) < int(130 * 1.5) + 40
+
+    def test_explicit_cap_is_respected(self, monkeypatch):
+        """명시적으로 넘긴 상한은 그대로 지킨다."""
+        self._all_weekdays(monkeypatch)
+        with pytest.raises(api.KrxApiError, match="거래일이"):
+            list(api.iter_trading_days("20260727", 924, max_lookback=100,
+                                       progress_every=0))

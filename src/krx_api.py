@@ -402,7 +402,7 @@ def weekdays_back(end_date: str, n_days: int, *, slack: float = 1.12,
     return days
 
 
-def iter_trading_days(end_date: str, n_days: int, *, max_lookback: int = 500,
+def iter_trading_days(end_date: str, n_days: int, *, max_lookback: int | None = None,
                       use_cache: bool = True, progress_every: int = 20):
     """(날짜, 스냅샷)을 최신순으로 내놓는다.
 
@@ -412,6 +412,11 @@ def iter_trading_days(end_date: str, n_days: int, *, max_lookback: int = 500,
 
     과다 조회분은 캐시에 남아 다음 실행에서 재사용되므로 버려지지 않는다.
     """
+    # 상한은 **요청량에 비례**해야 한다. 예전엔 500으로 고정돼 있었는데, 130일
+    # 패널에서는 절대 안 걸리다가 사이클 시차용 924일 패널에서 460일에서 멈췄다.
+    # 상한의 목적은 장기 휴장 때 폭주를 막는 것이지 요청을 잘라내는 게 아니다.
+    if max_lookback is None:
+        max_lookback = int(n_days * 1.5) + 40
     candidates = weekdays_back(end_date, n_days)[:max_lookback]
 
     def fetch(bas_dd):
