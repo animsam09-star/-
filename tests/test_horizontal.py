@@ -6,6 +6,8 @@
    그룹과 무관한 종목까지 '미반영'으로 잡힌다.
 """
 
+import pathlib
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -354,3 +356,57 @@ class TestIndustryGroupsReplaceEtfConstituents:
         out = gm.build_groups("20260728")
         assert out["groups"]["산업:철강"]
         assert set(out["membership"]["005490"]) == {"산업:철강"}
+
+
+class TestFactorKeywordOrderIsPriority:
+    """이름 길이로만 고르면 엉뚱한 상품이 뽑힌다.
+
+    라이브에서 '유가'에 'KIWOOM 미국원유에너지기업'이 걸렸다. 원유 선물이 아니라
+    에너지 **기업 주식** ETF라, 유가 노출이 아니라 섹터 알파를 재게 된다.
+    예외도 경고도 없이 조용히 틀리는 종류다.
+    """
+
+    SPECS = [{"name": "유가", "keywords": ["WTI원유선물", "원유선물", "WTI"],
+              "exclude": ["인버스", "레버리지", "기업", "에너지"]}]
+
+    def _wire(self, monkeypatch, catalog_names):
+        from src import krx_api, prices
+        dates = ["20260723", "20260724", "20260727"]
+        cols = [f"{i:06d}" for i in range(len(catalog_names))]
+        close = pd.DataFrame([[100 + i for i in range(len(cols))]] * 3,
+                             index=dates, columns=cols, dtype="float64")
+        catalog = pd.DataFrame({"name": catalog_names}, index=cols)
+        monkeypatch.setattr(krx_api, "fetch_etf_panel",
+                            lambda d, use_cache=True: (close, catalog))
+        monkeypatch.setattr(prices, "require_source", lambda: "openapi")
+        return prices, dates
+
+    def test_energy_equity_etf_is_excluded(self, monkeypatch):
+        prices, dates = self._wire(monkeypatch,
+                                   ["KIWOOM 미국원유에너지기업", "KODEX WTI원유선물(H)"])
+        resolved, _ = prices.resolve_factor_proxies(self.SPECS, dates)
+        assert resolved["유가"]["proxy_name"] == "KODEX WTI원유선물(H)"
+
+    def test_earlier_keyword_wins_over_shorter_name(self, monkeypatch):
+        """짧은 이름이 아니라 앞선 키워드가 이긴다 — 설정이 우선순위를 표현한다."""
+        prices, dates = self._wire(monkeypatch, ["TIGER WTI", "KODEX WTI원유선물(H)"])
+        resolved, _ = prices.resolve_factor_proxies(self.SPECS, dates)
+        assert resolved["유가"]["proxy_name"] == "KODEX WTI원유선물(H)", \
+            "짧은 이름이 우선순위를 이겼다"
+
+    def test_same_keyword_still_prefers_the_plain_product(self, monkeypatch):
+        prices, dates = self._wire(monkeypatch,
+                                   ["KODEX WTI원유선물(H) 액티브 플러스", "KODEX WTI원유선물(H)"])
+        resolved, _ = prices.resolve_factor_proxies(self.SPECS, dates)
+        assert resolved["유가"]["proxy_name"] == "KODEX WTI원유선물(H)"
+
+    def test_config_keywords_are_ordered_most_specific_first(self):
+        """설정이 우선순위를 표현하므로, 넓은 키워드가 앞에 오면 안 된다."""
+        import yaml
+        cfg = yaml.safe_load(pathlib.Path("config.yaml").read_text(encoding="utf-8"))
+        for spec in cfg["horizontal"]["factors"]:
+            kws = spec["keywords"]
+            for i, k in enumerate(kws):
+                for later in kws[i + 1:]:
+                    assert not later.endswith(k) or later == k, (
+                        f"'{spec['name']}': 더 구체적인 '{later}'가 넓은 '{k}'보다 뒤에 있다")

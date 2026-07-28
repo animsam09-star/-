@@ -23,25 +23,29 @@ horizontal:
   min_group_corr: 0.3               # 그룹 파급 대상으로 인정할 최소 상관계수
   max_peers_per_group: 6            # 그룹당 프롬프트/리포트에 넣을 미반영 상위 종목 수
   # 팩터 대용치는 전부 국내 상장 ETF/ETN. 티커가 아닌 종목명 키워드로 런타임 해석한다.
+  # keywords는 **우선순위 순서**다. 앞에 있는 것이 먼저 매칭된다.
+  # 이름 길이로만 고르던 때 '유가'에 'KIWOOM 미국원유에너지기업'이 뽑혔다.
+  # 그건 원유 선물이 아니라 에너지 '기업 주식'이라, 유가가 아니라 섹터 알파를
+  # 재게 된다 — 예외 없이 조용히 틀리는 종류다.
   factors:
     - name: 달러
-      keywords: [달러선물]
-      exclude: [인버스, 레버리지, 2X]
+      keywords: [미국달러선물, 달러선물]
+      exclude: [인버스, 레버리지, 2X, 기업, 커버드콜]
     - name: 구리
-      keywords: [구리]
-      exclude: [인버스, 레버리지]
+      keywords: [구리실물, 구리선물, 구리]
+      exclude: [인버스, 레버리지, 기업, 커버드콜]
     - name: 유가
-      keywords: [원유, WTI]
-      exclude: [인버스, 레버리지]
+      keywords: [WTI원유선물, 원유선물, WTI]
+      exclude: [인버스, 레버리지, 기업, 커버드콜, 에너지]
     - name: 금
-      keywords: [골드, 금현물]
-      exclude: [인버스, 레버리지]
+      keywords: [KRX금현물, 금현물, 골드선물, 골드]
+      exclude: [인버스, 레버리지, 기업, 커버드콜, 광산]
     - name: 미국채금리
-      keywords: [미국채10년, 미국30년, 국채10년]
-      exclude: [인버스, 레버리지]
+      keywords: [미국채10년, 국채10년, 미국채30년, 미국30년]
+      exclude: [인버스, 레버리지, 커버드콜, 기업]
     - name: 국내금리
       keywords: [국고채10년, 국고채3년]
-      exclude: [인버스, 레버리지]
+      exclude: [인버스, 레버리지, 커버드콜]
 
 collect:
   news_per_stock: 8                 # 종목당 수집 뉴스 수

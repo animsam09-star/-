@@ -1,7 +1,7 @@
 industry: 석회·화성품
 description: 생석회·소석회와 제철 부산 화성품 가공
 drivers: [제철 조업률, 석회석 채굴 허가, 유연탄·전력 단가]
-peers: [포스코퓨처엠, 백광산업]
+peers: [포스코퓨처엠]
 upstream:
   - segment: 석회석
     companies: [한일시멘트, 아세아시멘트, 성신양회]   # 자체 석회석 광산 보유

@@ -6,7 +6,7 @@ upstream:
   - segment: 정유
     companies: [S-Oil, SK이노베이션, GS]
   - segment: 조선
-    companies: [HD한국조선해양, 삼성중공업, 한화오션, HD현대미포]
+    companies: [HD한국조선해양, 삼성중공업, 한화오션, 에이치디현대미포]
 downstream:
   - segment: 물류·포워딩
     companies: [현대글로비스, CJ대한통운]

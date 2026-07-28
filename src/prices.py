@@ -139,16 +139,24 @@ def resolve_factor_proxies(specs: list[dict], dates: list[str],
     for spec in specs:
         keywords = spec.get("keywords") or []
         exclude = spec.get("exclude") or []
-        hits = [(t, n) for t, n in names.items()
-                if any(k in n for k in keywords) and not any(x in n for x in exclude)]
+        hits = []
+        for t, n in names.items():
+            if any(x in n for x in exclude):
+                continue
+            rank = next((i for i, k in enumerate(keywords) if k in n), None)
+            if rank is not None:
+                hits.append((rank, len(n), t, n))
         # 종가가 실제로 있는 것만 남긴다. 신규 상장이라 이력이 짧으면 회귀가 못 돈다.
-        hits = [(t, n) for t, n in hits if t in close.columns and close[t].notna().sum() >= 2]
+        hits = [h for h in hits if h[2] in close.columns and close[h[2]].notna().sum() >= 2]
         if not hits:
             print(f"  팩터 '{spec['name']}' 대용 ETF를 찾지 못해 건너뜁니다"
                   f" (키워드 {keywords})")
             continue
-        # 수식어(레버리지·헤지형 등)가 붙지 않은 기본 상품일 가능성이 높은 쪽
-        ticker, name = min(hits, key=lambda e: len(e[1]))
+        # **키워드 순서가 우선순위다.** 이름 길이만 보면 엉뚱한 상품이 뽑힌다 —
+        # 실제로 '유가'에 'KIWOOM 미국원유에너지기업'이 걸렸다. 그건 원유 선물이
+        # 아니라 에너지 '기업 주식'이라, 유가가 아니라 섹터 알파를 재게 된다.
+        # 조용히 틀리는 종류라 로그만 봐서는 알아채기 어렵다.
+        _, _, ticker, name = min(hits)
         resolved[spec["name"]] = {"ticker": ticker, "proxy_name": name, "kind": "etf"}
 
     panel = pd.DataFrame({fac: close[meta["ticker"]]
