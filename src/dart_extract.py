@@ -171,6 +171,30 @@ def normalize_industry(name: str) -> str:
     return s.upper()
 
 
+def known_industries(existing_edges: list[dict]) -> list[str]:
+    """추출 프롬프트에 줄 산업 어휘.
+
+    엣지 파일에서만 읽으면 안 된다 — graph/edges.jsonl은 파이프라인이 한 번
+    돌아야 생기는 산출물이라, 새 클론이나 첫 실행에서는 비어 있다. 그러면
+    어휘 통제가 조용히 꺼진 채로 추출이 돌아 '시멘트'와 '시멘트 제조업'이
+    각각 노드가 된다. 원천인 밸류체인 YAML을 함께 읽어 그 구멍을 막는다.
+    """
+    names = {G.split_node(e["dst"])[1] for e in existing_edges
+             if e["rel"] in (G.REL_MEMBER, G.REL_UPSTREAM, G.REL_DOWNSTREAM)}
+    for f in sorted(p for p in graph_build.VALUECHAIN_DIR.glob("*.yaml")
+                    if not p.name.startswith("_")):
+        try:
+            doc = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
+        except yaml.YAMLError:
+            continue
+        if doc.get("industry"):
+            names.add(str(doc["industry"]))
+        for block in (doc.get("upstream"), doc.get("downstream")):
+            for seg in graph_build._segments(block):
+                names.add(seg["segment"])
+    return sorted(n for n in names if n)
+
+
 def load_aliases() -> dict[str, str]:
     if not ALIAS_FILE.exists():
         return {}
@@ -546,17 +570,69 @@ def preflight(model: str) -> bool:
     return True
 
 
-def run(tickers: list[str], cfg: dict, asof: str, use_batch: bool = True) -> dict:
-    if not llm.has_credentials():
-        raise SystemExit(llm.MISSING_HINT)
+SECTIONS_DIR = DATA_DIR / "dart_sections"
 
-    # 공시 수집에 몇 분이 걸린 뒤에야 403으로 죽으면 그 시간이 통째로 낭비다.
-    # 알 수 있는 실패는 시작 전에 말한다.
-    if use_batch and llm.credential_kind() != llm.API_KEY_ENV:
-        raise SystemExit(BATCH_SCOPE_HINT)
 
-    print(f"== 사업보고서 수집 ({len(tickers)}종목) ==")
+def fetch_only(tickers: list[str], cfg: dict) -> dict:
+    """공시를 받아 절 선별까지만 하고 텍스트로 남긴다. LLM을 호출하지 않는다.
+
+    추출을 **세션 안의 Claude가 직접** 수행하는 경로를 위한 것이다. API 키 없이
+    구독만 있는 환경에서는 Messages API 호출이 막히지만, 사람이 쓰는 Claude는
+    같은 문서를 읽고 같은 스키마로 추출할 수 있다. 인용 검증은 그대로 돌므로
+    추출자가 API든 세션이든 품질 장치는 동일하게 작동한다.
+    """
     docs, missing = collect_documents(tickers, cfg)
+    if not docs:
+        raise SystemExit(f"'사업의 내용'을 하나도 확보하지 못했습니다. 미확보: {missing}")
+
+    SECTIONS_DIR.mkdir(parents=True, exist_ok=True)
+    for d in docs:
+        (SECTIONS_DIR / f"{d['ticker']}.json").write_text(
+            json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
+
+    full = sum(d.get("full_chars") or len(d["section"]) for d in docs)
+    kept = sum(len(d["section"]) for d in docs)
+    print(f"절 선별: {full:,}자 → {kept:,}자 ({kept / max(1, full):.0%})")
+    for d in docs:
+        print(f"  {d['ticker']} {d.get('corp_name') or '':10} {len(d['section']):>7,}자  "
+              f"{', '.join(d.get('kept_sections') or ['(원문)'])[:70]}")
+    print(f"\n{SECTIONS_DIR}에 {len(docs)}건 저장. 미확보 {len(missing)}건: {missing}")
+    return {"documents": len(docs), "missing": missing}
+
+
+def load_sections() -> dict[str, dict]:
+    if not SECTIONS_DIR.exists():
+        raise SystemExit(f"{SECTIONS_DIR}가 없습니다. 먼저 --fetch-only로 공시를 받으세요.")
+    return {p.stem: json.loads(p.read_text(encoding="utf-8"))
+            for p in sorted(SECTIONS_DIR.glob("*.json"))}
+
+
+def run(tickers: list[str], cfg: dict, asof: str, use_batch: bool = True,
+        extractions: dict | None = None) -> dict:
+    if extractions is None:
+        if not llm.has_credentials():
+            raise SystemExit(llm.MISSING_HINT)
+
+        # 공시 수집에 몇 분이 걸린 뒤에야 403으로 죽으면 그 시간이 통째로 낭비다.
+        # 알 수 있는 실패는 시작 전에 말한다.
+        if use_batch and llm.credential_kind() != llm.API_KEY_ENV:
+            raise SystemExit(BATCH_SCOPE_HINT)
+
+    if extractions is not None:
+        # 추출은 이미 끝났고, 남은 일은 검증과 엣지 생성이다. 공시는 저장된
+        # 절 텍스트에서 읽는다 — 인용 대조는 반드시 **추출자가 본 그 텍스트**와
+        # 해야 한다. 다시 받아 오면 미묘하게 달라져 멀쩡한 인용이 폐기된다.
+        stored = load_sections()
+        unknown = [t for t in extractions if t not in stored]
+        if unknown:
+            raise SystemExit(
+                f"추출에는 있으나 저장된 절이 없는 종목: {unknown}\n"
+                "  인용을 대조할 원문이 없으면 검증이 불가능합니다.")
+        docs, missing = [stored[t] for t in extractions], []
+        print(f"== 저장된 절 사용 ({len(docs)}종목) ==")
+    else:
+        print(f"== 사업보고서 수집 ({len(tickers)}종목) ==")
+        docs, missing = collect_documents(tickers, cfg)
     print(f"'사업의 내용' 확보 {len(docs)}건 / 미확보 {len(missing)}건")
     if not docs:
         return {"edges": 0, "documents": 0}
@@ -575,16 +651,19 @@ def run(tickers: list[str], cfg: dict, asof: str, use_batch: bool = True) -> dic
         print(f"  ::warning:: 하위 절을 못 찾아 원문을 그대로 쓴 종목: {no_slim}")
 
     existing = G.load()
-    vocab = IndustryVocab(
-        known=sorted({G.split_node(e["dst"])[1] for e in existing
-                      if e["rel"] in (G.REL_MEMBER, G.REL_UPSTREAM, G.REL_DOWNSTREAM)}),
-        aliases=load_aliases())
+    vocab = IndustryVocab(known=known_industries(existing), aliases=load_aliases())
     print(f"기존 산업 어휘 {len(vocab.known)}개, 별칭 {len(vocab.aliases)}개")
+    if not vocab.known:
+        print("  ::warning:: 산업 어휘가 비었습니다. 어휘 통제 없이 추출하면 "
+              "'시멘트'와 '시멘트 제조업'이 다른 노드가 되어 그래프가 조각납니다.")
 
-    client = llm.build_client()
-    print(f"Claude 인증: {llm.credential_kind()}")
-    print(f"== 추출 ({'배치' if use_batch else '순차'}, {cfg['model']}) ==")
-    if use_batch:
+    if extractions is not None:
+        raw = extractions
+        print(f"== 추출 (세션 제공, {len(raw)}건) ==")
+    elif use_batch:
+        client = llm.build_client()
+        print(f"Claude 인증: {llm.credential_kind()}")
+        print(f"== 추출 (배치, {cfg['model']}) ==")
         raw = extract_batch(client, docs, vocab, cfg)
     else:
         raw = {}
@@ -686,6 +765,11 @@ def main():
                    help="Batch API 대신 순차 호출 (소량·즉시 확인용, 비용 2배)")
     p.add_argument("--preflight", action="store_true",
                    help="최소 요청 1건만 보내 호출 가능 여부를 확인하고 끝낸다")
+    p.add_argument("--fetch-only", action="store_true",
+                   help="공시 수집·절 선별까지만 하고 data/dart_sections/에 저장 (LLM 미호출)")
+    p.add_argument("--extractions",
+                   help="{티커: 추출결과} JSON 파일. 저장된 절과 대조해 검증하고 엣지를 만든다 "
+                        "(LLM 미호출). --fetch-only로 받아 둔 절이 있어야 한다")
     args = p.parse_args()
 
     cfg_all = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
@@ -695,15 +779,27 @@ def main():
     if args.model:
         cfg["model"] = args.model
 
+    tickers = ([t.strip() for t in args.tickers.split(",") if t.strip()]
+               if args.tickers else None)
+    asof = args.date or __import__("datetime").datetime.now().strftime("%Y%m%d")
+
+    # LLM을 쓰지 않는 두 모드를 먼저 처리한다. 자격 증명 검사에 걸리면 안 된다.
+    if args.fetch_only:
+        print(json.dumps(fetch_only(tickers or _default_tickers(args.top_n, args.date), cfg),
+                         ensure_ascii=False, indent=2))
+        return
+    if args.extractions:
+        extractions = json.loads(Path(args.extractions).read_text(encoding="utf-8"))
+        report = run([], cfg, asof, extractions=extractions)
+        print(json.dumps(report, ensure_ascii=False, indent=2)[:1500])
+        return
+
     if not llm.has_credentials():
         raise SystemExit(llm.MISSING_HINT)
     if args.preflight:
         raise SystemExit(0 if preflight(cfg["model"]) else 1)
 
-    tickers = ([t.strip() for t in args.tickers.split(",") if t.strip()]
-               if args.tickers else _default_tickers(args.top_n, args.date))
-    asof = args.date or __import__("datetime").datetime.now().strftime("%Y%m%d")
-
+    tickers = tickers or _default_tickers(args.top_n, args.date)
     report = run(tickers, cfg, asof, use_batch=not args.no_batch)
     print(json.dumps(report, ensure_ascii=False, indent=2)[:1500])
 

@@ -561,3 +561,91 @@ class TestSubsectionHeaderIsNotATableRow:
         assert "원재료 및 생산설비" in titles
         assert "석회석을 매입합니다" in slim
         assert "기타 기타" not in slim
+
+
+class TestSessionExtractionPath:
+    """API 키 없이 구독만 있는 환경에서는 Messages API가 막힌다(라이브에서 429 확인).
+
+    그래도 추출은 가능하다 — 세션 안의 Claude가 같은 문서를 읽고 같은 스키마로
+    추출하면 된다. 중요한 것은 **인용 검증이 그대로 돈다**는 점이다. 추출자가
+    API든 사람이든 지어낸 인용은 똑같이 폐기돼야 한다.
+    """
+
+    SECTION = ("II. 사업의 내용\n\n"
+               "2. 주요 제품 및 서비스\n시멘트 | 62.0% | 레미콘 | 38.0%\n\n"
+               "4. 매출 및 수주상황\n주요 매출처는 국내 건설사입니다.\n")
+
+    @pytest.fixture
+    def stored(self, monkeypatch, tmp_path):
+        monkeypatch.setattr(dx, "SECTIONS_DIR", tmp_path)
+        (tmp_path / "300720.json").write_text(json.dumps({
+            "ticker": "300720", "corp_name": "한일시멘트", "section": self.SECTION,
+            "report_nm": "사업보고서", "rcept_dt": "20260318",
+        }, ensure_ascii=False), encoding="utf-8")
+        monkeypatch.setattr(dx, "DATA_DIR", tmp_path)
+        monkeypatch.setattr(dx.G, "GRAPH_PATH", tmp_path / "edges.jsonl", raising=False)
+        return tmp_path
+
+    def _extraction(self, **over):
+        base = {
+            "products": [{"industry": "시멘트·레미콘", "product": "시멘트",
+                          "revenue_share": 0.62, "tier": "A",
+                          "quote": "시멘트 | 62.0% | 레미콘 | 38.0%"}],
+            "upstream": [],
+            "downstream": [{"industry": "건설·EPC", "customer": "건설사", "tier": "B",
+                            "quote": "주요 매출처는 국내 건설사입니다."}],
+            "unmapped": "",
+        }
+        base.update(over)
+        return {"300720": base}
+
+    def test_fabricated_quote_is_dropped(self, stored, monkeypatch):
+        """세션이 추출했다고 검증이 느슨해지면 안 된다."""
+        monkeypatch.setattr(dx.G, "save", lambda *a, **k: None)
+        ex = self._extraction(upstream=[{
+            "industry": "전력", "material": "전기", "cost_share": None, "tier": "B",
+            "quote": "당사는 한국전력으로부터 전력을 공급받습니다.",  # 문서에 없다
+        }])
+        report = dx.run([], {"model": "x"}, "20260728", extractions=ex)
+        assert report["quote_dropped"] == 1
+        assert report["quote_kept"] == 2
+
+    def test_real_quotes_become_edges(self, stored, monkeypatch):
+        monkeypatch.setattr(dx.G, "save", lambda *a, **k: None)
+        report = dx.run([], {"model": "x"}, "20260728", extractions=self._extraction())
+        assert report["quote_dropped"] == 0
+        assert report["edges"] > 0
+
+    def test_missing_section_refuses_to_verify(self, stored, monkeypatch):
+        """원문 없이 검증했다고 하면 그게 최악이다."""
+        monkeypatch.setattr(dx.G, "save", lambda *a, **k: None)
+        with pytest.raises(SystemExit, match="저장된 절이 없는"):
+            dx.run([], {"model": "x"}, "20260728",
+                   extractions={"999999": self._extraction()["300720"]})
+
+    def test_no_llm_credentials_needed(self, stored, monkeypatch):
+        """이 경로의 존재 이유 — 자격 증명이 없어도 돌아야 한다."""
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.delenv("CLAUDE_CODE_OAUTH_TOKEN", raising=False)
+        monkeypatch.delenv("ANTHROPIC_AUTH_TOKEN", raising=False)
+        monkeypatch.setattr(dx.G, "save", lambda *a, **k: None)
+        report = dx.run([], {"model": "x"}, "20260728", extractions=self._extraction())
+        assert report["extracted"] == 1
+
+
+class TestIndustryVocabulary:
+    """어휘 통제가 조용히 꺼지면 '시멘트'와 '시멘트 제조업'이 각각 노드가 된다."""
+
+    def test_vocabulary_survives_an_empty_edge_file(self):
+        """graph/edges.jsonl은 파이프라인 산출물이라 새 클론에서는 없다."""
+        names = dx.known_industries([])
+        assert len(names) > 20, f"{len(names)}개 — YAML을 못 읽고 있다"
+        assert "시멘트·레미콘" in names and "조선" in names
+
+    def test_edge_file_industries_are_merged_in(self):
+        edge = dx.G.make_edge(dx.G.industry_node("우주항공"),
+                              dx.G.industry_node("탄소복합재"),
+                              dx.G.REL_UPSTREAM, "dart", asof="20260728")
+        names = dx.known_industries([edge])
+        assert "탄소복합재" in names
+        assert "조선" in names, "YAML 어휘가 사라졌다"

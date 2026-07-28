@@ -1,0 +1,5 @@
+{"asof": "20260728", "confidence": 0.7, "dst": "I:시멘트·레미콘", "evidence": "사업보고서 (2025.12)(20260318): 주요 매출처는 국내 건설사와 레미콘 업체입니다.", "rel": "후방", "sign": 0, "source": "dart", "src": "I:건설·EPC", "weight": null}
+{"asof": "20260728", "confidence": 0.7, "dst": "I:시멘트·레미콘", "evidence": "사업보고서 (2025.12)(20260318): 당사는 석회석과 유연탄을 주요 원재료로 매입하고 있습니다.", "rel": "전방", "sign": 0, "source": "dart", "src": "I:석회석", "weight": null}
+{"asof": "20260728", "confidence": 0.7, "dst": "I:건설·EPC", "evidence": "사업보고서 (2025.12)(20260318): 주요 매출처는 국내 건설사와 레미콘 업체입니다.", "rel": "전방", "sign": 0, "source": "dart", "src": "I:시멘트·레미콘", "weight": null}
+{"asof": "20260728", "confidence": 0.7, "dst": "I:석회석", "evidence": "사업보고서 (2025.12)(20260318): 당사는 석회석과 유연탄을 주요 원재료로 매입하고 있습니다.", "rel": "후방", "sign": 0, "source": "dart", "src": "I:시멘트·레미콘", "weight": null}
+{"asof": "20260728", "confidence": 0.85, "dst": "I:시멘트·레미콘", "evidence": "사업보고서 (2025.12)(20260318): 시멘트 | 62.0% | 레미콘 | 38.0%", "rel": "소속", "sign": 0, "source": "dart", "src": "T:300720", "weight": 0.62}

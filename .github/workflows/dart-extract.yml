@@ -15,6 +15,11 @@ on:
       top_n:
         description: "tickers 대신 시총 상위 N종목 (KRX 시세 접근 필요)"
         required: false
+      mode:
+        description: "fetch=공시만 받아 커밋(LLM 미호출) / extract=LLM으로 추출"
+        type: choice
+        options: [fetch, extract]
+        default: fetch
       use_batch:
         description: "Batch API 사용 (요금 50%, 최대 24시간). 소량이면 끄는 게 낫다"
         type: boolean
@@ -55,6 +60,11 @@ jobs:
           from src import llm
           if not os.getenv("DART_API_KEY"):
               sys.exit("DART_API_KEY 누락 — opendart.fss.or.kr에서 무료 발급")
+          # fetch 모드는 LLM을 부르지 않는다. 여기서 Claude 인증을 요구하면
+          # 이 모드가 존재하는 이유(API 키 없이 진행)와 정면으로 모순된다.
+          if "${{ inputs.mode }}" != "extract":
+              print("DART_API_KEY 확인 (fetch 모드 — Claude 인증 불필요)")
+              raise SystemExit(0)
           kind = llm.credential_kind()
           if not kind:
               sys.exit(llm.MISSING_HINT)
@@ -65,13 +75,40 @@ jobs:
       # 판별된다 — 사업보고서 5건을 12분간 태워 가며 알아낼 일이 아니다.
       # 실패해도 계속 진행한다. 판별 결과와 본 실행 결과를 한 번에 봐야 한다.
       - name: Preflight (LLM 호출 가능 여부)
+        if: ${{ inputs.mode == 'extract' }}
         continue-on-error: true
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: python -m src.dart_extract --preflight
 
+      # 공시만 받아 커밋한다. 추출은 세션 안의 Claude가 저장된 절을 읽고 수행하며,
+      # 인용 검증은 --extractions 경로에서 그대로 돈다. MAX 구독만으로 API 키 없이
+      # 밸류체인을 쌓는 경로다(Messages API는 구독 토큰으로 막혀 있다 — 라이브 확인).
+      - name: Fetch sections only
+        if: ${{ inputs.mode == 'fetch' }}
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+        run: |
+          DEFAULT="000720,300720,004020,009540,010140,006260,267260,000660"
+          TICKERS="${{ inputs.tickers }}"
+          python -m src.dart_extract --fetch-only --tickers "${TICKERS:-$DEFAULT}"
+
+      - name: Commit sections
+        if: ${{ inputs.mode == 'fetch' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f data/dart_sections
+          if git diff --staged --quiet; then
+            echo "변경 없음"
+          else
+            git commit -m "chore: DART 사업의 내용 절 수집 $(date +%Y-%m-%d)"
+            git push origin HEAD:${{ github.ref_name }}
+          fi
+
       - name: Extract
+        if: ${{ inputs.mode == 'extract' }}
         env:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -95,7 +132,7 @@ jobs:
           python -m src.dart_extract $ARGS
 
       - name: Summarize
-        if: always()
+        if: ${{ always() && inputs.mode == 'extract' }}
         run: |
           python - <<'PY'
           import json, pathlib
@@ -129,7 +166,7 @@ jobs:
           PY
 
       - name: Show resulting graph
-        if: always()
+        if: ${{ always() && inputs.mode == 'extract' }}
         run: |
           python - <<'PY'
           import collections
@@ -159,7 +196,7 @@ jobs:
           PY
 
       - name: Commit edges
-        if: ${{ inputs.commit && success() }}
+        if: ${{ inputs.commit && success() && inputs.mode == 'extract' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -179,4 +216,5 @@ jobs:
           path: |
             graph/
             data/dart_extract_*.json
+            data/dart_sections/
           retention-days: 14
