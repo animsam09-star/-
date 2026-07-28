@@ -44,7 +44,9 @@ from __future__ import annotations
 import json
 import os
 import re
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pandas as pd
@@ -88,6 +90,12 @@ FIELD_CANDIDATES = {
 
 _RATE_MIN_INTERVAL = 0.12   # 초당 10회 제한에 여유를 둔다
 _last_call = 0.0
+_rate_lock = threading.Lock()
+
+# 동시 호출 수. KRX 응답 한 건이 1~2MB(코스닥 1,800여 종목)라 왕복이 길고,
+# 순차로 130거래일을 받으면 40분이 넘는다(라이브에서 확인). 초당 제한은
+# _RATE_MIN_INTERVAL로 따로 지키므로 동시성과 충돌하지 않는다.
+MAX_WORKERS = 6
 
 
 class KrxApiError(RuntimeError):
@@ -113,12 +121,15 @@ def fetch_raw(category: str, endpoint: str, bas_dd: str,
 
     last_error: Exception | None = None
     for attempt in range(retries):
-        gap = time.monotonic() - _last_call
-        if gap < _RATE_MIN_INTERVAL:
-            time.sleep(_RATE_MIN_INTERVAL - gap)
+        # 여러 스레드가 동시에 두드리므로 간격 계산은 락 안에서 해야 한다.
+        # 락 없이 하면 모두 같은 _last_call을 보고 동시에 나가 초당 제한을 넘긴다.
+        with _rate_lock:
+            gap = time.monotonic() - _last_call
+            if gap < _RATE_MIN_INTERVAL:
+                time.sleep(_RATE_MIN_INTERVAL - gap)
+            _last_call = time.monotonic()
         try:
             resp = requests.get(url, params=params, timeout=timeout)
-            _last_call = time.monotonic()
 
             if resp.status_code >= 400:
                 # 응답 본문에 KRX가 적어 보낸 사유가 들어 있다. 버리면 원인을
@@ -316,33 +327,59 @@ def _snapshot_frame(records: list[dict]) -> pd.DataFrame:
     return df[~df.index.duplicated(keep="first")]
 
 
+def weekdays_back(end_date: str, n_days: int, *, slack: float = 1.12,
+                  pad: int = 12) -> list[str]:
+    """n_days 거래일을 담기에 충분한 평일 목록(최신순).
+
+    한국 증시 휴장일은 연 15일 안팎이라 거래일 대비 평일이 5% 정도 많다.
+    여유(slack·pad)를 두고 넉넉히 잡는다. 남는 날은 캐시에 남아 버려지지 않는다.
+    """
+    want = int(n_days * slack) + pad
+    days, day = [], pd.Timestamp(end_date)
+    while len(days) < want:
+        if day.weekday() < 5:
+            days.append(day.strftime("%Y%m%d"))
+        day -= pd.Timedelta(days=1)
+    return days
+
+
 def iter_trading_days(end_date: str, n_days: int, *, max_lookback: int = 500,
                       use_cache: bool = True, progress_every: int = 20):
-    """end_date에서 거슬러 올라가며 (날짜, 스냅샷)을 최신순으로 내놓는다.
+    """(날짜, 스냅샷)을 최신순으로 내놓는다.
 
-    거래일 달력 API가 없으므로 **응답이 비었으면 휴장일**로 본다. 주말은 조회하지
-    않는다(호출 낭비). 임시휴장·데이터 지연도 똑같이 '빈 응답'이라 구분되지 않지만,
-    어느 쪽이든 그 날은 패널에서 빠지는 게 맞다.
+    거래일 달력 API가 없으므로 **응답이 비었으면 휴장일**로 본다. 어느 평일이
+    거래일인지 미리 알 수 없으니, 넉넉히 잡은 평일들을 **한꺼번에 병렬로** 받고
+    빈 것을 버린다. 하루씩 순차로 받으면 130거래일에 40분이 넘는다.
+
+    과다 조회분은 캐시에 남아 다음 실행에서 재사용되므로 버려지지 않는다.
     """
-    day = pd.Timestamp(end_date)
+    candidates = weekdays_back(end_date, n_days)[:max_lookback]
+
+    def fetch(bas_dd):
+        try:
+            return bas_dd, daily_snapshot(bas_dd, use_cache=use_cache)
+        except KrxApiError as e:
+            # 한 날짜의 실패로 패널 전체를 버리지 않는다. 부족하면 아래에서 걸린다.
+            print(f"  {bas_dd} 조회 실패(건너뜀): {e}")
+            return bas_dd, pd.DataFrame(columns=SNAPSHOT_COLUMNS)
+
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
+        results = list(pool.map(fetch, candidates))
+
     found = 0
-    for _ in range(max_lookback):
+    for bas_dd, snap in results:          # candidates가 최신순이라 그대로 최신순
+        if snap.empty:
+            continue
+        found += 1
+        if progress_every and found % progress_every == 0:
+            print(f"  ... 가격 수집 {found}/{n_days}일 ({bas_dd})")
+        yield bas_dd, snap
         if found >= n_days:
             return
-        if day.weekday() < 5:      # 월~금만
-            bas_dd = day.strftime("%Y%m%d")
-            snap = daily_snapshot(bas_dd, use_cache=use_cache)
-            if not snap.empty:
-                found += 1
-                if progress_every and found % progress_every == 0:
-                    print(f"  ... 가격 수집 {found}/{n_days}일 ({bas_dd})")
-                yield bas_dd, snap
-        day -= pd.Timedelta(days=1)
 
-    if found < n_days:
-        raise KrxApiError(
-            f"{end_date}에서 {max_lookback}일을 거슬러 올라갔으나 거래일이 "
-            f"{found}일뿐입니다(요청 {n_days}일).")
+    raise KrxApiError(
+        f"{end_date} 기준 평일 {len(candidates)}일을 조회했으나 거래일이 "
+        f"{found}일뿐입니다(요청 {n_days}일). 휴장이 길었거나 조회가 막혔습니다.")
 
 
 def fetch_panel(end_date: str, n_days: int, use_cache: bool = True

@@ -7,6 +7,8 @@
 LIVE_RECORD는 2026-07-27 실제 응답에서 가져온 필드 구성이다. 가정이 아니다.
 """
 
+import time
+
 import pandas as pd
 import pytest
 
@@ -256,3 +258,61 @@ class TestTradingDayWalk:
         assert dates == ["20260723", "20260724", "20260727"]
         assert list(close.index) == dates, "패널이 오름차순이 아니면 수익률 부호가 뒤집힌다"
         assert not latest.empty, "기준일 스냅샷이 있어야 종목 마스터를 만든다"
+
+
+class TestParallelFetch:
+    """순차 조회는 130거래일에 40분이 넘는다(라이브에서 확인). 병렬로 받되
+    초당 제한과 최신순 정렬은 유지돼야 한다."""
+
+    def test_weekday_window_covers_holidays(self):
+        """거래일 n일을 담으려면 평일을 그보다 넉넉히 잡아야 한다."""
+        days = api.weekdays_back("20260728", 130)
+        assert len(days) > 130, "여유가 없으면 휴장이 낀 구간에서 모자란다"
+        assert days[0] == "20260728", "최신순이어야 한다"
+        assert all(pd.Timestamp(d).weekday() < 5 for d in days), "주말이 섞였다"
+
+    def test_results_stay_newest_first_despite_parallelism(self, monkeypatch):
+        """병렬 실행이 순서를 흐트러뜨리면 패널 정렬이 깨지고 수익률이 뒤집힌다."""
+        import random
+
+        def fake(bas_dd, use_cache=True, markets=("KOSPI", "KOSDAQ")):
+            time.sleep(random.random() * 0.01)      # 완료 순서를 일부러 흔든다
+            return pd.DataFrame({"close": [100.0], "volume": [1.0], "value": [1.0]},
+                                index=["005930"])
+        monkeypatch.setattr(api, "daily_snapshot", fake)
+        days = [d for d, _ in api.iter_trading_days("20260728", 10, progress_every=0)]
+        assert days == sorted(days, reverse=True)
+        assert len(days) == 10
+
+    def test_one_bad_date_does_not_sink_the_panel(self, monkeypatch):
+        """하루가 실패했다고 130일치를 버리면 안 된다."""
+        def fake(bas_dd, use_cache=True, markets=("KOSPI", "KOSDAQ")):
+            if bas_dd == "20260724":
+                raise api.KrxApiError("일시 오류")
+            return pd.DataFrame({"close": [100.0], "volume": [1.0], "value": [1.0]},
+                                index=["005930"])
+        monkeypatch.setattr(api, "daily_snapshot", fake)
+        days = [d for d, _ in api.iter_trading_days("20260728", 5, progress_every=0)]
+        assert "20260724" not in days
+        assert len(days) == 5, "실패한 하루를 건너뛰고 5일을 채워야 한다"
+
+    def test_rate_limiter_is_held_under_a_lock(self, monkeypatch):
+        """락 없이 간격을 계산하면 모든 스레드가 같은 값을 보고 동시에 나간다."""
+        monkeypatch.setenv(api.ENV_KEY, "k")
+        stamps = []
+
+        class Resp:
+            status_code = 200
+            def json(self): return {"OutBlock_1": []}
+
+        def fake_get(url, params=None, timeout=None):
+            stamps.append(time.monotonic())
+            return Resp()
+
+        monkeypatch.setattr(api.requests, "get", fake_get)
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=6) as pool:
+            list(pool.map(lambda i: api.fetch_raw("sto", "stk_bydd_trd", "2026072%d" % (i % 10)),
+                          range(12)))
+        gaps = [b - a for a, b in zip(sorted(stamps), sorted(stamps)[1:])]
+        assert min(gaps) >= api._RATE_MIN_INTERVAL * 0.8, f"간격 {min(gaps):.3f}s가 너무 촘촘하다"
