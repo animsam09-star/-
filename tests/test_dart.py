@@ -719,3 +719,63 @@ class TestMembershipDigest:
 
     def test_budget_is_respected(self):
         assert len(dx.membership_digest(self.DOC, budget=400)) <= 400
+
+
+class TestReportFallbackWhenDocumentIsMissing:
+    """최신 보고서의 원문이 DART에 없으면 다음 후보로 넘어가야 한다.
+
+    한화에어로스페이스·현대제철이 `status 014 파일이 존재하지 않습니다`로 통째로
+    실패했다. 재시도는 같은 접수번호를 다시 부르므로 소용이 없다. 직전 보고서라도
+    밸류체인 정보는 대부분 유효하니, 후보를 넘겨 가며 시도하는 것이 맞다.
+    """
+
+    CANDIDATES = [
+        {"rcept_no": "20260319000633", "report_nm": "사업보고서 (2025.12)",
+         "rcept_dt": "20260319", "corp_name": "테스트"},
+        {"rcept_no": "20250318000111", "report_nm": "사업보고서 (2024.12)",
+         "rcept_dt": "20250318", "corp_name": "테스트"},
+    ]
+    SECTION = ("Ⅱ. 사업의 내용\n\n1. 사업의 개요\n" + "가나다라마바사아자차" * 40
+               + "\n\nIII. 재무에 관한 사항\n")
+
+    def _wire(self, monkeypatch, docs):
+        monkeypatch.setattr(dart, "find_business_reports",
+                            lambda corp, **k: list(self.CANDIDATES))
+
+        def fake_doc(rcept_no, use_cache=True):
+            v = docs.get(rcept_no)
+            if isinstance(v, Exception):
+                raise v
+            return v
+        monkeypatch.setattr(dart, "fetch_document", fake_doc)
+
+    def test_missing_document_falls_through_to_the_next_report(self, monkeypatch):
+        self._wire(monkeypatch, {
+            "20260319000633": dart.DartError("문서 조회 실패: 파일이 존재하지 않습니다."),
+            "20250318000111": self.SECTION})
+        out = dart.fetch_business_section("012450", {"012450": "X"}, slim=False)
+        assert out is not None, "다음 후보를 시도하지 않았다"
+        assert out["rcept_no"] == "20250318000111"
+        assert out["report_nm"] == "사업보고서 (2024.12)"
+
+    def test_empty_section_also_falls_through(self, monkeypatch):
+        """원문은 있는데 '사업의 내용'이 비어 있는 정정 공시도 있다."""
+        self._wire(monkeypatch, {
+            "20260319000633": "III. 재무에 관한 사항\n숫자만 잔뜩\n",
+            "20250318000111": self.SECTION})
+        out = dart.fetch_business_section("004020", {"004020": "X"}, slim=False)
+        assert out is not None
+        assert out["rcept_no"] == "20250318000111"
+
+    def test_all_candidates_failing_returns_none_not_an_exception(self, monkeypatch):
+        """전부 실패하면 그 종목만 미확보로 남고 나머지 수집은 계속돼야 한다."""
+        self._wire(monkeypatch, {
+            "20260319000633": dart.DartError("없음"),
+            "20250318000111": dart.DartError("없음")})
+        assert dart.fetch_business_section("000000", {"000000": "X"}) is None
+
+    def test_first_working_candidate_wins(self, monkeypatch):
+        self._wire(monkeypatch, {"20260319000633": self.SECTION,
+                                 "20250318000111": self.SECTION})
+        out = dart.fetch_business_section("005930", {"005930": "X"}, slim=False)
+        assert out["rcept_no"] == "20260319000633", "최신 보고서를 건너뛰었다"

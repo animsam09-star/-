@@ -1,0 +1,15 @@
+industry: 완성차
+description: 승용·상용차 제조와 판매
+drivers: [미국 관세, 원달러 환율, 전기차 침투율, 강판 가격, 인센티브]
+peers: [현대차, 기아]
+upstream:
+  - segment: 자동차 부품·모듈
+    companies: [현대모비스, 현대위아, HL만도, 한온시스템, 에스엘]
+  - segment: 철강
+    companies: [POSCO홀딩스, 현대제철]
+  - segment: 이차전지
+    companies: [LG에너지솔루션, 삼성SDI]
+downstream:
+  - segment: 자동차 판매·금융
+    companies: [현대글로비스]
+notes: 환율은 완성차엔 수출 수혜, 부품 수입 비중이 큰 곳엔 원가다 — 부호가 갈린다

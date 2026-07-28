@@ -1,0 +1,15 @@
+industry: 건설기계
+description: 굴착기·휠로더 등 건설기계와 산업차량
+drivers: [북미·인도 인프라 투자, 중국 굴착기 판매, 광산 개발 CAPEX, 강재 가격]
+peers: [HD건설기계, HD현대인프라코어, 두산밥캣]
+upstream:
+  - segment: 건설기계 부품
+    companies: [진성티이씨, 대창단조, 흥국, 디와이파워]
+  - segment: 철강
+    companies: [POSCO홀딩스, 현대제철]
+downstream:
+  - segment: 건설·EPC
+    companies: [현대건설, 대우건설, GS건설]
+  - segment: 광산·비철 원광
+    companies: []
+notes: 굴착기는 광산 CAPEX와 인프라 착공 양쪽에 걸린다. 두 수요의 사이클이 달라 한쪽만 보면 틀린다

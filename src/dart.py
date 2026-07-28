@@ -103,11 +103,16 @@ def load_corp_codes(force: bool = False) -> dict[str, str]:
     return mapping
 
 
-def find_business_report(corp_code: str, years_back: int = 2) -> dict | None:
-    """가장 최근의 정기보고서 접수번호를 찾는다.
+def find_business_reports(corp_code: str, years_back: int = 2,
+                          limit: int = 4) -> list[dict]:
+    """정기보고서 후보를 **우선순위 순으로 여러 건** 돌려준다.
 
-    사업보고서 > 반기 > 분기 순으로 고른다. '사업의 내용'의 원재료·매출처 표는
-    사업보고서가 가장 상세하다.
+    사업보고서 > 반기 > 분기 순, 같은 종류 안에서는 최신순이다.
+
+    하나만 돌려주면 안 되는 이유 — 최신 보고서의 원문이 DART에 없을 수 있다.
+    실제로 한화에어로스페이스·현대제철이 `status 014 파일이 존재하지 않습니다`로
+    통째로 실패했다. 재시도해도 같은 접수번호라 소용없고, **다음 후보로 넘어가야**
+    한다. 직전 연도 사업보고서라도 밸류체인 정보는 대부분 유효하다.
     """
     end = datetime.now().strftime("%Y%m%d")
     begin = f"{datetime.now().year - years_back}0101"
@@ -125,13 +130,20 @@ def find_business_report(corp_code: str, years_back: int = 2) -> dict | None:
         raise DartError(f"DART 오류 {status}: {data.get('message')}")
 
     filings = data.get("list") or []
+    out: list[dict] = []
     for kind in REPORT_PRIORITY:
-        matches = [f for f in filings if kind in (f.get("report_nm") or "")]
-        if matches:
-            best = max(matches, key=lambda f: f.get("rcept_dt", ""))
-            return {"rcept_no": best["rcept_no"], "report_nm": best["report_nm"].strip(),
-                    "rcept_dt": best.get("rcept_dt", ""), "corp_name": best.get("corp_name", "")}
-    return None
+        matches = sorted((f for f in filings if kind in (f.get("report_nm") or "")),
+                         key=lambda f: f.get("rcept_dt", ""), reverse=True)
+        for f in matches:
+            out.append({"rcept_no": f["rcept_no"], "report_nm": f["report_nm"].strip(),
+                        "rcept_dt": f.get("rcept_dt", ""), "corp_name": f.get("corp_name", "")})
+    return out[:limit]
+
+
+def find_business_report(corp_code: str, years_back: int = 2) -> dict | None:
+    """가장 우선순위가 높은 정기보고서 하나. 후보가 없으면 None."""
+    reports = find_business_reports(corp_code, years_back=years_back, limit=1)
+    return reports[0] if reports else None
 
 
 def _decode(raw: bytes) -> str:
@@ -310,12 +322,22 @@ def fetch_business_section(ticker: str, corp_codes: dict[str, str],
     corp = corp_codes.get(ticker)
     if not corp:
         return None
-    report = find_business_report(corp)
-    if not report:
-        return None
 
-    section = extract_business_section(fetch_document(report["rcept_no"]))
-    if not section:
+    # 후보를 순서대로 시도한다. 원문이 없거나(014) 절 추출이 빈 보고서는 건너뛴다.
+    section, report = "", None
+    for cand in find_business_reports(corp):
+        try:
+            section = extract_business_section(fetch_document(cand["rcept_no"]))
+        except DartError as e:
+            print(f"    {ticker} {cand['report_nm']}({cand['rcept_no']}) 건너뜀: "
+                  f"{str(e)[:90]}", flush=True)
+            continue
+        if section:
+            report = cand
+            break
+        print(f"    {ticker} {cand['report_nm']}에 '사업의 내용'이 없어 다음 후보로",
+              flush=True)
+    if not section or report is None:
         return None
 
     full_len = len(section)

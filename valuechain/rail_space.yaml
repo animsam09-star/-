@@ -1,0 +1,13 @@
+industry: 철도차량
+description: 고속철·전동차 제작과 철도 시스템·유지보수
+drivers: [국내외 철도 발주, GTX·광역철도 예산, 해외 수출 계약, 강재 가격]
+peers: [현대로템, 대아티아이, 우진산전]
+upstream:
+  - segment: 철강
+    companies: [POSCO홀딩스, 현대제철]
+  - segment: 전력기기·전선
+    companies: [LS ELECTRIC, 일진전기]
+downstream:
+  - segment: 유틸리티·발전
+    companies: [한국전력]
+notes: 현대로템은 철도·방산·수소가 한 회사에 섞여 있어 단일 산업으로 보면 신호가 흐려진다
