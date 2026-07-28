@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src import krx_api, prices, screener
+from src import krx_api, prices, screener, universe
 
 
 class TestDataSourceSelection:
@@ -107,3 +107,82 @@ def test_drops_stocks_with_insufficient_history(panel):
     close.loc[close.index[:100], "000003"] = np.nan  # 신규 상장 흉내
     sig = compute_signals(close, volume, value, CFG)
     assert "000003" not in sig.index
+
+
+class TestScreenerEndToEnd:
+    """원천 응답 형태 그대로 스크리너→종목 마스터를 통과시킨다.
+
+    단위 테스트는 픽스처를 이미 깨끗한 DataFrame으로 만들기 때문에, 실제 응답의
+    '쉼표 낀 문자열'과 '표준코드'가 어디서 깨지는지 잡지 못한다. 라이브 실행은
+    20분이 걸려서 이런 버그를 거기서 발견하면 비싸다.
+    """
+
+    @pytest.fixture
+    def fake_source(self, monkeypatch, tmp_path):
+        monkeypatch.setattr(screener, "DATA_DIR", tmp_path)
+        monkeypatch.setattr(universe, "DATA_DIR", tmp_path)
+
+        tickers = [f"{i:06d}" for i in range(1, 41)]
+        dates = pd.date_range("2026-01-01", periods=70,
+                              freq="B").strftime("%Y%m%d").tolist()
+
+        def snapshot_for(i):
+            recs = []
+            for j, t in enumerate(tickers):
+                px = 10000 * (1 + 0.004 * i + 0.001 * j)
+                recs.append({
+                    "BAS_DD": dates[i],
+                    # 표준코드와 단축코드가 섞여 오는 상황을 재현한다
+                    "ISU_CD": f"KR7{t}003" if j % 3 == 0 else t,
+                    "ISU_NM": f"종목{j}",
+                    "TDD_CLSPRC": f"{px:,.0f}",          # 쉼표 낀 문자열
+                    "ACC_TRDVOL": "1,000,000",
+                    "ACC_TRDVAL": "5,000,000,000",
+                    "MKTCAP": f"{500_000_000_000 + j:,.0f}",
+                    "_MARKET": "KOSPI",
+                })
+            return krx_api._snapshot_frame(recs)
+
+        snaps = {d: snapshot_for(i) for i, d in enumerate(dates)}
+
+        def fake_panel(end_date, n_days, use_cache=True):
+            days = dates[-n_days:]
+            frame = lambda col: pd.DataFrame(
+                {d: snaps[d][col] for d in days}).T.sort_index()
+            return (days, frame("close"), frame("volume"), frame("value"),
+                    snaps[days[-1]])
+
+        monkeypatch.setattr(prices, "fetch_panel", fake_panel)
+        return dates
+
+    CFG = dict(lookback_days=65, min_market_cap=1, min_avg_turnover=1,
+               momentum_ret20=0.15, high_proximity=0.97, volume_surge_ratio=2.5,
+               golden_cross_window=7, top_n=5)
+
+    def test_string_prices_do_not_survive_into_signals(self, fake_source):
+        result, close = screener.screen(fake_source[-1], self.CFG)
+        assert close.dtypes.iloc[0].kind in "if", (
+            f"종가가 {close.dtypes.iloc[0]} — 문자열이면 비교가 사전순이 된다")
+        assert result["candidates"], "후보가 하나도 안 나왔다"
+
+    def test_standard_codes_are_normalized_before_they_reach_the_master(self, fake_source):
+        """표준코드가 남으면 DART·밸류체인과의 조인이 예외 없이 전부 빗나간다."""
+        result, _ = screener.screen(fake_source[-1], self.CFG)
+        uni = universe.load(result["base_date"])
+        assert uni is not None, "종목 마스터가 저장되지 않았다"
+        assert not [t for t in uni.entries if t.startswith("KR")]
+        assert "000001" in uni
+
+    def test_master_is_not_narrowed_by_the_screening_filter(self, fake_source):
+        """시총 하한에 걸린 소형주도 이름 해석이 돼야 한다 — 이 모듈의 존재 이유다."""
+        cfg = dict(self.CFG, min_market_cap=500_000_000_020)   # 대부분 탈락시킨다
+        result, _ = screener.screen(fake_source[-1], cfg)
+        uni = universe.load(result["base_date"])
+        assert len(uni) == 40, f"마스터가 {len(uni)}종목으로 좁혀졌다"
+        assert result["universe_size"] < 40, "필터가 실제로 걸리지 않아 검증이 무의미하다"
+
+    def test_names_resolve_back_to_tickers(self, fake_source):
+        result, _ = screener.screen(fake_source[-1], self.CFG)
+        uni = universe.load(result["base_date"])
+        assert uni.resolve("종목0") == "000001"
+        assert uni.resolve("종목 0") == "000001", "공백 정규화가 안 된다"
