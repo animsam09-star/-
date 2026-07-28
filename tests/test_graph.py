@@ -259,3 +259,45 @@ class TestCrossValidationSurvivesDedup:
         dart = G.make_edge(G.industry_node("조선"), G.industry_node("후판·강재"),
                            G.REL_UPSTREAM, "dart", origin="010140", asof="20260728")
         assert len(G.merge([vc, dart])) == 2
+
+
+class TestAliasTableIsConsistentWithRealNodes:
+    """별칭 표는 노드를 접으라고 있는 것이지, 쪼개라고 있는 게 아니다.
+
+    실제로 `방위산업: 방산`이 들어가 있었다. defense.yaml의 노드 이름은
+    '방위산업'인데 별칭이 그걸 '방산'으로 바꾸므로, 공시에서 '방위산업'이 나올
+    때마다 YAML 노드와 이어지지 않는 **새 노드** '방산'이 생긴다. 방향이 뒤집힌
+    별칭은 파편화를 막는 게 아니라 만들어 낸다. 조용히 일어나므로 테스트로 잡는다.
+    """
+
+    def _nodes(self):
+        from src import dart_extract as dx
+        nodes = set()
+        for f in graph_build.VALUECHAIN_DIR.glob("*.yaml"):
+            if f.name.startswith("_"):
+                continue
+            doc = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
+            if doc.get("industry"):
+                nodes.add(str(doc["industry"]))
+            for block in (doc.get("upstream"), doc.get("downstream")):
+                for seg in block or []:
+                    if isinstance(seg, dict) and seg.get("segment"):
+                        nodes.add(str(seg["segment"]))
+        return nodes, dx.load_aliases()
+
+    def test_every_alias_target_is_a_real_node(self):
+        nodes, aliases = self._nodes()
+        bad = {k: v for k, v in aliases.items() if v not in nodes}
+        assert not bad, f"별칭이 존재하지 않는 노드를 가리킨다(방향이 뒤집혔을 수 있음): {bad}"
+
+    def test_no_alias_source_is_itself_a_node(self):
+        """왼쪽이 이미 노드면 그 노드가 통째로 다른 이름으로 넘어간다."""
+        nodes, aliases = self._nodes()
+        bad = {k: v for k, v in aliases.items() if k in nodes}
+        assert not bad, f"실재하는 노드를 다른 이름으로 접고 있다: {bad}"
+
+    def test_aliases_do_not_chain(self):
+        """A→B, B→C는 한 번만 적용되므로 A가 C에 닿지 않는다."""
+        _, aliases = self._nodes()
+        chained = {k: v for k, v in aliases.items() if v in aliases}
+        assert not chained, f"별칭이 연쇄한다 — 한 번만 적용되므로 끝까지 접히지 않는다: {chained}"
