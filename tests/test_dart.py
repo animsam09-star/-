@@ -483,3 +483,35 @@ class TestSectionSlimming:
         assert "관급 및 민간 발주처" in slim
         assert "기타 기타" not in slim
         assert titles, "원재료가 없다고 통째로 포기하면 안 된다"
+
+
+class TestBatchScopeGuard:
+    """Batch API는 OAuth 토큰으로 호출할 수 없다(403 permission_error).
+
+    라이브에서 공시 수집에 8분을 쓴 뒤에야 이 403이 났다. 시작 전에 알 수 있는
+    실패를 끝까지 끌고 가면 그 시간이 통째로 낭비다.
+    """
+
+    def test_oauth_token_with_batch_stops_before_fetching(self, monkeypatch):
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.setenv("CLAUDE_CODE_OAUTH_TOKEN", "tok")
+        called = []
+        monkeypatch.setattr(dx, "collect_documents",
+                            lambda *a, **k: called.append(1) or ([], []))
+        with pytest.raises(SystemExit) as exc:
+            dx.run(["005930"], {}, "20260728", use_batch=True)
+        assert "Batch API" in str(exc.value)
+        assert "--no-batch" in str(exc.value), "대안이 안내되지 않았다"
+        assert not called, "공시를 받기 전에 멈춰야 한다"
+
+    def test_api_key_may_use_batch(self, monkeypatch):
+        """API 키는 Batch를 쓸 수 있어야 한다 — 이 가드가 과잉이면 안 된다."""
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
+        monkeypatch.setattr(dx, "collect_documents", lambda *a, **k: ([], []))
+        assert dx.run(["005930"], {}, "20260728", use_batch=True)["documents"] == 0
+
+    def test_sequential_mode_is_unaffected_by_the_guard(self, monkeypatch):
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.setenv("CLAUDE_CODE_OAUTH_TOKEN", "tok")
+        monkeypatch.setattr(dx, "collect_documents", lambda *a, **k: ([], []))
+        assert dx.run(["005930"], {}, "20260728", use_batch=False)["documents"] == 0

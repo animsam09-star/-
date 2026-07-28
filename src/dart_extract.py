@@ -506,9 +506,24 @@ def collect_documents(tickers: list[str], cfg: dict | None = None
     return docs, missing
 
 
+BATCH_SCOPE_HINT = (
+    "Batch API는 OAuth 토큰(CLAUDE_CODE_OAUTH_TOKEN)으로 호출할 수 없습니다.\n"
+    "  서버 응답: 'OAuth token does not meet scope requirement\n"
+    "             any_of(user:batch, user:developer, workspace:developer,\n"
+    "                    workspace:inference)'\n"
+    "  선택지:\n"
+    "   1. --no-batch로 순차 실행 (요금 2배지만 소량이면 무시할 만하다)\n"
+    "   2. ANTHROPIC_API_KEY를 따로 발급해 등록 (Batch는 요금 50%)")
+
+
 def run(tickers: list[str], cfg: dict, asof: str, use_batch: bool = True) -> dict:
     if not llm.has_credentials():
         raise SystemExit(llm.MISSING_HINT)
+
+    # 공시 수집에 몇 분이 걸린 뒤에야 403으로 죽으면 그 시간이 통째로 낭비다.
+    # 알 수 있는 실패는 시작 전에 말한다.
+    if use_batch and llm.credential_kind() != llm.API_KEY_ENV:
+        raise SystemExit(BATCH_SCOPE_HINT)
 
     print(f"== 사업보고서 수집 ({len(tickers)}종목) ==")
     docs, missing = collect_documents(tickers, cfg)
