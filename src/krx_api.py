@@ -43,10 +43,20 @@ KRX OpenAPI(openapi.krx.co.kr에서 발급, 호출은 data-dbg.krx.co.kr)는 인
 마스터를 만드는 데 종목기본정보(stk_isu_base_info) 엔드포인트가 필요 없다 —
 그쪽은 별도 이용신청 대상이라, 안 써도 되는 편이 낫다.
 
-**ETN(etn_bydd_trd)은 401**이다(2026-07-28 라이브). 이용신청이 따로다. 설정의
-팩터 6종(달러·구리·유가·금·미국채·국고채)은 전부 ETF 대용치가 있으므로 수평축을
-ETF만으로 세운다. 지수 엔드포인트(idx/*)의 필드명은 **아직 라이브로 확인하지
-못했다** — 스모크의 스키마 탐색이 그 줄이 추가되기 전 커밋에서 돌았다.
+    kospi_dd_trd / kosdaq_dd_trd / krx_dd_trd:
+      BAS_DD IDX_CLSS IDX_NM CLSPRC_IDX CMPPREVDD_IDX FLUC_RT
+      OPNPRC_IDX HGPRC_IDX LWPRC_IDX ACC_TRDVOL ACC_TRDVAL MKTCAP
+
+지수는 종목코드가 없고 IDX_NM으로 식별한다(예: '코리아 밸류업 지수'). 접근은
+되지만 **시장 요인에는 쓰지 않는다** — prices.market_series가 이미 받아 둔 전
+종목 패널로 시총가중 지수를 재구성한다. 외부 시계열을 끌어오면 날짜 라벨이
+어긋났을 때 예외가 아니라 전부 NaN이 되기 때문이다.
+
+**ETN(etn_bydd_trd)은 두 번의 라이브 탐색에서 모두 401**이었다 — 이용신청이
+따로일 가능성이 높다. 설정의 팩터 6종(달러·구리·유가·금·미국채·국고채)은 전부
+ETF 대용치가 있으므로 수평축은 ETF만으로 선다. 참고로 401은 간헐적으로도
+나타난다 — 2026-07-28 두 번째 탐색에서 ETF가 401을 받았지만, 같은 실행의
+파이프라인에서는 1,150건이 정상 조회됐다. 401 한 번으로 미승인이라 단정하지 말 것.
 
 여전히 후보 목록으로 해석한다. 잘못 짚으면 KeyError가 아니라 **빈 컬럼**이 되어
 조용히 틀리므로, 실패하면 **실제 필드 목록을 담아 예외**를 올린다.
@@ -214,7 +224,17 @@ def resolve_field(records: list[dict], canonical: str, required: bool = True) ->
 
 
 _STANDARD_CODE = re.compile(r"^KR[A-Z0-9]([0-9]{6})[0-9]{3}$")
-_SIX_DIGITS = re.compile(r"^\d{5}[0-9A-Z]$")   # 005930, 종류주 08104K 등
+# 005930(보통주), 08104K(종류주), 0184E0(신형 ETF 단축코드) 모두 통과해야 한다.
+#
+# 처음엔 `\d{5}[0-9A-Z]`로 잡았다. 알파벳이 **끝자리에만** 온다고 본 것인데,
+# KRX는 6자리 숫자 공간이 차면서 5번째 자리에 알파벳을 쓰는 코드를 발급하고 있다
+# (라이브 응답 1,150건 중 284건). 그래서 정상 ETF 코드가 '이상'으로 잡혔고,
+# 5% 임계를 넘겨 **모든 날짜의 ETF 시세가 통째로 버려졌다.** 검사식이 데이터보다
+# 좁으면 안전장치가 아니라 고장이다.
+#
+# 그래도 앞자리는 숫자로 못 박는다. 표준코드(KR7005930003)가 정규화 없이 흘러
+# 들어오는 경우를 잡는 것이 이 검사의 본래 목적이기 때문이다.
+_SIX_DIGITS = re.compile(r"^[0-9][0-9A-Z]{5}$")
 
 
 def normalize_ticker(raw) -> str:
@@ -231,6 +251,20 @@ def normalize_ticker(raw) -> str:
     if m:
         return m.group(1)
     return s.zfill(6)
+
+
+def looks_like_krx_code(raw) -> bool:
+    """원본 값이 KRX 종목코드 형태인가.
+
+    정규화 **결과**를 검사하면 안 된다. zfill(6)이 'XX0'을 '000XX0'으로 만들고,
+    그건 신형 단축코드와 형태가 같아 통과해 버린다. 판정은 정규화 전에 한다.
+    """
+    s = str(raw).strip().upper()
+    if _STANDARD_CODE.match(s):
+        return True
+    if s.isdigit():                 # JSON이 숫자로 준 경우(5930)
+        s = s.zfill(6)
+    return bool(_SIX_DIGITS.match(s))
 
 
 def to_frame(records: list[dict], fields: list[str],
@@ -261,8 +295,8 @@ def to_frame(records: list[dict], fields: list[str],
             errors="coerce")
 
     if "ticker" in out.columns:
+        odd = [str(v) for v in out["ticker"] if not looks_like_krx_code(v)]
         out["ticker"] = out["ticker"].map(normalize_ticker)
-        odd = [t for t in out["ticker"] if not _SIX_DIGITS.match(t)]
         if len(odd) > len(out) * 0.05:
             raise KrxApiError(
                 f"종목코드 {len(odd)}/{len(out)}건이 6자리 형태가 아닙니다. "

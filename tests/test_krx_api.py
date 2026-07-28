@@ -218,6 +218,25 @@ class TestTickerNormalization:
         with pytest.raises(api.KrxApiError, match="6자리"):
             api.to_frame(odd, ["ticker", "close"])
 
+    def test_alphanumeric_short_codes_are_valid(self):
+        """KRX는 6자리 숫자 공간이 차면서 알파벳이 낀 단축코드를 발급한다.
+
+        라이브 ETF 응답 1,150건 중 284건이 '0184E0' 꼴이었다. 검사식이 알파벳을
+        끝자리에만 허용해서 이것들이 '이상'으로 잡혔고, 5% 임계를 넘겨 **모든
+        날짜의 ETF 시세가 통째로 버려졌다.** 안전장치가 데이터보다 좁으면 고장이다.
+        """
+        live = ["0184E0", "0182R0", "0182S0", "0103T0", "0198D0", "0131W0",
+                "08104K", "005930", "132030"]
+        rows = [{"ISU_CD": c, "TDD_CLSPRC": "1,000"} for c in live]
+        out = api.to_frame(rows, ["ticker", "close"])
+        assert list(out.index) == live
+
+    def test_unnormalized_standard_codes_still_raise(self):
+        """검사를 넓히되, 표준코드가 정규화 없이 흘러드는 것은 계속 잡아야 한다."""
+        rows = [{"ISU_CD": "KR7005930003XYZ", "TDD_CLSPRC": "1"} for _ in range(10)]
+        with pytest.raises(api.KrxApiError, match="6자리"):
+            api.to_frame(rows, ["ticker", "close"])
+
 
 class TestTradingDayWalk:
     """거래일 달력 API가 없으므로 '빈 응답 = 휴장일'로 판정한다."""
