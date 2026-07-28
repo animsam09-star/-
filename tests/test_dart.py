@@ -688,3 +688,34 @@ class TestCrossReferenceTrap:
         doc = "Ⅱ. 사업의 내용\n1. 사업의 개요\n" + "본문 " * 200
         sec = dart.extract_business_section(doc)
         assert "1. 사업의 개요" in sec
+
+
+class TestMembershipDigest:
+    """소형주에는 소속 산업만 붙으면 된다.
+
+    후방·전방은 대형주 보고서에서 산업 대 산업으로 확정되므로, 소형주가 그
+    산업에 속하기만 하면 파급 대상이 된다. 대형주만 매핑하면 '아직 안 움직인
+    소형 공급사를 찾는다'는 목적 자체가 성립하지 않는다.
+    """
+
+    DOC = ("1. 사업의 개요\n당사는 특수합금 소재를 제조합니다. " + "개요 " * 60 + "\n\n"
+           "2. 주요 제품 및 서비스\n합금소재 | 78.0% | 부품가공 | 22.0%\n" + "제품 " * 60 + "\n\n"
+           "3. 원재료 및 생산설비\n" + "원재료 " * 300 + "\n\n"
+           "4. 생산설비의 현황 등\n" + "설비 " * 2000 + "\n")
+
+    def test_keeps_what_identifies_the_industry(self):
+        out = dx.membership_digest(self.DOC)
+        assert "특수합금 소재를 제조합니다" in out
+        assert "합금소재 | 78.0%" in out, "매출 비중이 빠지면 주력 산업을 못 정한다"
+
+    def test_drops_the_bulk(self):
+        out = dx.membership_digest(self.DOC)
+        assert "설비 설비" not in out
+        assert len(out) < len(self.DOC) * 0.2, f"{len(out)}/{len(self.DOC)}"
+
+    def test_short_or_unstructured_document_is_passed_through(self):
+        plain = "당사는 반도체 장비를 제조합니다. " * 5
+        assert dx.membership_digest(plain).startswith("당사는 반도체 장비를")
+
+    def test_budget_is_respected(self):
+        assert len(dx.membership_digest(self.DOC, budget=400)) <= 400

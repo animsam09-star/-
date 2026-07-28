@@ -602,6 +602,37 @@ def fetch_only(tickers: list[str], cfg: dict) -> dict:
     return {"documents": len(docs), "missing": missing}
 
 
+_MEMBERSHIP_KEEP = re.compile(r"사업의\s*개요|사업\s*개요|주요\s*제품|제품\s*및\s*서비스|매출실적")
+_MEMBERSHIP_DROP = re.compile(r"생산설비|생산\s*및\s*설비|유형자산|무형자산|가격변동추이")
+
+
+def membership_digest(section: str, budget: int = 1200) -> str:
+    """'이 회사가 무엇을 파는가'만 남긴 요약.
+
+    소형주에는 **소속 산업만 붙으면 된다.** 후방·전방은 대형주 보고서에서
+    산업 대 산업으로 이미 확정되므로, 소형주가 그 산업에 속하기만 하면 파급
+    대상이 된다. 대형주가 오른 뒤 아직 안 움직인 소형 공급사를 찾는 것이
+    이 파이프라인의 목적이라, 여기가 비면 파급 대상 자체가 없다.
+
+    그래서 원재료·매출처까지 읽을 필요가 없고, 분량을 1/10로 줄이면 한 번에
+    수백 종목을 다룰 수 있다. 인용 대조는 원문 전체를 상대로 하므로 여기서
+    잘려 나간 부분을 인용해도 검증은 정상 동작한다.
+    """
+    marks = [(m.start(), m.group(1).strip())
+             for m in dart._SUBSECTION_LINE.finditer(section)]
+    marks = [(p, t) for p, t in marks if t]
+    if len(marks) < 2:
+        return section[:budget]
+    out = []
+    for i, (pos, title) in enumerate(marks):
+        if _MEMBERSHIP_DROP.search(title) or not _MEMBERSHIP_KEEP.search(title):
+            continue
+        end = marks[i + 1][0] if i + 1 < len(marks) else len(section)
+        out.append(section[pos:end].strip()[:900])
+    text = "\n\n".join(out).strip()
+    return (text or section)[:budget]
+
+
 def load_sections() -> dict[str, dict]:
     if not SECTIONS_DIR.exists():
         raise SystemExit(f"{SECTIONS_DIR}가 없습니다. 먼저 --fetch-only로 공시를 받으세요.")
@@ -772,6 +803,8 @@ def main():
     p.add_argument("--extractions",
                    help="{티커: 추출결과} JSON 파일. 저장된 절과 대조해 검증하고 엣지를 만든다 "
                         "(LLM 미호출). --fetch-only로 받아 둔 절이 있어야 한다")
+    p.add_argument("--digest", action="store_true",
+                   help="저장된 절에서 '무엇을 파는가'만 요약해 출력한다. 소속 매핑용")
     args = p.parse_args()
 
     cfg_all = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
@@ -785,7 +818,19 @@ def main():
                if args.tickers else None)
     asof = args.date or __import__("datetime").datetime.now().strftime("%Y%m%d")
 
-    # LLM을 쓰지 않는 두 모드를 먼저 처리한다. 자격 증명 검사에 걸리면 안 된다.
+    # LLM을 쓰지 않는 모드를 먼저 처리한다. 자격 증명 검사에 걸리면 안 된다.
+    if args.digest:
+        stored = load_sections()
+        want = tickers or sorted(stored)
+        for t in want:
+            d = stored.get(t)
+            if not d:
+                print(f"### {t} — 절 없음\n")
+                continue
+            print(f"### {t} {d.get('corp_name') or ''} ({len(d['section']):,}자)")
+            print(membership_digest(d["section"]))
+            print()
+        return
     if args.fetch_only:
         print(json.dumps(fetch_only(tickers or _default_tickers(args.top_n, args.date), cfg),
                          ensure_ascii=False, indent=2))
