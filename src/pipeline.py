@@ -33,6 +33,27 @@ ROOT = Path(__file__).resolve().parent.parent
 KST = timezone(timedelta(hours=9))
 
 
+def notify_blocker(analysis: dict, skip_notify: bool = False) -> str:
+    """알림을 보내지 않을 이유. 보내도 되면 빈 문자열.
+
+    **원인 분석이 없으면 보내지 않는다.** 이 알림의 내용은 '무엇이 왜 올랐고
+    어디로 파급되는가'인데, 분석이 비면 남는 건 상승률 순 종목 목록뿐이다.
+    그건 알림받을 이유가 없을뿐더러, 매일 꼬박꼬박 오면 '분석이 돌고 있다'는
+    인상을 줘서 실제로는 멈춰 있다는 사실을 덮는다. 조용한 실패가 시끄러운
+    실패보다 나쁜 전형적인 자리다.
+
+    지금 LLM 호출이 429로 전부 막혀 있고, --skip-analyze로도 같은 상태가 된다.
+    분석이 다시 돌기 시작하면 이 함수가 알아서 빈 문자열을 돌려주므로 알림도
+    저절로 재개된다 — 껐다 켜는 스위치를 따로 두지 않는다.
+    """
+    if skip_notify:
+        return "--skip-notify"
+    if not (analysis or {}).get("analyses"):
+        return ("원인 분석이 없어 알림을 보내지 않습니다 — 종목 목록만으로는 "
+                "보낼 내용이 아닙니다. 리포트(HTML)는 그대로 생성됐습니다.")
+    return ""
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--date", help="기준일 YYYYMMDD (기본: 오늘 KST)")
@@ -165,7 +186,10 @@ def main():
 
     # 알림
     print("== 알림 ==")
-    if not args.skip_notify:
+    reason = notify_blocker(analysis, args.skip_notify)
+    if reason:
+        print(f"  {reason}")
+    else:
         pages_url = os.getenv("PAGES_URL")
         if pages_url:
             pages_url = pages_url.rstrip("/") + f"/{base_date}.html"
