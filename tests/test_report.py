@@ -360,3 +360,47 @@ class TestValuechainIsActuallyConnected:
         h = report.render_valuechain(edges, TestValuechainTabIsADiagram.NAMES)
         assert "외톨이산업" in h
         assert "아직 어느 사슬에도 안 붙은" in h
+
+
+class TestPriceReviewSurvivesSkippedPairs:
+    """구성 종목이 겹쳐 측정을 포기한 쌍은 corr 키가 아예 없다.
+
+    corr.py에는 measured/skipped 구분을 넣어 두고 report.py에서만 빠뜨렸다.
+    라이브에서 6쌍이 그 모양으로 들어오자 정렬 중 KeyError로 파이프라인 전체가
+    죽었다 — 리포트 한 칸이 아니라 실행이 통째로 멈춘다.
+    """
+
+    LAGS = {
+        "ESS·전력→분리막·전해액": {"lag_months": 0, "corr": 0.506,
+                              "obs": 43, "overlap": 0.0},
+        "ESS·전력→신재생": {"lag_months": -12, "corr": -0.509,
+                         "obs": 31, "overlap": 0.0},
+        "동제련→비철·소재": {"skipped": "구성 중복", "overlap": 0.5},
+    }
+
+    def _html(self, lags):
+        return report.render_price_review({"price_review": {"cycle_lags": lags}})
+
+    def test_skipped_pair_does_not_crash_the_report(self):
+        h = self._html(self.LAGS)
+        assert "ESS·전력 → 신재생" in h
+        assert "-12개월" in h
+
+    def test_skipped_pairs_are_counted_not_hidden(self):
+        """조용히 지우면 '관계가 없다'로 읽힌다 — 뜻이 정반대다."""
+        h = self._html(self.LAGS)
+        assert "측정 불가 1쌍" in h
+
+    def test_all_skipped_renders_nothing_rather_than_an_empty_section(self):
+        assert self._html({"동제련→비철·소재": {"skipped": "구성 중복",
+                                            "overlap": 0.5}}) == ""
+
+    def test_real_lead_lag_file_renders(self):
+        """실측 파일 그대로 통과해야 한다. 합성 데이터만 보면 같은 실수를 반복한다."""
+        import json
+        from pathlib import Path
+        f = Path(__file__).resolve().parent.parent / "data" / "lead_lag.json"
+        if not f.exists():
+            pytest.skip("lead_lag.json 없음")
+        table = json.loads(f.read_text(encoding="utf-8"))["lags"]
+        assert report.render_price_review({"price_review": {"cycle_lags": table}})

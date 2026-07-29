@@ -315,7 +315,13 @@ def render_price_review(analysis: dict, limit: int = 12) -> str:
     lags = pr.get("cycle_lags") or {}
     weak = pr.get("weak") or []
     cand = pr.get("candidates") or []
-    if not (lags or weak or cand):
+
+    # 측정된 것과 건너뛴 것을 갈라야 한다. 구성 종목이 겹쳐 측정을 포기한 쌍은
+    # corr 키 자체가 없어서, 섞어서 정렬하면 KeyError로 리포트가 통째로 죽는다.
+    # corr.py에는 이 구분을 넣어 두고 여기서만 빠뜨려 실제로 파이프라인이 멈췄다.
+    measured = {k: v for k, v in lags.items() if "lag_months" in v}
+    skipped = {k: v for k, v in lags.items() if "lag_months" not in v}
+    if not (measured or weak or cand):
         return ""
 
     parts = ["<h2 id='price'>가격이 뒷받침하는가</h2>",
@@ -323,17 +329,22 @@ def render_price_review(analysis: dict, limit: int = 12) -> str:
              "관계가 실제로 가격에 나타나는지, 몇 달 시차로 전달되는지를 잽니다.</p>",
              "<div class='grid2'>"]
 
-    if lags:
-        top = sorted(lags.items(), key=lambda kv: -abs(kv[1]["corr"]))[:limit]
+    if measured:
+        top = sorted(measured.items(), key=lambda kv: -abs(kv[1]["corr"]))[:limit]
         rows = "".join(
             f"<tr><td class='wide'>{_esc(k.replace('→', ' → '))}</td>"
             f"<td>{(str(v['lag_months']) + '개월') if v['lag_months'] else '동행'}</td>"
             f"<td>{v['corr']:+.2f}</td>"
             f"<td>{_diverging_bar(v['corr'], 1.0, width=90)}</td></tr>" for k, v in top)
+        # 건너뛴 쌍을 조용히 없애면 '관계가 없다'로 읽힌다. 실제로는 두 산업에
+        # 같은 회사가 들어 있어 가격으로 갈라낼 수 없다는 뜻이라, 뜻이 정반대다.
+        note = (f"<p class='muted'>구성 종목이 겹쳐 측정 불가 {len(skipped)}쌍은 "
+                "제외했습니다 — 관계가 없다는 뜻이 아니라 가격으로 갈라낼 수 "
+                "없다는 뜻입니다.</p>" if skipped else "")
         parts.append("<div class='card'><h3>사이클 시차 (월 단위 실측)</h3>"
                      "<p class='muted'>+N개월 = 왼쪽이 오른쪽보다 N개월 먼저 움직였다</p>"
                      "<div class='scroll'><table><tr><th>관계</th><th>시차</th>"
-                     f"<th>상관</th><th>　</th></tr>{rows}</table></div></div>")
+                     f"<th>상관</th><th>　</th></tr>{rows}</table></div>{note}</div>")
 
     if weak:
         rows = "".join(
