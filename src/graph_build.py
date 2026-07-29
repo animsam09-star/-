@@ -24,7 +24,8 @@ ROOT = Path(__file__).resolve().parent.parent
 VALUECHAIN_DIR = ROOT / "valuechain"
 DATA_DIR = ROOT / "data"
 
-PERSISTENT_SOURCES = ("valuechain", "dart", "llm")
+# "profile" — 기사·IR 자료로 채운 종목 프로필. 여기 없으면 매 실행 사라진다.
+PERSISTENT_SOURCES = ("valuechain", "dart", "llm", "profile")
 DAILY_SOURCES = ("theme_index", "etf_pdf", "factor_beta", "krx_sector")
 
 # 사전지식으로 손으로 쓴 맵이라는 사실을 신뢰도에 반영한다.
@@ -187,6 +188,61 @@ def from_factor_exposures(exposures: dict, asof: str) -> list[dict]:
 
 # ---- 조립 ---------------------------------------------------------------
 
+PROFILES_FILE = VALUECHAIN_DIR / "_company_profiles.yaml"
+PROFILE_CONFIDENCE = 0.6      # 공시(0.8~0.85)보다 낮고 손으로 쓴 맵(0.5)보다 높다
+
+
+def from_profiles(universe: Universe, asof: str,
+                  path: Path = PROFILES_FILE) -> tuple[list[dict], dict]:
+    """종목 프로필 표 → 품목이 붙은 소속 엣지 + 회사 간 거래 엣지.
+
+    사업보고서를 못 받은 종목의 빈자리를 메운다. 소속 엣지는 **새로 만들지
+    않는다** — 어느 산업에 속하는지는 밸류체인 맵이 이미 정했고, 여기서 또
+    정하면 같은 종목이 두 경로로 들어와 어느 쪽이 맞는지 알 수 없게 된다.
+    이 표가 하는 일은 이미 있는 소속에 '무엇을 만드는가'를 얹는 것뿐이다.
+    """
+    if not path.exists():
+        return [], {"profiles": 0, "unresolved": []}
+
+    doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    edges: list[dict] = []
+    unresolved: list[str] = []
+    for ticker, prof in doc.items():
+        ticker = str(ticker).zfill(6)
+        if ticker not in universe:
+            unresolved.append(f"{ticker}({(prof or {}).get('name') or '?'})")
+            continue
+        src = (prof or {}).get("source") or ""
+        for key, forward in (("customers", True), ("suppliers", False)):
+            for other_name in (prof or {}).get(key) or []:
+                other = universe.resolve(str(other_name))
+                if not other:
+                    unresolved.append(f"{ticker}→{other_name}")
+                    continue
+                if other == ticker:
+                    continue
+                a, b = (ticker, other) if forward else (other, ticker)
+                edges.append(G.make_edge(
+                    G.ticker_node(a), G.ticker_node(b), G.REL_DOWNSTREAM, "profile",
+                    origin=ticker, asof=asof, confidence=PROFILE_CONFIDENCE,
+                    product=" / ".join((prof or {}).get("products") or [])[:80],
+                    evidence=src))
+    return edges, {"profiles": len(doc), "unresolved": unresolved}
+
+
+def profile_products(path: Path = PROFILES_FILE) -> dict[str, str]:
+    """티커 → 품목 문자열. 공시에 품목이 없는 소속 엣지에 얹는다."""
+    if not path.exists():
+        return {}
+    doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    out = {}
+    for ticker, prof in doc.items():
+        items = (prof or {}).get("products") or []
+        if items:
+            out[str(ticker).zfill(6)] = " / ".join(items)[:80]
+    return out
+
+
 def build_persistent(universe: Universe, asof: str) -> tuple[list[dict], dict]:
     """수직축 엣지를 만들어 graph/edges.jsonl에 저장한다.
 
@@ -194,11 +250,31 @@ def build_persistent(universe: Universe, asof: str) -> tuple[list[dict], dict]:
     않는다.
     """
     vc_edges, report = from_valuechain(universe, asof)
+    prof_edges, prof_report = from_profiles(universe, asof)
     existing = [e for e in G.load() if e.get("source") in PERSISTENT_SOURCES]
-    merged = G.merge(existing, vc_edges)
+    merged = G.merge(existing, vc_edges, prof_edges)
+
+    # 공시에 품목이 없는 소속 엣지에만 프로필 품목을 얹는다. 공시가 이긴다 —
+    # 프로필은 기사·IR 자료라 1차 자료가 있으면 그쪽이 맞다.
+    products = profile_products()
+    filled = 0
+    for e in merged:
+        if (e["rel"] == G.REL_MEMBER and not e.get("product")
+                and e["src"].startswith("T:")):
+            what = products.get(e["src"][2:])
+            if what:
+                e["product"] = what
+                filled += 1
+
     G.save(merged)
+    report.update(prof_report)
     print(f"수직축 엣지 {len(merged)}개 (밸류체인 {len(vc_edges)}개 반영, "
           f"산업 {len(report['industries'])}개)")
+    if prof_report["profiles"]:
+        print(f"  종목 프로필 {prof_report['profiles']}건 — 품목 {filled}개 보충, "
+              f"회사 간 거래 {len(prof_edges)}건")
+        if prof_report["unresolved"]:
+            print(f"  프로필 미해석: {', '.join(prof_report['unresolved'][:8])}")
     return merged, report
 
 
