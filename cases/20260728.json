@@ -363,5 +363,8 @@
     }
   ],
   "analyses": [],
-  "synthesis": null
+  "synthesis": {
+    "market_summary": "산업공통 요인으로 분류된 상승 종목이 없어 파급 아이디어를 도출하지 않았다.",
+    "ideas": []
+  }
 }
