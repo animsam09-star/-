@@ -285,7 +285,7 @@ class TestValuechainIsActuallyConnected:
             G.make_edge(G.industry_node("후판"), G.industry_node("조선"),
                         G.REL_DOWNSTREAM, "dart", origin="009540", asof="20260728"),
         ]
-        flow, _ = report._vc_flow(edges)
+        flow, _, _ = report._vc_flow(edges)
         assert flow == {("후판", "조선"): {"009540"}}
 
     def test_map_appears_in_the_page(self):

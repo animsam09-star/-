@@ -606,13 +606,15 @@ _VC_GAP = 232
 
 # 전체 지도용 치수. 산업 카드보다 작게 잡는다 — 62개 산업을 한 장에 올리려면
 # 상자마다 종목명을 다 적을 수 없고, 종목은 아래 카드에서 보면 된다.
-_MAP_BOX_W = 128
-_MAP_BOX_H = 30
-_MAP_ROW_H = 42
-_MAP_COL_W = 196
+# 1:1로 읽는 크기다(지도는 줄이지 않고 스크롤한다). 글자가 12.5px는 돼야
+# 산업명이 눈에 들어오고, 상자는 그 글자가 들어갈 만큼이어야 한다.
+_MAP_BOX_W = 146
+_MAP_BOX_H = 34
+_MAP_ROW_H = 50
+_MAP_COL_W = 218
 
 
-def _vc_flow(edges: list[dict]) -> tuple[dict, dict]:
+def _vc_flow(edges: list[dict]) -> tuple[dict, dict, dict]:
     """공급 방향 간선 {(공급, 수요): 교차검증 횟수} 와 산업별 소속 종목.
 
     그래프에는 같은 관계가 후방·전방 두 방향으로 들어 있다(A의 후방이 B면
@@ -623,15 +625,21 @@ def _vc_flow(edges: list[dict]) -> tuple[dict, dict]:
 
     flow: dict[tuple[str, str], set] = {}
     members: dict[str, set] = {}
+    guessed: dict[tuple[str, str], bool] = {}
     for e in edges:
         sk, sn = G.split_node(e["src"])
         dk, dn = G.split_node(e["dst"])
         if e["rel"] == G.REL_MEMBER and sk == "T" and dk == "I":
             members.setdefault(dn, set()).add(sn)
         elif sk == "I" and dk == "I" and e["rel"] == G.REL_UPSTREAM:
-            flow.setdefault((dn, sn), set()).add(
+            key = (dn, sn)
+            flow.setdefault(key, set()).add(
                 e.get("origin") or e.get("source") or "?")
-    return flow, members
+            # 한 회사라도 부문을 확인해 준 관계면 추정 딱지를 뗀다.
+            guessed.setdefault(key, True)
+            if e.get("attribution") != "추정":
+                guessed[key] = False
+    return flow, members, guessed
 
 
 def _vc_sequence(nodes: list[str], flow) -> dict[str, int]:
@@ -692,6 +700,20 @@ def _vc_layout(flow) -> tuple[dict[str, tuple[int, int]], int, int, set]:
     for n in sorted(nodes, key=lambda x: order[x]):
         col[n] = max([col[u] + 1 for u in incoming[n] if u in col], default=0)
 
+    # 공급처가 없는 산업을 0열에 그대로 두면 안 된다. 원료 18개가 왼쪽 끝에
+    # 쌓이는데 그중 상당수는 한참 오른쪽의 한 산업에만 납품해서, 화면을 가로지르는
+    # 긴 곡선만 남는다. 소비처 **바로 앞 열**로 당기면 선이 짧아지고 원료가 자기가
+    # 먹이는 공정 옆에 선다 — 위치 자체가 정보가 된다.
+    outgoing: dict[str, list] = {n: [] for n in nodes}
+    for u, d in fwd:
+        outgoing[u].append(d)
+    for n in nodes:
+        if not incoming[n] and outgoing[n]:
+            col[n] = min(col[d] for d in outgoing[n]) - 1
+    lo_col = min(col.values())
+    for n in col:
+        col[n] -= lo_col
+
     cols: dict[int, list] = {}
     for n in nodes:
         cols.setdefault(col[n], []).append(n)
@@ -700,23 +722,43 @@ def _vc_layout(flow) -> tuple[dict[str, tuple[int, int]], int, int, set]:
 
     # 무게중심 정렬 — 이웃의 평균 높이로 자리를 옮긴다. 안 하면 선이 통째로
     # 교차해서, 연결은 돼 있는데 눈으로는 못 따라간다.
+    #
+    # 높이는 **실수 좌표**여야 한다. 처음엔 열 안의 정수 순번을 썼는데, 원료 열은
+    # 18칸이고 철강 열은 1칸이라 0~17과 0~0을 같은 자로 평균했다. 그 결과 모든
+    # 열이 위쪽에 몰리고 화면 아래 3분의 2가 비었으며, 왼쪽 아래에서 오른쪽 위로
+    # 길게 휘는 선만 남아 아무것도 따라갈 수 없었다.
+    nbr: dict[str, list] = {n: [] for n in nodes}
     nbr_in: dict[str, list] = {n: [] for n in nodes}
     nbr_out: dict[str, list] = {n: [] for n in nodes}
     for u, d in fwd:
-        nbr_in[d].append(u)
-        nbr_out[u].append(d)
-    row = {n: i for c in cols for i, n in enumerate(cols[c])}
-    for sweep in range(4):
-        keys = sorted(cols) if sweep % 2 == 0 else sorted(cols, reverse=True)
-        for c in keys:
-            side = nbr_in if sweep % 2 == 0 else nbr_out
-            cols[c].sort(key=lambda n: (
-                sum(row[x] for x in side[n]) / len(side[n]) if side[n] else row[n], n))
-            for i, n in enumerate(cols[c]):
-                row[n] = i
+        nbr_in[d].append(u); nbr_out[u].append(d)
+        nbr[u].append(d); nbr[d].append(u)
 
-    pos = {n: (col[n], row[n]) for n in nodes}
-    return pos, max(col.values()) + 1, max(len(v) for v in cols.values()), dropped
+    # 각 열을 세로 중앙에 맞춰 시작한다. 위로 붙이면 칸이 적은 열이 화면 위쪽에
+    # 매달리고, 칸이 많은 열만 아래로 흘러 그림이 삼각형이 된다.
+    y: dict[str, float] = {}
+    for c, group in cols.items():
+        for i, n in enumerate(group):
+            y[n] = i - (len(group) - 1) / 2
+
+    for sweep in range(8):
+        keys = sorted(cols) if sweep % 2 == 0 else sorted(cols, reverse=True)
+        side = nbr_in if sweep % 2 == 0 else nbr_out
+        for c in keys:
+            group = cols[c]
+            bary = {n: (sum(y[x] for x in (side[n] or nbr[n])) / len(side[n] or nbr[n])
+                        if (side[n] or nbr[n]) else y[n]) for n in group}
+            group.sort(key=lambda n: (bary[n], n))
+            # 순서를 지킨 채 1칸 간격으로 다시 벌리고, 무게중심 평균에 맞춰 옮긴다.
+            shift = (sum(bary.values()) / len(group)) - (len(group) - 1) / 2
+            for i, n in enumerate(group):
+                y[n] = i + shift
+
+    lo = min(y.values())
+    for n in y:
+        y[n] -= lo
+    pos = {n: (col[n], y[n]) for n in nodes}
+    return pos, max(col.values()) + 1, max(y.values()) + 1, dropped
 
 
 def _vc_reach(flow) -> tuple[dict[str, set], dict[str, set]]:
@@ -787,7 +829,7 @@ def _vc_link(x1: float, y1: float, x2: float, y2: float, strength: int) -> str:
             f'stroke="var(--accent)" stroke-width="{w:.1f}" opacity="{op:.2f}"/>')
 
 
-def _vc_map(flow, members: dict) -> tuple[str, int]:
+def _vc_map(flow, members: dict, guessed: dict | None = None) -> tuple[str, int]:
     """전 산업을 한 장에 이은 흐름 지도. (SVG, 그려진 산업 수).
 
     산업별 카드만 있던 이전 판은 각 산업의 **이웃 한 칸**까지만 보여 줬다.
@@ -797,6 +839,10 @@ def _vc_map(flow, members: dict) -> tuple[str, int]:
 
     왼쪽이 원류, 오른쪽이 최종 수요다. 산업을 누르면 그 산업의 사슬 전체가
     남고 나머지는 흐려진다 — 62개 노드를 한꺼번에 눈으로 좇을 수는 없다.
+
+    사업부문이 여럿인 회사에서 나와 어느 부문의 관계인지 확인되지 않은 선은
+    **점선**으로 그린다. 실선과 똑같이 그리면 확인된 관계와 구분이 안 되는데,
+    지금 그런 선이 절반이다.
     """
     pos, ncols, nrows, dropped = _vc_layout(flow)
     if not pos:
@@ -829,9 +875,10 @@ def _vc_map(flow, members: dict) -> tuple[str, int]:
         y1 += _MAP_BOX_H / 2; y2 += _MAP_BOX_H / 2
         mx = (x1 + x2) / 2
         sw = min(3.2, 0.9 + len(who) * 0.6)
+        dash = ' stroke-dasharray="5 4"' if (guessed or {}).get((u, d)) else ''
         out.append(f'<path class="lk" data-a="{idx[u]}" data-b="{idx[d]}" '
                    f'd="M{x1} {y1} C {mx} {y1}, {mx} {y2}, {x2} {y2}" fill="none" '
-                   f'stroke="var(--accent)" stroke-width="{sw:.1f}" opacity=".28"/>')
+                   f'stroke="var(--accent)" stroke-width="{sw:.1f}" opacity=".28"{dash}/>')
 
     for n in sorted(pos):
         x, y = xy(n)
@@ -847,8 +894,8 @@ def _vc_map(flow, members: dict) -> tuple[str, int]:
             f'후방 {len(up_all.get(n, ()))} / 전방 {len(down_all.get(n, ()))}</title>'
             f'<rect x="{x}" y="{y}" width="{_MAP_BOX_W}" height="{_MAP_BOX_H}" rx="7" '
             f'fill="var(--card)" stroke="var(--line)"/>'
-            f'<text x="{x + _MAP_BOX_W / 2}" y="{y + 19}" text-anchor="middle" '
-            f'font-size="11" fill="var(--fg)">{_esc(n[:11])}</text></g>')
+            f'<text x="{x + _MAP_BOX_W / 2}" y="{y + 22}" text-anchor="middle" '
+            f'font-size="12.5" fill="var(--fg)">{_esc(n[:12])}</text></g>')
 
     out.append("</svg>")
     return "".join(out), len(pos)
@@ -942,8 +989,8 @@ def render_valuechain(edges: list[dict], names: dict[str, str],
     rel_count = sum(len(v) for v in ups.values()) + sum(len(v) for v in downs.values())
     cross = sum(1 for v in ups.values() for w in v.values() if len(w) >= 2)
 
-    flow, _ = _vc_flow(edges)
-    chain_map, mapped = _vc_map(flow, members)
+    flow, _, guessed = _vc_flow(edges)
+    chain_map, mapped = _vc_map(flow, members, guessed)
     # 흐름에 아직 못 붙은 산업은 지도에서 그냥 사라진다. 조용히 빠지면 '없는'
     # 건지 '안 이어진' 건지 알 수 없으므로 이름을 적어 드러낸다.
     orphans = sorted(i for i in industries
@@ -975,6 +1022,10 @@ def render_valuechain(edges: list[dict], names: dict[str, str],
            font-size:.78rem; color:var(--muted); margin:10px 0 4px; }
 #f { width:100%; padding:10px 13px; border-radius:9px; border:1px solid var(--line);
      background:var(--card); color:var(--fg); font-size:.95rem; margin:14px 0 2px; }
+/* 전체 지도는 줄이지 않는다. 공통 규칙(svg{max-width:100%})에 걸리면 2292px
+   짜리 지도가 1010px로 눌리고, 11px 글자가 5px가 되어 아무것도 안 읽힌다.
+   가로로 넓은 그림은 줄일 게 아니라 스크롤할 것이다. */
+.map { max-width:none; width:auto; }
 .map .nd { cursor:pointer; }
 .map .nd:focus { outline:none; }
 .map .nd rect { transition:opacity .12s, stroke .12s; }
@@ -1047,6 +1098,7 @@ ul.mk .none { opacity:.55; font-style:italic; }
             f'<div class="card"><p class="muted">산업 {mapped}개가 한 사슬로 이어져 '
             '있습니다. 산업을 누르면 그 산업이 닿는 후방·전방 전체만 남습니다.</p>'
             '<div class="axis"><span>← 원류(원료·부품)</span>'
+            '<span>실선 = 사업부문 확인 · 점선 = 부문 미확인(최대 매출 산업에 귀속)</span>'
             '<span>최종 수요 →</span></div>'
             f'<div class="scroll">{chain_map}</div>{note}</div>')
 

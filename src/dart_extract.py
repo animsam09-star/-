@@ -86,14 +86,26 @@ EXTRACT_SCHEMA = {
             "revenue_share": {**_nullable_number(),
                               "description": "매출 비중(0~1). 문서에 없으면 null"},
         }),
+        # segment — 이 관계가 **어느 사업부문의 것인가**. 없으면 회사의 최대 매출
+        # 산업에 붙일 수밖에 없는데, 사업부문이 여럿인 회사에서는 그게 대개 틀린다.
+        # 실제로 HD한국조선해양의 태양광 웨이퍼 매입이 '조선'의 후방으로 붙어
+        # '실리콘 웨이퍼 → 조선'이라는 없는 관계가 생겼다.
         "upstream": _relation_items({
             "material": {"type": "string", "description": "매입하는 원재료·부품명"},
+            "segment": {"type": "string",
+                        "description": "이 원재료를 쓰는 사업부문의 산업명. "
+                                       "products에 적은 industry 중 하나여야 한다. "
+                                       "부문을 특정할 수 없으면 빈 문자열"},
             "cost_share": {**_nullable_number(),
                            "description": "매입액 비중(0~1). 문서에 없으면 null"},
         }),
         "downstream": _relation_items({
             "customer": {"type": "string",
                          "description": "매출처 유형. 익명이면 '건설사'처럼 업종으로 적는다"},
+            "segment": {"type": "string",
+                        "description": "이 매출처에 파는 사업부문의 산업명. "
+                                       "products에 적은 industry 중 하나여야 한다. "
+                                       "부문을 특정할 수 없으면 빈 문자열"},
         }),
         "unmapped": {"type": "string",
                      "description": "문서에 있으나 산업으로 분류하기 어려웠던 내용. 없으면 빈 문자열"},
@@ -323,11 +335,13 @@ def _fold(items: list[dict], vocab: IndustryVocab, share_key: str | None) -> dic
         # 실제로 오가는 물건'이라 같은 자리에 담는다.
         what = str(item.get("product") or item.get("material")
                    or item.get("customer") or "").strip()
+        seg = str(item.get("segment") or "").strip()
         cur = folded.get(industry)
         if cur is None:
             folded[industry] = {"industry": industry, "share": share,
                                 "confidence": conf, "quote": item.get("quote", ""),
-                                "products": [what] if what else []}
+                                "products": [what] if what else [],
+                                "segments": {seg} if seg else set()}
             continue
         if share is not None:
             cur["share"] = share if cur["share"] is None else cur["share"] + share
@@ -335,6 +349,8 @@ def _fold(items: list[dict], vocab: IndustryVocab, share_key: str | None) -> dic
             cur["confidence"], cur["quote"] = conf, item.get("quote", "")
         if what and what not in cur["products"]:
             cur["products"].append(what)
+        if seg:
+            cur["segments"].add(seg)
     return folded
 
 
@@ -367,20 +383,30 @@ def to_edges(ticker: str, extraction: dict, vocab: IndustryVocab,
         share_key = "cost_share" if key == "upstream" else None
         for item in _fold(extraction.get(key) or [], vocab, share_key).values():
             target = item["industry"]
-            if target == primary:
+            # 관계의 **출발 산업**은 그 관계가 속한 사업부문이다. 공시가 부문을
+            # 밝혔고 그게 이 회사의 제품 산업 중 하나면 그걸 쓴다. 없으면 최대
+            # 매출 산업으로 떨어지는데, 사업부문이 여럿이면 그건 추정일 뿐이라
+            # 표시를 남긴다 — 표시가 없으면 추정과 확인을 구분할 수 없다.
+            segs = [s for s in (vocab.resolve(s) for s in item["segments"]) if s in products]
+            if len(segs) == 1:
+                anchor, attribution = segs[0], "부문확인"
+            else:
+                anchor = primary
+                attribution = "추정" if len(products) > 1 else ""
+            if target == anchor:
                 continue
             ev = f"{evidence_prefix}{str(item['quote'])[:150]}"
             what = " / ".join(item["products"])[:80]
             # 산업 간 관계는 양방향 — 소형 소재주에서 전방을 찾을 수 있어야 한다
             # origin=ticker — 어느 회사 공시에서 나왔는지가 키에 들어가야
             # 같은 관계를 두 회사가 각각 주장한 것이 교차 검증으로 남는다.
-            edges.append(G.make_edge(G.industry_node(primary), G.industry_node(target),
+            edges.append(G.make_edge(G.industry_node(anchor), G.industry_node(target),
                                      rel, "dart", weight=item["share"], origin=ticker,
-                                     product=what,
+                                     product=what, attribution=attribution,
                                      confidence=item["confidence"], evidence=ev, asof=asof))
-            edges.append(G.make_edge(G.industry_node(target), G.industry_node(primary),
+            edges.append(G.make_edge(G.industry_node(target), G.industry_node(anchor),
                                      G._OPPOSITE[rel], "dart", origin=ticker,
-                                     product=what,
+                                     product=what, attribution=attribution,
                                      confidence=item["confidence"], evidence=ev, asof=asof))
     return edges
 
