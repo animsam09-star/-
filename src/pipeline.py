@@ -153,7 +153,7 @@ def main():
 
     # 8. 리포트 생성 + 케이스 축적
     print("== 8/8 리포트 생성 ==")
-    report_mod.build(base_date, candidates, analysis, cfg["report"], horizontal)
+    report_mod.build(base_date, candidates, analysis, cfg["report"], horizontal, uni)
     case_file = ROOT / "cases" / f"{base_date}.json"
     case_file.parent.mkdir(exist_ok=True)
     case_file.write_text(json.dumps({

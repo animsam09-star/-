@@ -547,14 +547,22 @@ def render_telegram(base_date: str, candidates: list[dict], analysis: dict,
 
 
 def build(base_date: str, candidates: list[dict], analysis: dict, cfg: dict,
-          horizontal: dict | None = None) -> Path:
+          horizontal: dict | None = None, universe=None) -> Path:
     REPORTS_DIR.mkdir(exist_ok=True)
 
+    # 종목명은 **전 종목 마스터**에서 가져온다. returns_*.json은 시총·거래대금
+    # 필터를 통과한 종목만 담아서, 밸류체인의 소형 후방 소재주는 이름이 없다.
+    # 이름이 없으면 상자에 티커가 그대로 찍히는데, '104700'을 보고 한국철강임을
+    # 아는 사람은 없다. 실제로 20종목이 그렇게 나가고 있었다.
     names: dict[str, str] = {}
-    returns_file = ROOT / "data" / f"returns_{base_date}.json"
-    if returns_file.exists():
-        raw = json.loads(returns_file.read_text(encoding="utf-8"))
-        names = {t: v.get("name") for t, v in raw.items() if isinstance(v, dict) and v.get("name")}
+    if universe is not None:
+        names = {t: n for t in universe.entries if (n := universe.name(t))}
+    if not names:
+        returns_file = ROOT / "data" / f"returns_{base_date}.json"
+        if returns_file.exists():
+            raw = json.loads(returns_file.read_text(encoding="utf-8"))
+            names = {t: v.get("name") for t, v in raw.items()
+                     if isinstance(v, dict) and v.get("name")}
 
     out = REPORTS_DIR / f"{base_date}.html"
     out.write_text(
@@ -584,6 +592,148 @@ def build(base_date: str, candidates: list[dict], analysis: dict, cfg: dict,
 _VC_BOX_W = 168
 _VC_ROW_H = 62
 _VC_GAP = 232
+
+# 전체 지도용 치수. 산업 카드보다 작게 잡는다 — 62개 산업을 한 장에 올리려면
+# 상자마다 종목명을 다 적을 수 없고, 종목은 아래 카드에서 보면 된다.
+_MAP_BOX_W = 128
+_MAP_BOX_H = 30
+_MAP_ROW_H = 42
+_MAP_COL_W = 196
+
+
+def _vc_flow(edges: list[dict]) -> tuple[dict, dict]:
+    """공급 방향 간선 {(공급, 수요): 교차검증 횟수} 와 산업별 소속 종목.
+
+    그래프에는 같은 관계가 후방·전방 두 방향으로 들어 있다(A의 후방이 B면
+    B의 전방이 A). 지도는 **흐름 방향 하나**로만 그려야 하므로 후방 엣지만
+    읽어 '공급 → 수요'로 뒤집는다. 둘 다 읽으면 모든 선이 두 번 그려진다.
+    """
+    from . import graph as G
+
+    flow: dict[tuple[str, str], set] = {}
+    members: dict[str, set] = {}
+    for e in edges:
+        sk, sn = G.split_node(e["src"])
+        dk, dn = G.split_node(e["dst"])
+        if e["rel"] == G.REL_MEMBER and sk == "T" and dk == "I":
+            members.setdefault(dn, set()).add(sn)
+        elif sk == "I" and dk == "I" and e["rel"] == G.REL_UPSTREAM:
+            flow.setdefault((dn, sn), set()).add(
+                e.get("origin") or e.get("source") or "?")
+    return flow, members
+
+
+def _vc_sequence(nodes: list[str], flow) -> dict[str, int]:
+    """사이클을 무시할 순서를 정한다 (Eades–Lin–Smyth 그리디).
+
+    산업 연관은 실제로 순환한다 — 철강이 건설기계를 먹이고 건설기계가 광산을,
+    광산이 다시 철강을 먹인다. 위상정렬을 그냥 돌리면 62개 중 41개가 사이클에
+    걸려 층이 안 나온다. 그래서 '되돌아가는 간선'을 최소로 만드는 순서를 먼저
+    잡고, 그 순서를 거스르는 간선만 층 계산에서 뺀다. 실제 데이터에서 142개 중
+    7개만 빠진다 — 나머지 135개는 그대로 흐름을 이룬다.
+    """
+    succ: dict[str, set] = {n: set() for n in nodes}
+    pred: dict[str, set] = {n: set() for n in nodes}
+    for u, d in flow:
+        succ[u].add(d)
+        pred[d].add(u)
+
+    left, right, rest = [], [], set(nodes)
+    while rest:
+        moved = True
+        while moved:
+            moved = False
+            for n in sorted(rest):
+                if n in rest and not (succ[n] & rest):     # 더 팔 곳이 없다 = 끝단
+                    right.append(n); rest.discard(n); moved = True
+            for n in sorted(rest):
+                if n in rest and not (pred[n] & rest):     # 받을 곳이 없다 = 원류
+                    left.append(n); rest.discard(n); moved = True
+        if rest:
+            # 남은 건 전부 사이클이다. 나가는 쪽이 가장 많은 노드를 앞으로 빼면
+            # 끊어야 하는 간선이 가장 적어진다.
+            n = max(sorted(rest), key=lambda x: len(succ[x] & rest) - len(pred[x] & rest))
+            left.append(n); rest.discard(n)
+    return {n: i for i, n in enumerate(left + right[::-1])}
+
+
+def _vc_layout(flow) -> tuple[dict[str, tuple[int, int]], int, int, set]:
+    """산업 → (열, 행). 열은 공급 깊이, 행은 선이 덜 꼬이는 자리.
+
+    열은 원류로부터의 **최장 경로**다. 최단으로 잡으면 소재가 완성품 옆에 붙어
+    중간 단계가 사라진다.
+
+    전력처럼 거의 모든 산업이 받아 쓰는 투입은 층을 길게 늘인다(유틸리티가
+    오른쪽으로 밀리면 그걸 받는 시멘트가 더 오른쪽으로 간다). 절대 위치보다
+    **선을 따라가는 것**이 이 그림의 용도라 그대로 둔다.
+    """
+    nodes = sorted({x for pair in flow for x in pair})
+    if not nodes:
+        return {}, 0, 0, set()
+    order = _vc_sequence(nodes, flow)
+    fwd = [(u, d) for u, d in flow if order[u] < order[d]]
+    dropped = {(u, d) for u, d in flow if order[u] >= order[d]}
+
+    incoming: dict[str, list] = {n: [] for n in nodes}
+    for u, d in fwd:
+        incoming[d].append(u)
+    col: dict[str, int] = {}
+    for n in sorted(nodes, key=lambda x: order[x]):
+        col[n] = max([col[u] + 1 for u in incoming[n] if u in col], default=0)
+
+    cols: dict[int, list] = {}
+    for n in nodes:
+        cols.setdefault(col[n], []).append(n)
+    for c in cols:
+        cols[c].sort()
+
+    # 무게중심 정렬 — 이웃의 평균 높이로 자리를 옮긴다. 안 하면 선이 통째로
+    # 교차해서, 연결은 돼 있는데 눈으로는 못 따라간다.
+    nbr_in: dict[str, list] = {n: [] for n in nodes}
+    nbr_out: dict[str, list] = {n: [] for n in nodes}
+    for u, d in fwd:
+        nbr_in[d].append(u)
+        nbr_out[u].append(d)
+    row = {n: i for c in cols for i, n in enumerate(cols[c])}
+    for sweep in range(4):
+        keys = sorted(cols) if sweep % 2 == 0 else sorted(cols, reverse=True)
+        for c in keys:
+            side = nbr_in if sweep % 2 == 0 else nbr_out
+            cols[c].sort(key=lambda n: (
+                sum(row[x] for x in side[n]) / len(side[n]) if side[n] else row[n], n))
+            for i, n in enumerate(cols[c]):
+                row[n] = i
+
+    pos = {n: (col[n], row[n]) for n in nodes}
+    return pos, max(col.values()) + 1, max(len(v) for v in cols.values()), dropped
+
+
+def _vc_reach(flow) -> tuple[dict[str, set], dict[str, set]]:
+    """각 산업의 전체 후방(조상)·전방(자손). 지도에서 사슬을 따라가는 데 쓴다.
+
+    **반드시 사이클을 걷어낸 간선만 넣어야 한다.** 원본 간선으로 돌리면 62개 중
+    41개가 한 덩어리로 순환하고 있어서 모든 산업이 모든 산업에 닿는다 — 철강도
+    시멘트도 조선도 '후방 38 / 전방 41'로 똑같이 나와 아무것도 구분되지 않는다.
+    """
+    succ: dict[str, set] = {}
+    pred: dict[str, set] = {}
+    for u, d in flow:
+        succ.setdefault(u, set()).add(d)
+        pred.setdefault(d, set()).add(u)
+
+    def close(adj):
+        out: dict[str, set] = {}
+        for start in set(adj) | {x for v in adj.values() for x in v}:
+            seen, stack = set(), [start]
+            while stack:
+                x = stack.pop()
+                for y in adj.get(x, ()):
+                    if y not in seen:
+                        seen.add(y); stack.append(y)
+            out[start] = seen
+        return out
+
+    return close(pred), close(succ)
 
 
 def _vc_box(x: float, y: float, name: str, members: list[str], *,
@@ -624,6 +774,73 @@ def _vc_link(x1: float, y1: float, x2: float, y2: float, strength: int) -> str:
     mx = (x1 + x2) / 2
     return (f'<path d="M{x1} {y1} C {mx} {y1}, {mx} {y2}, {x2} {y2}" fill="none" '
             f'stroke="var(--accent)" stroke-width="{w:.1f}" opacity="{op:.2f}"/>')
+
+
+def _vc_map(flow, members: dict) -> tuple[str, int]:
+    """전 산업을 한 장에 이은 흐름 지도. (SVG, 그려진 산업 수).
+
+    산업별 카드만 있던 이전 판은 각 산업의 **이웃 한 칸**까지만 보여 줬다.
+    그래서 철광석 → 철강 → 후판 → 조선 → 해운처럼 사슬을 따라가는, 이 도구의
+    본래 용도가 화면에서 불가능했다. 카드 61장이 서로 이어지지 않은 채 흩어져
+    있었던 셈이다.
+
+    왼쪽이 원류, 오른쪽이 최종 수요다. 산업을 누르면 그 산업의 사슬 전체가
+    남고 나머지는 흐려진다 — 62개 노드를 한꺼번에 눈으로 좇을 수는 없다.
+    """
+    pos, ncols, nrows, dropped = _vc_layout(flow)
+    if not pos:
+        return "", 0
+
+    idx = {n: i for i, n in enumerate(sorted(pos))}
+    fwd = {k: v for k, v in flow.items() if k not in dropped}
+    up_all, down_all = _vc_reach(fwd)
+    near: dict[str, set] = {}
+    for u, d in fwd:
+        near.setdefault(u, set()).add(d)
+        near.setdefault(d, set()).add(u)
+
+    w = (ncols - 1) * _MAP_COL_W + _MAP_BOX_W + 8
+    h = nrows * _MAP_ROW_H + 16
+
+    def xy(n):
+        c, r = pos[n]
+        return 4 + c * _MAP_COL_W, 8 + r * _MAP_ROW_H
+
+    out = [f'<svg viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img" '
+           f'aria-label="산업 밸류체인 전체 흐름도" class="map">']
+
+    # 선을 먼저 깔아야 상자가 그 위에 온다.
+    for (u, d), who in sorted(flow.items()):
+        if (u, d) in dropped:
+            continue          # 사슬을 거스르는 간선. 그리면 흐름이 뒤엉킨다.
+        x1, y1 = xy(u); x2, y2 = xy(d)
+        x1 += _MAP_BOX_W
+        y1 += _MAP_BOX_H / 2; y2 += _MAP_BOX_H / 2
+        mx = (x1 + x2) / 2
+        sw = min(3.2, 0.9 + len(who) * 0.6)
+        out.append(f'<path class="lk" data-a="{idx[u]}" data-b="{idx[d]}" '
+                   f'd="M{x1} {y1} C {mx} {y1}, {mx} {y2}, {x2} {y2}" fill="none" '
+                   f'stroke="var(--accent)" stroke-width="{sw:.1f}" opacity=".28"/>')
+
+    for n in sorted(pos):
+        x, y = xy(n)
+        chain = sorted({idx[m] for m in (up_all.get(n, set()) | down_all.get(n, set())
+                                         | {n}) if m in idx})
+        adj = sorted({idx[m] for m in near.get(n, ()) if m in idx})
+        cnt = len(members.get(n, ()))
+        out.append(
+            f'<g class="nd" data-i="{idx[n]}" data-chain="{",".join(map(str, chain))}" '
+            f'data-near="{",".join(map(str, adj))}" '
+            f'tabindex="0" role="button" aria-label="{_esc(n)} 사슬 보기">'
+            f'<title>{_esc(n)} · 소속 {cnt}종목 · '
+            f'후방 {len(up_all.get(n, ()))} / 전방 {len(down_all.get(n, ()))}</title>'
+            f'<rect x="{x}" y="{y}" width="{_MAP_BOX_W}" height="{_MAP_BOX_H}" rx="7" '
+            f'fill="var(--card)" stroke="var(--line)"/>'
+            f'<text x="{x + _MAP_BOX_W / 2}" y="{y + 19}" text-anchor="middle" '
+            f'font-size="11" fill="var(--fg)">{_esc(n[:11])}</text></g>')
+
+    out.append("</svg>")
+    return "".join(out), len(pos)
 
 
 def _vc_diagram(industry: str, members: dict, ups: list, downs: list) -> str:
@@ -681,6 +898,13 @@ def render_valuechain(edges: list[dict], names: dict[str, str],
     rel_count = sum(len(v) for v in ups.values()) + sum(len(v) for v in downs.values())
     cross = sum(1 for v in ups.values() for w in v.values() if len(w) >= 2)
 
+    flow, _ = _vc_flow(edges)
+    chain_map, mapped = _vc_map(flow, members)
+    # 흐름에 아직 못 붙은 산업은 지도에서 그냥 사라진다. 조용히 빠지면 '없는'
+    # 건지 '안 이어진' 건지 알 수 없으므로 이름을 적어 드러낸다.
+    orphans = sorted(i for i in industries
+                     if not any(i in pair for pair in flow) and members.get(i))
+
     kpis = "".join(
         f'<div class="kpi"><div class="v">{v}</div><div class="l">{l}</div></div>'
         for l, v in [("산업", len(industries)), ("소속 종목", len(all_stocks)),
@@ -706,11 +930,49 @@ def render_valuechain(edges: list[dict], names: dict[str, str],
            font-size:.78rem; color:var(--muted); margin:10px 0 4px; }
 #f { width:100%; padding:10px 13px; border-radius:9px; border:1px solid var(--line);
      background:var(--card); color:var(--fg); font-size:.95rem; margin:14px 0 2px; }
+.map .nd { cursor:pointer; }
+.map .nd:focus { outline:none; }
+.map .nd rect { transition:opacity .12s, stroke .12s; }
+/* 고른 산업 > 바로 붙은 산업 > 사슬의 나머지 > 사슬 밖. 사슬을 통째로 같은
+   밝기로 켜면 62개 중 28개가 켜져 여전히 못 읽는다. 단계를 줘야 눈이 따라간다. */
+.map.sel .nd { opacity:.12; }
+.map.sel .nd.ch { opacity:.5; }
+.map.sel .nd.on { opacity:1; }
+.map.sel .lk { opacity:.04 !important; }
+.map.sel .lk.ch { opacity:.3 !important; }
+.map.sel .lk.on { opacity:.85 !important; }
+.map .nd.pick { opacity:1 !important; }
+.map .nd.pick rect { stroke:var(--accent); stroke-width:2.4; fill:var(--chip); }
+.axis { display:flex; justify-content:space-between; font-size:.74rem;
+        color:var(--muted); margin:2px 0 6px; }
 """
-    js = ("<script>const f=document.getElementById('f');"
+    # 사슬 추적. 62개 노드를 한꺼번에 눈으로 좇을 수 없으니, 하나를 누르면
+    # 그 산업이 닿는 후방·전방만 남기고 나머지를 흐린다. 다시 누르면 원래대로.
+    js = ("<script>"
+          "const f=document.getElementById('f');"
           "f.addEventListener('input',()=>{const q=f.value.trim().toLowerCase();"
           "document.querySelectorAll('.vc').forEach(c=>{"
-          "c.style.display=!q||c.dataset.k.toLowerCase().includes(q)?'':'none';});});</script>")
+          "c.style.display=!q||c.dataset.k.toLowerCase().includes(q)?'':'none';});});"
+          "const m=document.querySelector('.map');"
+          "if(m){let cur=null;const clear=()=>{m.classList.remove('sel');"
+          "m.querySelectorAll('.on,.ch,.pick').forEach(e=>"
+          "e.classList.remove('on','ch','pick'));};"
+          "const pick=g=>{const i=g.dataset.i;"
+          "if(cur===i){cur=null;clear();return;}"
+          "cur=i;clear();m.classList.add('sel');"
+          "const s=new Set(g.dataset.chain.split(','));"
+          "const nr=new Set(g.dataset.near?g.dataset.near.split(','):[]);"
+          "m.querySelectorAll('.nd').forEach(n=>{const j=n.dataset.i;"
+          "if(nr.has(j))n.classList.add('on');else if(s.has(j))n.classList.add('ch');});"
+          "g.classList.add('pick');"
+          "m.querySelectorAll('.lk').forEach(l=>{const a=l.dataset.a,b=l.dataset.b;"
+          "if(a===i||b===i)l.classList.add('on');"
+          "else if(s.has(a)&&s.has(b))l.classList.add('ch');});};"
+          "m.querySelectorAll('.nd').forEach(g=>{"
+          "g.addEventListener('click',()=>pick(g));"
+          "g.addEventListener('keydown',e=>{"
+          "if(e.key==='Enter'||e.key===' '){e.preventDefault();pick(g);}});});}"
+          "</script>")
 
     legend = (
         '<div class="legend2">'
@@ -718,6 +980,21 @@ def render_valuechain(edges: list[dict], names: dict[str, str],
         '<span>가운데 = 해당 산업</span>'
         '<span>오른쪽 = 수요(전방) →</span>'
         '<span>선이 굵을수록 여러 회사가 같은 관계를 말함</span></div>')
+
+    map_block = ""
+    if chain_map:
+        note = ""
+        if orphans:
+            note = ('<p class="muted">아직 어느 사슬에도 안 붙은 산업: '
+                    + _esc(", ".join(orphans))
+                    + ' — 공시에서 전·후방이 아직 안 잡힌 곳입니다.</p>')
+        map_block = (
+            '<h2>전체 흐름도</h2>'
+            f'<div class="card"><p class="muted">산업 {mapped}개가 한 사슬로 이어져 '
+            '있습니다. 산업을 누르면 그 산업이 닿는 후방·전방 전체만 남습니다.</p>'
+            '<div class="axis"><span>← 원류(원료·부품)</span>'
+            '<span>최종 수요 →</span></div>'
+            f'<div class="scroll">{chain_map}</div>{note}</div>')
 
     return (f"<!doctype html><html lang='ko'><head><meta charset='utf-8'>"
             f"<meta name='viewport' content='width=device-width,initial-scale=1'>"
@@ -727,6 +1004,8 @@ def render_valuechain(edges: list[dict], names: dict[str, str],
             f'<p class="sub">사업보고서에서 추출한 산업 간 흐름 · '
             f'<a href="index.html">리포트로</a></p>'
             f'<div class="kpis">{kpis}</div></div></header><main>'
+            f'{map_block}'
+            f'<h2>산업별 상세</h2>'
             f'<input id="f" placeholder="산업명·종목명으로 거르기 (예: 조선, 시멘트, 포스코)">'
             f'{legend}{"".join(cards)}'
             f'<p class="muted">본 자료는 자동 생성된 참고 자료이며 투자 권유가 아닙니다.</p>'

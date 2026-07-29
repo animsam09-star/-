@@ -223,3 +223,114 @@ class TestValuechainTabIsADiagram:
 
     def test_empty_graph_does_not_crash(self):
         assert "밸류체인" in report.render_valuechain([], {})
+
+
+class TestValuechainIsActuallyConnected:
+    """산업별 카드만으로는 사슬을 따라갈 수 없다.
+
+    이전 판은 산업마다 '이웃 한 칸'짜리 카드를 따로 그렸다. 정보는 다 있었지만
+    철광석 → 철강 → 후판 → 조선 → 해운처럼 **이어서** 보는 게 화면에서
+    불가능했다 — 카드 61장이 서로 안 이어진 채 흩어져 있었던 셈이다.
+    """
+
+    def _flow(self, pairs):
+        return {p: {"a"} for p in pairs}
+
+    def test_chain_is_laid_out_left_to_right(self):
+        """공급이 왼쪽, 수요가 오른쪽. 순서가 뒤집히면 그림이 거짓말을 한다."""
+        flow = self._flow([("광산", "철강"), ("철강", "후판"),
+                           ("후판", "조선"), ("조선", "해운")])
+        pos, ncols, _, _ = report._vc_layout(flow)
+        cols = {n: c for n, (c, _) in pos.items()}
+        assert cols["광산"] < cols["철강"] < cols["후판"] < cols["조선"] < cols["해운"]
+        assert ncols == 5
+
+    def test_cycles_do_not_collapse_the_layout(self):
+        """산업 연관은 실제로 순환한다 — 철강↔건설기계↔광산.
+
+        위상정렬만 쓰면 62개 중 41개가 사이클에 걸려 층이 안 나왔다.
+        """
+        flow = self._flow([("철강", "건설기계"), ("건설기계", "광산"),
+                           ("광산", "철강"), ("철강", "조선")])
+        pos, ncols, _, dropped = report._vc_layout(flow)
+        assert len(pos) == 4, "사이클에 걸린 산업이 지도에서 사라지면 안 된다"
+        assert ncols >= 2
+        assert len(dropped) == 1, "사이클을 끊는 간선은 최소여야 한다"
+
+    def test_reachability_uses_the_acyclic_edges(self):
+        """사이클이 남은 채 도달성을 재면 모두가 모두에 닿아 구분이 사라진다.
+
+        실제로 원본 간선으로 계산했더니 철강·시멘트·조선이 전부 '후방 38 /
+        전방 41'로 똑같이 나왔다. 62개 중 41개가 한 덩어리로 순환해서였다.
+        """
+        flow = self._flow([("철강", "건설기계"), ("건설기계", "광산"),
+                           ("광산", "철강"), ("철강", "조선")])
+        _, _, _, dropped = report._vc_layout(flow)
+        fwd = {k: v for k, v in flow.items() if k not in dropped}
+        up, down = report._vc_reach(fwd)
+        sets = [(len(up.get(n, ())), len(down.get(n, ())))
+                for n in ("철강", "건설기계", "광산", "조선")]
+        assert len(set(sets)) > 1, "모든 산업의 사슬이 같으면 추적이 의미가 없다"
+        assert "조선" not in up.get("조선", set())
+
+    def test_map_draws_every_relation_once(self):
+        """그래프에는 같은 관계가 후방·전방 두 방향으로 들어 있다.
+
+        둘 다 읽으면 모든 선이 두 번 그려져 굵기(교차 검증 횟수)가 거짓이 된다.
+        """
+        from src import graph as G
+        edges = [
+            G.make_edge(G.industry_node("조선"), G.industry_node("후판"),
+                        G.REL_UPSTREAM, "dart", origin="009540", asof="20260728"),
+            G.make_edge(G.industry_node("후판"), G.industry_node("조선"),
+                        G.REL_DOWNSTREAM, "dart", origin="009540", asof="20260728"),
+        ]
+        flow, _ = report._vc_flow(edges)
+        assert flow == {("후판", "조선"): {"009540"}}
+
+    def test_map_appears_in_the_page(self):
+        h = report.render_valuechain(
+            TestValuechainTabIsADiagram()._edges(),
+            TestValuechainTabIsADiagram.NAMES)
+        assert 'class="map"' in h
+        assert "전체 흐름도" in h
+
+    def test_member_names_come_from_the_full_master(self, tmp_path, monkeypatch):
+        """이름을 스크리닝 결과에서 가져오면 소형 후방주가 티커로 찍힌다.
+
+        returns_*.json은 시총·거래대금 필터를 통과한 종목만 담는다. 밸류체인이
+        잡아내야 하는 대상이 바로 그 필터 밖 소재주라, 실제로 20종목이 '104700'
+        같은 숫자로 화면에 나가고 있었다.
+        """
+        from src import graph as G, universe as U
+        monkeypatch.setattr(report, "REPORTS_DIR", tmp_path)
+        # load()의 기본 인자는 정의 시점에 묶이므로 EDGES_FILE만 갈아 끼우면
+        # 실제 저장소 그래프를 읽는다. 그러면 이 테스트는 통과하되 아무것도
+        # 검증하지 않게 된다 — 함수 자체를 바꿔야 격리된다.
+        edges = self._member_edges()
+        monkeypatch.setattr(G, "load", lambda *a, **k: edges)
+        uni = U.Universe("20260728", {"104700": {"name": "한국철강",
+                                                 "market_cap": 1}})
+        report.build("20260728", [], {"analyses": []},
+                     {"site_title": "테스트"}, None, uni)
+        h = (tmp_path / "valuechain.html").read_text(encoding="utf-8")
+        assert "한국철강" in h
+        assert "104700" not in h
+
+    def _member_edges(self):
+        from src import graph as G
+        return [G.make_edge(G.ticker_node("104700"), G.industry_node("철근·형강"),
+                            G.REL_MEMBER, "valuechain", asof="20260728"),
+                G.make_edge(G.industry_node("철근·형강"), G.industry_node("철강"),
+                            G.REL_UPSTREAM, "dart", origin="104700",
+                            asof="20260728")]
+
+    def test_unconnected_industry_is_named_not_dropped(self):
+        """흐름에 못 붙은 산업이 조용히 사라지면 '없는' 건지 '안 이어진' 건지 모른다."""
+        from src import graph as G
+        edges = TestValuechainTabIsADiagram()._edges() + [
+            G.make_edge(G.ticker_node("000660"), G.industry_node("외톨이산업"),
+                        G.REL_MEMBER, "valuechain", asof="20260728")]
+        h = report.render_valuechain(edges, TestValuechainTabIsADiagram.NAMES)
+        assert "외톨이산업" in h
+        assert "아직 어느 사슬에도 안 붙은" in h
