@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import html
 import json
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -602,7 +603,9 @@ def build(base_date: str, candidates: list[dict], analysis: dict, cfg: dict,
 
 _VC_BOX_W = 168
 _VC_ROW_H = 62
-_VC_GAP = 232
+# 상자 사이가 화살표에 품목을 적을 자리다. 232이면 틈이 64px뿐이라 '레미콘'도
+# 안 들어간다. 흐르는 물건 이름이 들어갈 만큼 벌린다.
+_VC_GAP = 330
 
 # 전체 지도용 치수. 산업 카드보다 작게 잡는다 — 62개 산업을 한 장에 올리려면
 # 상자마다 종목명을 다 적을 수 없고, 종목은 아래 카드에서 보면 된다.
@@ -888,8 +891,8 @@ def _vc_map(flow, members: dict, guessed: dict | None = None) -> tuple[str, int]
         cnt = len(members.get(n, ()))
         out.append(
             f'<g class="nd" data-i="{idx[n]}" data-chain="{",".join(map(str, chain))}" '
-            f'data-near="{",".join(map(str, adj))}" '
-            f'tabindex="0" role="button" aria-label="{_esc(n)} 사슬 보기">'
+            f'data-near="{",".join(map(str, adj))}" data-ind="{_esc(n)}" '
+            f'tabindex="0" role="button" aria-label="{_esc(n)} 자세히 보기">'
             f'<title>{_esc(n)} · 소속 {cnt}종목 · '
             f'후방 {len(up_all.get(n, ()))} / 전방 {len(down_all.get(n, ()))}</title>'
             f'<rect x="{x}" y="{y}" width="{_MAP_BOX_W}" height="{_MAP_BOX_H}" rx="7" '
@@ -901,8 +904,47 @@ def _vc_map(flow, members: dict, guessed: dict | None = None) -> tuple[str, int]
     return "".join(out), len(pos)
 
 
-def _vc_diagram(industry: str, members: dict, ups: list, downs: list) -> str:
-    """한 산업의 후방 → 산업 → 전방 흐름 그림."""
+_PARENS = re.compile(r"[(（][^)）]*[)）]")
+
+
+def _flow_label(products: set, supplier: str, consumer: str) -> str:
+    """화살표에 적을 '무엇이 흐르는가'. 없으면 빈 문자열.
+
+    같은 관계라도 회사마다 표현이 다르게 들어온다. 시멘트→건설 한 쌍에만
+    이런 게 섞여 있다.
+
+        레미콘(유진기업·아주산업) / 벌크시멘트(한일시멘트)   ← 물건
+        국내 건설 산업 / 건설사·레미콘사                  ← 누가 사는지
+        건축·토목                                    ← 어디에 쓰는지
+
+    화살표에 필요한 건 첫 줄이다. 그래서 (1) 괄호 안 회사명을 지우고,
+    (2) 수요 산업 이름이 든 표현은 뒤로 밀고, (3) 공급 산업 이름이 든 표현을
+    앞으로 당긴 뒤, (4) 남은 것 중 짧은 쪽을 고른다.
+
+    (3)이 없으면 '건축·토목'처럼 짧지만 물건이 아닌 말이 뽑힌다 — 실제로
+    처음에 그렇게 나왔다. 짧다는 것만으로는 물건인지 용도인지 못 가른다.
+    """
+    sup = [t for t in re.split(r"[·・, ]", supplier) if len(t) >= 2]
+    con = [t for t in re.split(r"[·・, ]", consumer) if len(t) >= 2]
+    best = []
+    for raw in products:
+        p = _PARENS.sub("", str(raw))
+        p = re.sub(r"\s*/\s*", " / ", p)
+        p = re.sub(r"\s+", " ", p).strip(" /·,")
+        if p:
+            best.append((any(t in p for t in con), not any(t in p for t in sup), len(p), p))
+    return min(best)[3] if best else ""
+
+
+def _vc_diagram(industry: str, members: dict, ups: list, downs: list,
+                flows: dict | None = None) -> str:
+    """한 산업의 후방 → 산업 → 전방 흐름 그림.
+
+    화살표에 **무엇이 흐르는지**를 적는다. 산업 상자만 이으면 '시멘트가 건설로
+    간다'까지만 보이고, 무엇이 어떤 식으로 가는지는 안 보인다. 레미콘이 가는지
+    벌크시멘트가 가는지에 따라 파급의 크기도 시차도 다르다.
+    """
+    flows = flows or {}
     rows = max(len(ups), len(downs), 1)
     h = rows * _VC_ROW_H + 24
     w = _VC_GAP * 2 + _VC_BOX_W
@@ -911,15 +953,25 @@ def _vc_diagram(industry: str, members: dict, ups: list, downs: list) -> str:
     out = [f'<svg viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img" '
            f'aria-label="{_esc(industry)} 밸류체인">']
 
-    def col(items, x, anchor_x):
+    def col(items, x, anchor_x, *, supplying):
         for i, (name, strength) in enumerate(items):
             y = 12 + i * _VC_ROW_H + (rows - len(items)) * _VC_ROW_H / 2
-            out.append(_vc_link(anchor_x, mid + 23,
-                                x + (_VC_BOX_W if x < _VC_GAP else 0), y + 23, strength))
+            bx = x + (_VC_BOX_W if x < _VC_GAP else 0)
+            out.append(_vc_link(anchor_x, mid + 23, bx, y + 23, strength))
+            # 공급자 → 수요자 방향으로 품목을 찾는다. 왼쪽 열은 name이 공급자,
+            # 오른쪽 열은 industry가 공급자다.
+            pair = (name, industry) if supplying else (industry, name)
+            label = _flow_label(flows.get(pair, set()), pair[0], pair[1])
+            if label:
+                lx = (anchor_x + bx) / 2
+                ly = (mid + 23 + y + 23) / 2
+                out.append(
+                    f'<text x="{lx}" y="{ly - 6}" text-anchor="middle" font-size="9.5" '
+                    f'fill="var(--muted)">{_esc(label[:16])}</text>')
             out.append(_vc_box(x, y, name, sorted(members.get(name, ()))))
 
-    col(ups, 0, _VC_GAP)                       # 왼쪽: 공급(후방)
-    col(downs, _VC_GAP * 2, _VC_GAP + _VC_BOX_W)   # 오른쪽: 수요(전방)
+    col(ups, 0, _VC_GAP, supplying=True)                       # 왼쪽: 공급(후방)
+    col(downs, _VC_GAP * 2, _VC_GAP + _VC_BOX_W, supplying=False)   # 오른쪽: 수요(전방)
     out.append(_vc_box(_VC_GAP, mid, industry, sorted(members.get(industry, ())),
                        accent=True))
     out.append("</svg>")
@@ -952,6 +1004,55 @@ def _vc_makes(industry: str, members: dict, makes: dict) -> str:
     return f'<ul class="mk">{"".join(rows)}</ul>'
 
 
+def render_company_trades(edges: list[dict], names: dict[str, str]) -> str:
+    """누가 누구에게 무엇을 파는가 — 회사 단위.
+
+    산업 상자는 '어느 쪽으로 번지는가'까지만 말한다. 수혜주를 고르려면 그
+    산업 안에서 **누가** 그 물건을 대는지를 알아야 하고, 그건 공시에 이름으로
+    적혀 있다. 매출 비중이 함께 적힌 건 파급 크기를 가늠할 유일한 정량 근거라
+    따로 세워 보여 준다.
+    """
+    from . import graph as G
+
+    rows: dict[tuple[str, str], dict] = {}
+    for e in edges:
+        sk, sn = G.split_node(e["src"])
+        dk, dn = G.split_node(e["dst"])
+        if sk != "T" or dk != "T" or e["rel"] != G.REL_DOWNSTREAM:
+            continue
+        cur = rows.setdefault((sn, dn), {"product": "", "weight": None})
+        if e.get("product") and len(e["product"]) > len(cur["product"]):
+            cur["product"] = e["product"]
+        if e.get("weight") is not None:
+            cur["weight"] = max(cur["weight"] or 0, e["weight"])
+    if not rows:
+        return ""
+
+    # 비중이 적힌 거래를 위로. 숫자가 있는 것이 판단에 먼저 쓰인다.
+    order = sorted(rows.items(),
+                   key=lambda kv: (kv[1]["weight"] is None, -(kv[1]["weight"] or 0),
+                                   names.get(kv[0][0]) or kv[0][0]))
+    cells = []
+    for (s, d), v in order:
+        what = _PARENS.sub("", v["product"]).strip(" /·,")[:34]
+        share = "" if v["weight"] is None else f"{v['weight']:.1%}"
+        cells.append(
+            f'<tr><td class="wide">{_esc(names.get(s) or s)}</td>'
+            f'<td class="ar">→</td>'
+            f'<td class="wide">{_esc(names.get(d) or d)}</td>'
+            f'<td class="muted">{_esc(what)}</td>'
+            f'<td>{share}</td></tr>')
+    body = "".join(cells)
+    with_share = sum(1 for _, v in order if v["weight"] is not None)
+    return ('<h2 id="trades">기업 간 거래</h2>'
+            f'<div class="card"><p class="muted">공시에 상대 회사 이름이 적힌 거래 '
+            f'{len(order)}건입니다. 이 중 {with_share}건은 매출 비중까지 적혀 있어 '
+            '파급 크기를 가늠할 수 있습니다. 산업이 아니라 <b>회사</b>가 이어진 '
+            '것이라, 수혜주를 고르는 데는 이쪽이 직접적입니다.</p>'
+            '<div class="scroll"><table><tr><th>공급</th><th></th><th>수요</th>'
+            f'<th>무엇을</th><th>매출비중</th></tr>{body}</table></div></div>')
+
+
 def render_valuechain(edges: list[dict], names: dict[str, str],
                       site_title: str = "밸류체인") -> str:
     """구축된 밸류체인을 그림으로 훑어보는 페이지."""
@@ -964,6 +1065,7 @@ def render_valuechain(edges: list[dict], names: dict[str, str],
     makes: dict[str, dict[str, set]] = {}
     ups: dict[str, dict[str, set]] = {}
     downs: dict[str, dict[str, set]] = {}
+    link_products: dict[tuple[str, str], set] = {}
 
     for e in edges:
         sk, sn = G.split_node(e["src"])
@@ -980,6 +1082,11 @@ def render_valuechain(edges: list[dict], names: dict[str, str],
                 continue
             who = e.get("origin") or e.get("source") or "?"
             bucket.setdefault(sn, {}).setdefault(dn, set()).add(who)
+            # 화살표에 적을 품목. 후방 엣지(sn의 공급처가 dn)는 dn→sn 방향으로,
+            # 전방 엣지(sn이 dn에 판다)는 sn→dn 방향으로 흐른다.
+            if e.get("product"):
+                pair = (dn, sn) if e["rel"] == G.REL_UPSTREAM else (sn, dn)
+                link_products.setdefault(pair, set()).add(e["product"])
 
     industries = sorted(set(members) | set(ups) | set(downs),
                         key=lambda i: (-(len(members.get(i, ())) * 2
@@ -1011,9 +1118,9 @@ def render_valuechain(edges: list[dict], names: dict[str, str],
             continue          # 연결도 소속도 없는 노드는 그림이 될 게 없다
         key = " ".join([ind] + [x for x, _ in u + d] + sorted(members.get(ind, ())))
         cards.append(
-            f'<div class="card vc" data-k="{_esc(key)}">'
+            f'<div class="card vc" data-k="{_esc(key)}" data-ind="{_esc(ind)}">'
             f'<h3>{_esc(ind)} <span class="chip">{len(members.get(ind, ()))}종목</span></h3>'
-            f'<div class="scroll">{_vc_diagram(ind, members, u, d)}</div>'
+            f'<div class="scroll">{_vc_diagram(ind, members, u, d, link_products)}</div>'
             f'{_vc_makes(ind, members, makes)}</div>')
 
     css_extra = """
@@ -1051,33 +1158,52 @@ ul.mk .none { opacity:.55; font-style:italic; }
 @media (max-width:560px){ ul.mk li { flex-direction:column; gap:1px; }
                           ul.mk li b { flex:none; } }
 """
-    # 사슬 추적. 62개 노드를 한꺼번에 눈으로 좇을 수 없으니, 하나를 누르면
-    # 그 산업이 닿는 후방·전방만 남기고 나머지를 흐린다. 다시 누르면 원래대로.
-    js = ("<script>"
-          "const f=document.getElementById('f');"
-          "f.addEventListener('input',()=>{const q=f.value.trim().toLowerCase();"
-          "document.querySelectorAll('.vc').forEach(c=>{"
-          "c.style.display=!q||c.dataset.k.toLowerCase().includes(q)?'':'none';});});"
-          "const m=document.querySelector('.map');"
-          "if(m){let cur=null;const clear=()=>{m.classList.remove('sel');"
-          "m.querySelectorAll('.on,.ch,.pick').forEach(e=>"
-          "e.classList.remove('on','ch','pick'));};"
-          "const pick=g=>{const i=g.dataset.i;"
-          "if(cur===i){cur=null;clear();return;}"
-          "cur=i;clear();m.classList.add('sel');"
-          "const s=new Set(g.dataset.chain.split(','));"
-          "const nr=new Set(g.dataset.near?g.dataset.near.split(','):[]);"
+    # 누르면 그 산업 하나로 들어간다(확대 + 소속 기업). 지도만 흐리게 하는
+    # 방식으로는 상자가 작아 기업명이 안 들어가고, 결국 아래 카드를 손으로
+    # 찾아 내려가야 했다. 되돌아오는 길(뒤로 버튼 · Esc · 브라우저 뒤로)을
+    # 반드시 같이 둔다 — 들어갔다가 못 나오면 확대가 아니라 함정이다.
+    js = ("<script>(function(){"
+          "const f=document.getElementById('f'),m=document.querySelector('.map'),"
+          "bar=document.getElementById('fbar'),fn=document.getElementById('fname'),"
+          "mapc=document.getElementById('mapc'),cards=[...document.querySelectorAll('.vc')];"
+          "let focused=null;"
+          "const filter=()=>{const q=f.value.trim().toLowerCase();"
+          "cards.forEach(c=>{c.hidden=!!q&&!c.dataset.k.toLowerCase().includes(q);});};"
+          "const hover=g=>{if(focused||!m)return;m.classList.add('sel');"
+          "m.querySelectorAll('.on,.ch,.pick').forEach(e=>e.classList.remove('on','ch','pick'));"
+          "const i=g.dataset.i,s=new Set(g.dataset.chain.split(',')),"
+          "nr=new Set(g.dataset.near?g.dataset.near.split(','):[]);"
           "m.querySelectorAll('.nd').forEach(n=>{const j=n.dataset.i;"
           "if(nr.has(j))n.classList.add('on');else if(s.has(j))n.classList.add('ch');});"
           "g.classList.add('pick');"
           "m.querySelectorAll('.lk').forEach(l=>{const a=l.dataset.a,b=l.dataset.b;"
           "if(a===i||b===i)l.classList.add('on');"
           "else if(s.has(a)&&s.has(b))l.classList.add('ch');});};"
-          "m.querySelectorAll('.nd').forEach(g=>{"
-          "g.addEventListener('click',()=>pick(g));"
-          "g.addEventListener('keydown',e=>{"
-          "if(e.key==='Enter'||e.key===' '){e.preventDefault();pick(g);}});});}"
-          "</script>")
+          "const unhover=()=>{if(focused||!m)return;m.classList.remove('sel');"
+          "m.querySelectorAll('.on,.ch,.pick').forEach(e=>e.classList.remove('on','ch','pick'));};"
+          "const show=(ind,push)=>{const hit=cards.find(c=>c.dataset.ind===ind);"
+          "if(!hit)return;focused=ind;unhover();"
+          "if(mapc)mapc.hidden=true;cards.forEach(c=>{c.hidden=c!==hit;});"
+          "hit.classList.add('zoom');f.hidden=true;bar.hidden=false;fn.textContent=ind;"
+          "if(push)history.pushState({ind},'','#'+encodeURIComponent(ind));"
+          "window.scrollTo({top:0});};"
+          "const back=push=>{focused=null;if(mapc)mapc.hidden=false;"
+          "cards.forEach(c=>c.classList.remove('zoom'));f.hidden=false;bar.hidden=true;"
+          "filter();if(push)history.pushState({},'',location.pathname);};"
+          "f.addEventListener('input',filter);"
+          "document.getElementById('fback').addEventListener('click',()=>back(true));"
+          "document.addEventListener('keydown',e=>{if(e.key==='Escape'&&focused)back(true);});"
+          "window.addEventListener('popstate',e=>{"
+          "const i=(e.state&&e.state.ind)||decodeURIComponent(location.hash.slice(1));"
+          "i?show(i,false):back(false);});"
+          "if(m)m.querySelectorAll('.nd').forEach(g=>{const ind=g.dataset.ind;"
+          "g.addEventListener('mouseenter',()=>hover(g));"
+          "g.addEventListener('mouseleave',unhover);"
+          "g.addEventListener('click',()=>show(ind,true));"
+          "g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){"
+          "e.preventDefault();show(ind,true);}});});"
+          "if(location.hash)show(decodeURIComponent(location.hash.slice(1)),false);"
+          "})();</script>")
 
     legend = (
         '<div class="legend2">'
@@ -1085,6 +1211,8 @@ ul.mk .none { opacity:.55; font-style:italic; }
         '<span>가운데 = 해당 산업</span>'
         '<span>오른쪽 = 수요(전방) →</span>'
         '<span>선이 굵을수록 여러 회사가 같은 관계를 말함</span></div>')
+
+    trades_block = render_company_trades(edges, names)
 
     map_block = ""
     if chain_map:
@@ -1110,7 +1238,7 @@ ul.mk .none { opacity:.55; font-style:italic; }
             f'<p class="sub">사업보고서에서 추출한 산업 간 흐름 · '
             f'<a href="index.html">리포트로</a></p>'
             f'<div class="kpis">{kpis}</div></div></header><main>'
-            f'{map_block}'
+            f'{map_block}{trades_block}'
             f'<h2>산업별 상세</h2>'
             f'<input id="f" placeholder="산업명·종목명으로 거르기 (예: 조선, 시멘트, 포스코)">'
             f'{legend}{"".join(cards)}'

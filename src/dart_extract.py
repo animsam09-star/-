@@ -695,6 +695,26 @@ def load_sections() -> dict[str, dict]:
             for p in sorted(SECTIONS_DIR.glob("*.json"))}
 
 
+def load_extractions() -> dict[str, dict]:
+    """저장된 추출 결과 전부 {티커: 추출}. 없으면 빈 dict.
+
+    파일이 여러 개인 건 종목을 나눠 돌렸기 때문이다(23개, 50개…). 같은 티커가
+    두 파일에 있으면 **나중 파일이 이긴다** — 파일명에 붙은 접미(b, c)가 재실행
+    순서라, 나중 것이 고쳐 돌린 결과다.
+
+    파이프라인은 LLM 없이도 이걸 읽어 회사 간 거래를 만든다. 추출은 비싸고
+    가끔 막히지만(429), 한 번 받아 둔 결과는 매일 다시 쓸 수 있다.
+    """
+    files = sorted((ROOT / "data").glob("dart_extractions_*.json"))
+    out: dict[str, dict] = {}
+    for f in files:
+        try:
+            out.update(json.loads(f.read_text(encoding="utf-8")))
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"  추출 파일을 읽지 못했습니다 {f.name}: {e}")
+    return out
+
+
 def run(tickers: list[str], cfg: dict, asof: str, use_batch: bool = True,
         extractions: dict | None = None) -> dict:
     if extractions is None:
