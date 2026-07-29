@@ -25,6 +25,12 @@ MAX_NAME_BACKFILL = 300
 
 _NAME_NOISE = re.compile(r"\s|㈜|\(주\)|（주）|주식회사")
 
+# '이름(티커)' 표기. 미해석 목록이 후보를 바로 이 형태로 찍어 주므로, 사람이
+# 로그에서 복사해 YAML에 붙여 넣으면 그대로 동작한다.
+# 티커 자리는 KRX 단축코드 형태(첫 자리 숫자 + 영숫자 5자)만 받는다 — 사명에
+# 들어간 괄호('한국ANKOR유전(1호)' 같은)를 티커로 오인하지 않기 위해서다.
+_EXPLICIT_TICKER = re.compile(r"^(.*?)\(([0-9][0-9A-Z]{5})\)$")
+
 
 def normalize_name(name: str) -> str:
     """종목명 대조용 정규화. 공백·법인 표기·대소문자·문자폭 차이를 흡수한다.
@@ -113,6 +119,19 @@ class Universe:
         return f"{name}({ticker})" if name else ticker
 
     def resolve(self, name: str) -> str | None:
+        """'삼성전자' 또는 '삼성전자(005930)' → 티커.
+
+        괄호 안에 티커를 적으면 이름 대조를 건너뛰고 그 티커를 쓴다. 사명이
+        표기마다 갈리는 회사(HD현대미포/현대미포조선/에이치디현대미포)를 이름으로
+        맞히려 하면 KRX 표기를 매번 확인해야 하고, 틀리면 조용히 빠진다.
+        티커는 사명이 바뀌어도 그대로다.
+
+        적어 둔 티커가 유니버스에 없으면 **해석 실패로 둔다.** 이름으로 되돌아가면
+        상장폐지된 티커가 동명 회사에 붙어도 알 수 없다.
+        """
+        m = _EXPLICIT_TICKER.match(str(name).strip())
+        if m:
+            return m.group(2) if m.group(2) in self.entries else None
         return self._by_norm.get(normalize_name(name))
 
     def resolve_many(self, names) -> tuple[dict[str, str], list[str]]:

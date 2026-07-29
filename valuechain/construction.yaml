@@ -10,7 +10,7 @@ upstream:  # 후방: 소재·부품·장비 공급
   - segment: 건자재·마감재
     companies: [KCC, LX하우시스, 벽산, 아이에스동서]
   - segment: 건설기계
-    companies: [에이치디현대인프라코어, HD건설기계, 두산밥캣]
+    companies: [HD현대인프라코어(042670), HD건설기계, 두산밥캣]
 downstream:  # 전방: 수요처
   - segment: 부동산 개발·시행
     companies: [HDC, SK디앤디]

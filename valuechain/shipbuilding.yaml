@@ -1,7 +1,7 @@
 industry: 조선
 description: 상선(LNG·컨테이너·탱커)·해양플랜트·함정 건조
 drivers: [신조선가 지수, 발주 사이클(LNG선·친환경 규제), 후판 가격(원가), 미국 함정 MRO·동맹조선]
-peers: [HD한국조선해양, HD현대중공업, 삼성중공업, 한화오션, 에이치디현대미포]
+peers: [HD한국조선해양, HD현대중공업, 삼성중공업, 한화오션, HD현대미포(010620)]
 upstream:
   - segment: 후판·강재
     companies: [POSCO홀딩스, 현대제철, 동국제강]

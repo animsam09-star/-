@@ -1,7 +1,7 @@
 industry: 건설기계
 description: 굴착기·휠로더 등 건설기계와 산업차량
 drivers: [북미·인도 인프라 투자, 중국 굴착기 판매, 광산 개발 CAPEX, 강재 가격]
-peers: [HD건설기계, 에이치디현대인프라코어, 두산밥캣]
+peers: [HD건설기계, HD현대인프라코어(042670), 두산밥캣]
 upstream:
   - segment: 건설기계 부품
     companies: [진성티이씨, 대창단조, 흥국, 디와이파워]

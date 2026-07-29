@@ -212,3 +212,23 @@ class TestNameResolutionDiagnostics:
     def test_preferred_share_suffix_survives_normalization(self, uni):
         from src.universe import normalize_name
         assert normalize_name("삼성전자우") != normalize_name("삼성전자")
+
+    def test_explicit_ticker_beats_name_spelling(self, uni):
+        """표기가 흔들리는 회사는 티커로 못 박을 수 있어야 한다.
+
+        '에이치디현대미포'로 적었을 때 라이브에서 미해석이 났다. KRX 표기를
+        추측으로 맞히는 대신 티커를 적으면, 사명이 또 바뀌어도 안 깨진다.
+        """
+        assert uni.resolve("에이치디현대미포(010620)") == "010620"
+        assert uni.resolve("에이치디현대미포") is None
+
+    def test_stale_ticker_stays_unresolved(self, uni):
+        """유니버스에 없는 티커를 이름으로 되돌리면 상장폐지가 조용히 묻힌다."""
+        assert uni.resolve("삼성전자(999999)") is None
+
+    def test_parenthesised_name_is_not_read_as_ticker(self, uni):
+        """사명에 든 괄호를 티커로 오인하면 멀쩡한 회사가 통째로 빠진다."""
+        from src import universe as U
+        u2 = U.Universe("20260727", {"152550": {"name": "한국ANKOR유전(1호)",
+                                                "market_cap": 1}})
+        assert u2.resolve("한국ANKOR유전(1호)") == "152550"
