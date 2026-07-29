@@ -293,6 +293,41 @@ class TestToEdges:
         assert member_edges[0]["weight"] == pytest.approx(1.0), \
             "같은 산업 안의 두 제품 비중은 합산돼야 한다"
 
+    def test_product_names_survive_the_fold(self):
+        """산업으로 접힌다고 만드는 물건까지 같아지는 건 아니다.
+
+        레미콘과 시멘트는 같은 산업 노드지만 다른 제품이다. 비중은 합치되
+        품목은 둘 다 남아야, 화면에서 '이 회사가 뭘 만드는지'를 말할 수 있다.
+        """
+        g, _ = self._graph()
+        product = g.industries_of("003410")[0]["product"]
+        assert "레미콘" in product and "시멘트" in product
+
+    def test_upstream_material_is_carried_as_product(self):
+        """후방은 material, 전방은 customer로 온다. 셋 다 '오가는 물건'이다."""
+        g, _ = self._graph()
+        up = [e for e in g.edges
+              if e["rel"] == G.REL_UPSTREAM and e["dst"] == G.industry_node("석탄")]
+        assert up and up[0]["product"] == "유연탄"
+
+    def test_same_industry_different_companies_keep_their_own_products(self):
+        """HL만도(제동)와 SNT다이내믹스(변속기)를 하나로 퉁치면 안 된다.
+
+        둘 다 '자동차 부품·모듈'이지만 수요 동인도 경쟁 상대도 다르다.
+        산업명만 남기면 파급 예측이 두 회사에 똑같이 적용돼 버린다.
+        """
+        vocab = dx.IndustryVocab(known=["자동차 부품·모듈"])
+        def one(ticker, product):
+            return dx.to_edges(ticker, {
+                "products": [{"industry": "자동차 부품·모듈", "product": product,
+                              "revenue_share": 1.0, "tier": "A", "quote": "q"}],
+                "upstream": [], "downstream": [], "unmapped": "",
+            }, vocab, ASOF)
+        edges = one("204320", "제동·조향·현가") + one("003570", "차축·변속기")
+        by_ticker = {e["src"]: e["product"] for e in edges}
+        assert by_ticker[G.ticker_node("204320")] == "제동·조향·현가"
+        assert by_ticker[G.ticker_node("003570")] == "차축·변속기"
+
     def test_dart_confidence_beats_handwritten_valuechain(self):
         from src import graph_build
         g, _ = self._graph()

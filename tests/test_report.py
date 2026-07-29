@@ -325,6 +325,32 @@ class TestValuechainIsActuallyConnected:
                             G.REL_UPSTREAM, "dart", origin="104700",
                             asof="20260728")]
 
+    def test_companies_in_one_industry_show_different_products(self):
+        """같은 산업에 있다고 같은 걸 만드는 게 아니다.
+
+        이름만 나열하면 '자동차 부품·모듈'의 종목들이 서로 대체재처럼 보인다.
+        실제로는 제동장치·변속기·자동차 전선이고 수요가 움직이는 이유가 다르다.
+        """
+        from src import graph as G
+        edges = [
+            G.make_edge(G.ticker_node("204320"), G.industry_node("자동차 부품·모듈"),
+                        G.REL_MEMBER, "dart", origin="204320", asof="20260728",
+                        product="제동·조향·현가 장치"),
+            G.make_edge(G.ticker_node("003570"), G.industry_node("자동차 부품·모듈"),
+                        G.REL_MEMBER, "dart", origin="003570", asof="20260728",
+                        product="차축·변속기"),
+            G.make_edge(G.ticker_node("000500"), G.industry_node("자동차 부품·모듈"),
+                        G.REL_MEMBER, "valuechain", asof="20260728"),
+        ]
+        h = report.render_valuechain(edges, {"204320": "HL만도",
+                                             "003570": "SNT다이내믹스",
+                                             "000500": "가온전선"})
+        assert "제동·조향·현가 장치" in h
+        assert "차축·변속기" in h
+        # 품목을 못 뽑은 종목은 빈칸이 아니라 그렇다고 말해야 한다 — 빈칸이면
+        # '안 만든다'인지 '아직 못 뽑았다'인지 구분이 안 된다.
+        assert "공시에서 품목 미추출" in h
+
     def test_unconnected_industry_is_named_not_dropped(self):
         """흐름에 못 붙은 산업이 조용히 사라지면 '없는' 건지 '안 이어진' 건지 모른다."""
         from src import graph as G

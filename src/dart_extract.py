@@ -306,6 +306,10 @@ def _fold(items: list[dict], vocab: IndustryVocab, share_key: str | None) -> dic
     합치지 않으면 같은 엣지가 두 번 생기고 비중은 둘 중 하나만 임의로 남는다.
     한 산업 안의 서로 다른 제품이므로 **비중은 더한다.**
     신뢰도와 인용은 근거가 가장 강한(등급이 높은) 항목의 것을 쓴다.
+
+    제품명은 **합치지 않고 모은다.** 같은 산업으로 접혔다는 건 분류가 같다는
+    뜻일 뿐, 만드는 물건이 같다는 뜻이 아니다. 한 회사가 '자동차 부품·모듈'
+    안에서 변속기와 차축을 따로 적었다면 둘 다 남아야 한다.
     """
     folded: dict[str, dict] = {}
     for item in items or []:
@@ -315,15 +319,22 @@ def _fold(items: list[dict], vocab: IndustryVocab, share_key: str | None) -> dic
         share = item.get(share_key) if share_key else None
         share = float(share) if isinstance(share, (int, float)) else None
         conf = _tier_conf(item)
+        # 후방은 'material', 전방은 'customer'로 들어온다. 셋 다 '이 관계에서
+        # 실제로 오가는 물건'이라 같은 자리에 담는다.
+        what = str(item.get("product") or item.get("material")
+                   or item.get("customer") or "").strip()
         cur = folded.get(industry)
         if cur is None:
             folded[industry] = {"industry": industry, "share": share,
-                                "confidence": conf, "quote": item.get("quote", "")}
+                                "confidence": conf, "quote": item.get("quote", ""),
+                                "products": [what] if what else []}
             continue
         if share is not None:
             cur["share"] = share if cur["share"] is None else cur["share"] + share
         if conf > cur["confidence"]:
             cur["confidence"], cur["quote"] = conf, item.get("quote", "")
+        if what and what not in cur["products"]:
+            cur["products"].append(what)
     return folded
 
 
@@ -342,6 +353,7 @@ def to_edges(ticker: str, extraction: dict, vocab: IndustryVocab,
         edges.append(G.make_edge(
             G.ticker_node(ticker), G.industry_node(p["industry"]), G.REL_MEMBER, "dart",
             weight=p["share"], confidence=p["confidence"], origin=ticker,
+            product=" / ".join(p["products"])[:80],
             evidence=f"{evidence_prefix}{str(p['quote'])[:150]}", asof=asof))
 
     if not products:
@@ -358,14 +370,17 @@ def to_edges(ticker: str, extraction: dict, vocab: IndustryVocab,
             if target == primary:
                 continue
             ev = f"{evidence_prefix}{str(item['quote'])[:150]}"
+            what = " / ".join(item["products"])[:80]
             # 산업 간 관계는 양방향 — 소형 소재주에서 전방을 찾을 수 있어야 한다
             # origin=ticker — 어느 회사 공시에서 나왔는지가 키에 들어가야
             # 같은 관계를 두 회사가 각각 주장한 것이 교차 검증으로 남는다.
             edges.append(G.make_edge(G.industry_node(primary), G.industry_node(target),
                                      rel, "dart", weight=item["share"], origin=ticker,
+                                     product=what,
                                      confidence=item["confidence"], evidence=ev, asof=asof))
             edges.append(G.make_edge(G.industry_node(target), G.industry_node(primary),
                                      G._OPPOSITE[rel], "dart", origin=ticker,
+                                     product=what,
                                      confidence=item["confidence"], evidence=ev, asof=asof))
     return edges
 

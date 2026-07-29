@@ -74,14 +74,22 @@ def split_node(node: str) -> tuple[str, str]:
 
 def make_edge(src: str, dst: str, rel: str, source: str, *, sign: int = 0,
               weight: float | None = None, confidence: float = 0.5,
-              evidence: str = "", asof: str = "", origin: str = "") -> dict:
+              evidence: str = "", asof: str = "", origin: str = "",
+              product: str = "") -> dict:
+    """관계 하나.
+
+    `product`는 소속 엣지에서 **그 회사가 이 산업에서 실제로 만드는 것**이다.
+    산업명만 남기면 HL만도(제동·조향)와 SNT다이내믹스(변속기·차축)와
+    가온전선(자동차 전선)이 전부 '자동차 부품·모듈'로 같아 보인다. 셋은 수요
+    동인도 경쟁 상대도 다르므로, 하나로 퉁치면 파급 예측이 통째로 뭉개진다.
+    """
     if rel not in RELATIONS:
         raise ValueError(f"알 수 없는 관계 유형: {rel} (허용: {RELATIONS})")
     return {"src": src, "dst": dst, "rel": rel, "sign": int(sign),
             "weight": None if weight is None else round(float(weight), 4),
             "source": source, "origin": origin,
             "confidence": round(float(confidence), 3),
-            "evidence": evidence, "asof": asof}
+            "evidence": evidence, "asof": asof, "product": product}
 
 
 def edge_key(e: dict) -> tuple:

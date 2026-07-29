@@ -868,12 +868,42 @@ def _vc_diagram(industry: str, members: dict, ups: list, downs: list) -> str:
     return "".join(out)
 
 
+def _vc_makes(industry: str, members: dict, makes: dict) -> str:
+    """이 산업의 종목이 각각 **무엇을 만드는지**.
+
+    상자 안에는 이름밖에 못 넣는다. 그런데 같은 산업 안에서도 만드는 물건은
+    제각각이라, 이름만 보면 '자동차 부품·모듈' 12종목이 서로 대체재처럼 보인다.
+    실제로는 제동장치(HL만도)·변속기(SNT다이내믹스)·자동차 전선(가온전선)이고
+    수요가 움직이는 이유가 다르다.
+
+    제품이 안 적힌 종목은 **적힌 종목 뒤로 보낸다.** 근거가 있는 쪽이 먼저
+    보여야 하고, 빈 자리는 공시에서 아직 못 뽑았다는 뜻이라 숨기지 않는다.
+    """
+    who = sorted(members.get(industry, ()))
+    if not who:
+        return ""
+    m = makes.get(industry, {})
+    rows = []
+    for name in sorted(who, key=lambda n: (not m.get(n), n)):
+        prods = " · ".join(sorted(m.get(name, ())))
+        rows.append(
+            f'<li><b>{_esc(name)}</b>'
+            + (f'<span>{_esc(prods[:70])}</span>' if prods
+               else '<span class="none">공시에서 품목 미추출</span>')
+            + '</li>')
+    return f'<ul class="mk">{"".join(rows)}</ul>'
+
+
 def render_valuechain(edges: list[dict], names: dict[str, str],
                       site_title: str = "밸류체인") -> str:
     """구축된 밸류체인을 그림으로 훑어보는 페이지."""
     from . import graph as G
 
     members: dict[str, set] = {}
+    # 산업 → 종목 → 그 종목이 이 산업에서 만드는 것. 산업명만 남기면 HL만도와
+    # SNT다이내믹스와 가온전선이 전부 '자동차 부품·모듈'로 같아 보인다.
+    # 제동장치·변속기·자동차 전선은 수요 동인이 다르므로 파급도 다르게 간다.
+    makes: dict[str, dict[str, set]] = {}
     ups: dict[str, dict[str, set]] = {}
     downs: dict[str, dict[str, set]] = {}
 
@@ -882,6 +912,9 @@ def render_valuechain(edges: list[dict], names: dict[str, str],
         dk, dn = G.split_node(e["dst"])
         if e["rel"] == G.REL_MEMBER and sk == "T" and dk == "I":
             members.setdefault(dn, set()).add(names.get(sn) or sn)
+            if e.get("product"):
+                makes.setdefault(dn, {}).setdefault(
+                    names.get(sn) or sn, set()).add(e["product"])
         elif sk == "I" and dk == "I":
             bucket = ups if e["rel"] == G.REL_UPSTREAM else (
                 downs if e["rel"] == G.REL_DOWNSTREAM else None)
@@ -922,7 +955,8 @@ def render_valuechain(edges: list[dict], names: dict[str, str],
         cards.append(
             f'<div class="card vc" data-k="{_esc(key)}">'
             f'<h3>{_esc(ind)} <span class="chip">{len(members.get(ind, ()))}종목</span></h3>'
-            f'<div class="scroll">{_vc_diagram(ind, members, u, d)}</div></div>')
+            f'<div class="scroll">{_vc_diagram(ind, members, u, d)}</div>'
+            f'{_vc_makes(ind, members, makes)}</div>')
 
     css_extra = """
 .vc h3 { margin-bottom:2px; }
@@ -945,6 +979,15 @@ def render_valuechain(edges: list[dict], names: dict[str, str],
 .map .nd.pick rect { stroke:var(--accent); stroke-width:2.4; fill:var(--chip); }
 .axis { display:flex; justify-content:space-between; font-size:.74rem;
         color:var(--muted); margin:2px 0 6px; }
+ul.mk { list-style:none; margin:10px 0 0; border-top:1px solid var(--line);
+        padding-top:8px; }
+ul.mk li { display:flex; gap:10px; padding:3px 0; font-size:.82rem;
+           border-bottom:1px solid var(--line); }
+ul.mk li b { flex:0 0 8.5em; font-weight:600; }
+ul.mk li span { color:var(--muted); }
+ul.mk .none { opacity:.55; font-style:italic; }
+@media (max-width:560px){ ul.mk li { flex-direction:column; gap:1px; }
+                          ul.mk li b { flex:none; } }
 """
     # 사슬 추적. 62개 노드를 한꺼번에 눈으로 좇을 수 없으니, 하나를 누르면
     # 그 산업이 닿는 후방·전방만 남기고 나머지를 흐린다. 다시 누르면 원래대로.
