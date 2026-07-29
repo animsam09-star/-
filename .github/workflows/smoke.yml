@@ -256,7 +256,7 @@ jobs:
           NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
         run: |
-          ARGS="--smoke --skip-notify"
+          ARGS="--smoke"
           if [ -n "${{ inputs.date }}" ]; then ARGS="$ARGS --date ${{ inputs.date }}"; fi
           if [ "${{ inputs.with_llm }}" != "true" ]; then ARGS="$ARGS --skip-analyze"; fi
           python -m src.pipeline $ARGS

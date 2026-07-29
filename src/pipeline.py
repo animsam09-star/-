@@ -33,32 +33,38 @@ ROOT = Path(__file__).resolve().parent.parent
 KST = timezone(timedelta(hours=9))
 
 
-def notify_blocker(analysis: dict, skip_notify: bool = False) -> str:
-    """알림을 보내지 않을 이유. 보내도 되면 빈 문자열.
+def notify_decision(analysis: dict, notify: bool = False) -> tuple[bool, str]:
+    """(보낼까, 안 보낸다면 찍을 말). 안 보내는 게 기본이라 말도 대개 없다.
 
-    **원인 분석이 없으면 보내지 않는다.** 이 알림의 내용은 '무엇이 왜 올랐고
-    어디로 파급되는가'인데, 분석이 비면 남는 건 상승률 순 종목 목록뿐이다.
-    그건 알림받을 이유가 없을뿐더러, 매일 꼬박꼬박 오면 '분석이 돌고 있다'는
-    인상을 줘서 실제로는 멈춰 있다는 사실을 덮는다. 조용한 실패가 시끄러운
-    실패보다 나쁜 전형적인 자리다.
+    **알림은 기본이 '안 보냄'이고, 요청해야만 나간다.** 자동 발송이 기본이면
+    보낼 내용이 준비됐는지와 무관하게 매일 나가고, 그게 '뭔가 돌고 있다'는
+    인상을 만든다. 실제로 원인 분석이 429로 한 건도 못 도는 동안 알림만 정상으로
+    나갔다. 받는 쪽에서는 그 둘을 구분할 방법이 없다.
 
-    지금 LLM 호출이 429로 전부 막혀 있고, --skip-analyze로도 같은 상태가 된다.
-    분석이 다시 돌기 시작하면 이 함수가 알아서 빈 문자열을 돌려주므로 알림도
-    저절로 재개된다 — 껐다 켜는 스위치를 따로 두지 않는다.
+    보낼지 말지는 사람이 정한다. 파이프라인은 리포트를 만들어 두는 데까지가
+    일이고, 리포트는 보러 가는 것이지 오는 게 아니다.
+
+    '보낸다/안 보낸다'와 '왜 안 보내는가'를 한 값에 섞지 않는다. 처음엔 '안 보낼
+    이유' 문자열 하나로 두었는데, 요청이 없는 정상 경로도 빈 문자열이라 그대로
+    발송으로 떨어졌다 — 끄려고 넣은 코드가 켜는 코드가 될 뻔했다.
     """
-    if skip_notify:
-        return "--skip-notify"
+    if not notify:
+        return False, ""   # 기본값이자 정상 경로. 굳이 알릴 것도 없다.
     if not (analysis or {}).get("analyses"):
-        return ("원인 분석이 없어 알림을 보내지 않습니다 — 종목 목록만으로는 "
-                "보낼 내용이 아닙니다. 리포트(HTML)는 그대로 생성됐습니다.")
-    return ""
+        # 요청은 있었으니 왜 안 나갔는지는 말해 줘야 한다.
+        return False, ("원인 분석이 없어 알림을 보내지 않습니다 — 종목 목록만으로는 "
+                       "보낼 내용이 아닙니다. 리포트(HTML)는 그대로 생성됐습니다.")
+    return True, ""
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--date", help="기준일 YYYYMMDD (기본: 오늘 KST)")
     parser.add_argument("--skip-analyze", action="store_true", help="LLM 분석 생략")
-    parser.add_argument("--skip-notify", action="store_true", help="텔레그램 알림 생략")
+    # 끄는 플래그가 아니라 켜는 플래그다. 끄는 쪽이 기본이면 누군가 워크플로에서
+    # 플래그를 빼는 순간 조용히 발송이 시작된다 — 실수의 방향이 나쁜 쪽이다.
+    parser.add_argument("--notify", action="store_true",
+                        help="텔레그램 알림 발송 (기본: 보내지 않음)")
     parser.add_argument("--skip-horizontal", action="store_true", help="수평 그래프 생략")
     parser.add_argument("--smoke", action="store_true",
                         help="스모크 모드: 조회 기간·후보 수를 줄여 라이브 경로만 빠르게 확인")
@@ -184,12 +190,12 @@ def main():
         "synthesis": analysis.get("synthesis"),
     }, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    # 알림
-    print("== 알림 ==")
-    reason = notify_blocker(analysis, args.skip_notify)
-    if reason:
-        print(f"  {reason}")
-    else:
+    send, why_not = notify_decision(analysis, args.notify)
+    if send or why_not:
+        print("== 알림 ==")
+    if why_not:
+        print(f"  {why_not}")
+    if send:
         pages_url = os.getenv("PAGES_URL")
         if pages_url:
             pages_url = pages_url.rstrip("/") + f"/{base_date}.html"
