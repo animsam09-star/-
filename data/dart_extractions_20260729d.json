@@ -1,0 +1,122 @@
+{
+ "005850": {
+  "products": [
+   {"industry": "자동차 부품·모듈", "product": "자동차 램프(LED Head Lamp)·전동화 부품·미러·E-Shifter", "revenue_share": null, "tier": "A",
+    "quote": "지배기업인 당사와 12개의 종속회사는 자동차 부품 전문기업으로 자동차 램프, 전동화 부품, 미러, 전자 등의 제품을 생산하여 국내외의 현대차, 기아차, GM, Ford, Stellantis, Geely 등의 OEM에 납품하고 있습니다."}
+  ],
+  "upstream": [],
+  "downstream": [
+   {"industry": "완성차", "customer": "현대차, 기아차, GM, Ford, Stellantis, Geely", "segment": "자동차 부품·모듈", "tier": "A",
+    "quote": "지배기업인 당사와 12개의 종속회사는 자동차 부품 전문기업으로 자동차 램프, 전동화 부품, 미러, 전자 등의 제품을 생산하여 국내외의 현대차, 기아차, GM, Ford, Stellantis, Geely 등의 OEM에 납품하고 있습니다."}
+  ],
+  "unmapped": "OEM 직납과 모듈업체 경유 두 경로가 있다고 적혀 있다. 수주잔고를 관리하지 않는다고 명시해 선행 지표로 쓸 수 없다. 친환경차 전환으로 LED 헤드램프·E-Shifter 채택 비중이 오른다는 회사 판단도 적혀 있다."
+ },
+ "007210": {
+  "products": [
+   {"industry": "건자재·마감재", "product": "단열재·외장재 등 건축자재", "revenue_share": null, "tier": "A",
+    "quote": "건재부문은 단열재, 외장재 등 건축자재를 생산, 판매하고 있습니다."},
+   {"industry": "서버·전자기기", "product": "주방 렌지후드·가스/전기 쿡탑·주택환기시스템", "revenue_share": null, "tier": "B",
+    "quote": "주방기기 및 환기부문은 주방 렌지후드, 가스/전기 쿡탑을 생산, 판매하며, 주택환기시스템을 시공하고 있습니다."}
+  ],
+  "upstream": [],
+  "downstream": [
+   {"industry": "건설·EPC", "customer": "건축 시공", "segment": "건자재·마감재", "tier": "A",
+    "quote": "건재부문은 단열재, 외장재 등 건축자재를 생산, 판매하고 있습니다."}
+  ],
+  "unmapped": "화스너·공구, 특수수지 유통, 폐자재 재활용, 가설자재 임대까지 부문이 잘게 나뉘어 있다. 층간소음저감재 유통도 한다."
+ },
+ "010240": {
+  "products": [
+   {"industry": "건설기계 부품", "product": "건설 중장비 부품(OEM 납품)", "revenue_share": null, "tier": "A",
+    "quote": "연결기업의 납품구조는 건설 중장비 완성업체에 판매 1~3개월 전에 수주 받아 납품하는 OEM(주문자위탁생산)방식으로, 업황에 따라 민감하게 수주량이 변동되어 정확한 계량적 정보를 작성하기에 어려움이 있고 수주상황 공개로 인해 회사 경쟁력에 영향을 미칠 수 있기에 기재를 생략합니다."}
+  ],
+  "upstream": [
+   {"industry": "철강", "material": "철강환봉", "segment": "건설기계 부품", "cost_share": null, "tier": "A",
+    "quote": "주요 원재료는 철강환봉 등이 있으며, 가격은 국내외 철강가격의 변동에 따라 영향을 받고 있습니다."}
+  ],
+  "downstream": [
+   {"industry": "건설기계", "customer": "건설 중장비 완성업체", "segment": "건설기계 부품", "tier": "A",
+    "quote": "연결기업의 납품구조는 건설 중장비 완성업체에 판매 1~3개월 전에 수주 받아 납품하는 OEM(주문자위탁생산)방식으로, 업황에 따라 민감하게 수주량이 변동되어 정확한 계량적 정보를 작성하기에 어려움이 있고 수주상황 공개로 인해 회사 경쟁력에 영향을 미칠 수 있기에 기재를 생략합니다."}
+  ],
+  "unmapped": "**시차가 공시에 숫자로 적혀 있다 — 완성업체 판매 1~3개월 전에 수주받아 납품한다.** 건설기계 완성품 대비 부품사의 선행 폭이 1~3개월이라는 1차 근거다. 신규 납품 시 최소 2년의 시험·장착평가가 필요해 진입장벽이 높다는 서술도 있다."
+ },
+ "010780": {
+  "products": [
+   {"industry": "시멘트·레미콘", "product": "PHC PILE·PC부재·침목·SEGMENT 등 콘크리트 2차제품", "revenue_share": null, "tier": "A",
+    "quote": "SEGMENT, PC부재, 침목, PHC PILE, Ext PILE, ICP PILE 등"},
+   {"industry": "비철 스크랩", "product": "건설폐기물 처리·고철·순환골재 판매", "revenue_share": null, "tier": "A",
+    "quote": "건설폐기물 수집운반 및 중간처리, 고철 및 순환골재 판매 등"}
+  ],
+  "upstream": [
+   {"industry": "골재", "material": "골재류(모래·자갈)", "segment": "시멘트·레미콘", "cost_share": null, "tier": "A",
+    "quote": "콘크리트사업부문의 제품 생산에 필요한 주원료는 골재류(모래, 자갈 등) 및 철재류(PC강봉, 철근, 철선 등)이며, 이러한 원재료의 단위당 가격은 환율, 국제유가 및 경기의 변동에 따라 민감하게 반응하여 당사의 제품 제조원가에 크게 영향을 미치고 있습니다."},
+   {"industry": "철근·형강", "material": "철재류(PC강봉·철근·철선)", "segment": "시멘트·레미콘", "cost_share": null, "tier": "A",
+    "quote": "콘크리트사업부문의 제품 생산에 필요한 주원료는 골재류(모래, 자갈 등) 및 철재류(PC강봉, 철근, 철선 등)이며, 이러한 원재료의 단위당 가격은 환율, 국제유가 및 경기의 변동에 따라 민감하게 반응하여 당사의 제품 제조원가에 크게 영향을 미치고 있습니다."}
+  ],
+  "downstream": [
+   {"industry": "건설·EPC", "customer": "건설 현장(파일·PC부재)", "segment": "시멘트·레미콘", "tier": "A",
+    "quote": "SEGMENT, PC부재, 침목, PHC PILE, Ext PILE, ICP PILE 등"},
+   {"industry": "철도차량", "customer": "철도 침목", "segment": "시멘트·레미콘", "tier": "B",
+    "quote": "SEGMENT, PC부재, 침목, PHC PILE, Ext PILE, ICP PILE 등"}
+  ],
+  "unmapped": "콘크리트 2차제품과 폐기물·순환골재를 함께 한다. 원재료 가격이 환율·국제유가에 민감하다고 스스로 적었다."
+ },
+ "011930": {
+  "products": [
+   {"industry": "장비", "product": "FFU/EFU·클린룸·공조시스템·드라이룸 제조 및 설치공사", "revenue_share": null, "tier": "A",
+    "quote": "FFU/EFU, 클린룸 및공조시스템, 드라이룸 등 제조, 설치공사"},
+   {"industry": "태양광", "product": "태양광 모듈", "revenue_share": null, "tier": "A",
+    "quote": "당사는 태양광 모듈을 위한 원재료를 국내외의 업체들을 통해 구매하고 있습니다."}
+  ],
+  "upstream": [
+   {"industry": "실리콘 웨이퍼", "material": "태양전지", "segment": "태양광", "cost_share": null, "tier": "A",
+    "quote": "당기 동안 주요 원재료인 태양전지의 가격은 다음과 같은 가격변동 추이를 보이고 있습니다."},
+   {"industry": "후판·강재", "material": "알루미늄·Stainless·철강류(냉연강판)", "segment": "장비", "cost_share": null, "tier": "A",
+    "quote": "FFU 및 기타 클린룸 장비와 클린룸 설비공사에 필요한 원재료는 Filter, Motor, 알루미늄, Stainless, 철강류(냉연강판) 등이 있으며 가격 변동 추이는 다음과 같습니다."}
+  ],
+  "downstream": [
+   {"industry": "반도체", "customer": "반도체·이차전지 팹(클린룸·드라이룸)", "segment": "장비", "tier": "B",
+    "quote": "FFU/EFU, 클린룸 및공조시스템, 드라이룸 등 제조, 설치공사"}
+  ],
+  "unmapped": "클린환경(반도체·이차전지 팹 인프라)과 재생에너지(태양광 모듈)가 한 회사에 있다. 두 부문의 동인이 완전히 다르다 — 반도체 CAPEX와 태양광 설치 수요."
+ },
+ "015230": {
+  "products": [
+   {"industry": "건설기계 부품", "product": "굴삭기·불도저 하부주행체(Link·Roller Ass'y·Track Shoe Ass'y)", "revenue_share": null, "tier": "A",
+    "quote": "당사는 굴삭기, 불도자용의 중장비 하부 주행체인 Link 및 Roller Ass'y, Track ShoeAss'y 와 자동차 엔진의 핵심부품인 Crank Shaft를 주요 제품으로 생산하여 매출하고 있습니다."},
+   {"industry": "자동차 부품·모듈", "product": "자동차 엔진 Crank Shaft", "revenue_share": null, "tier": "A",
+    "quote": "당사는 굴삭기, 불도자용의 중장비 하부 주행체인 Link 및 Roller Ass'y, Track ShoeAss'y 와 자동차 엔진의 핵심부품인 Crank Shaft를 주요 제품으로 생산하여 매출하고 있습니다."}
+  ],
+  "upstream": [],
+  "downstream": [
+   {"industry": "건설기계", "customer": "굴삭기·불도저 완성업체", "segment": "건설기계 부품", "tier": "A",
+    "quote": "당사는 굴삭기, 불도자용의 중장비 하부 주행체인 Link 및 Roller Ass'y, Track ShoeAss'y 와 자동차 엔진의 핵심부품인 Crank Shaft를 주요 제품으로 생산하여 매출하고 있습니다."},
+   {"industry": "완성차", "customer": "자동차 엔진(크랭크샤프트)", "segment": "자동차 부품·모듈", "tier": "A",
+    "quote": "당사는 굴삭기, 불도자용의 중장비 하부 주행체인 Link 및 Roller Ass'y, Track ShoeAss'y 와 자동차 엔진의 핵심부품인 Crank Shaft를 주요 제품으로 생산하여 매출하고 있습니다."}
+  ],
+  "unmapped": "건설기계 하부주행체와 자동차 크랭크샤프트를 함께 만드는 단조 회사다. 굴삭기 사이클과 자동차 사이클에 동시에 붙어 있다."
+ },
+ "018000": {
+  "products": [
+   {"industry": "풍력", "product": "풍력발전시스템(750kW~4.3MW)·풍력타워·발전단지 건설·설계·유지보수", "revenue_share": null, "tier": "A",
+    "quote": "750㎾, 2㎿, 2.3㎿ 및 4.2㎿, 4.3㎿ 풍력발전시스템, 풍력발전타워, 풍력발전단지 건설, 풍력발전시스템 및 발전단지 설계용역, 유지보수"}
+  ],
+  "upstream": [],
+  "downstream": [
+   {"industry": "유틸리티·발전", "customer": "풍력발전단지 사업자", "segment": "풍력", "tier": "A",
+    "quote": "750㎾, 2㎿, 2.3㎿ 및 4.2㎿, 4.3㎿ 풍력발전시스템, 풍력발전타워, 풍력발전단지 건설, 풍력발전시스템 및 발전단지 설계용역, 유지보수"}
+  ],
+  "unmapped": "터빈 제조부터 단지 건설·설계·O&M까지 한 회사가 다 한다. 타워만 만드는 회사(동국S&C 등)와 사업 구조가 다르다."
+ },
+ "018670": {
+  "products": [
+   {"industry": "LNG·가스", "product": "LPG 수입·판매(사우디 Aramco CP 연동)", "revenue_share": null, "tier": "A",
+    "quote": "LPG는 당사가 주요 판매하는 제품으로서 수입 후 고객에게 판매합니다. LPG 판매가격은 사우디 Aramco사가 매달 말 고시하는 Contract Price(CP가격)을 기준으로, 매입 발생 시점 환율과 도입 비용, 운송비, 적정 이윤 등을 감안하여 결정됩니다."},
+   {"industry": "유틸리티·발전", "product": "LNG 복합화력 발전(1,212MW)", "revenue_share": null, "tier": "A",
+    "quote": "설비용량 : 1,212MW(발전단 기준) 가스터빈×2기, 배열회수보일러×2기, 증기터빈×1기"}
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": "**판가 결정식이 공시에 그대로 적혀 있다 — 사우디 Aramco CP + 환율 + 도입비 + 운송비 + 이윤.** 유가·환율 노출을 추정이 아니라 계약 구조로 알 수 있는 드문 경우다. LPG 유통과 발전이 한 회사에 있어 동인이 둘이다."
+ }
+}
