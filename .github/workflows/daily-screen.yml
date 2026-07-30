@@ -35,6 +35,11 @@ jobs:
   run:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    outputs:
+      # 배포해도 되는가. deploy 잡은 needs: run이라 run이 실패하면 건너뛰는데,
+      # 커밋 경쟁으로 죽었을 때도 리포트는 멀쩡하다. '리포트가 만들어졌는가'를
+      # 잡 성공 여부와 분리해 명시적으로 넘긴다.
+      deployable: ${{ steps.artifact.outputs.ready }}
     steps:
       - uses: actions/checkout@v4
 
@@ -47,6 +52,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run pipeline
+        id: pipeline
         env:
           KRX_OPENAPI_KEY: ${{ secrets.KRX_OPENAPI_KEY }}
           KRX_ID: ${{ secrets.KRX_ID }}
@@ -66,24 +72,45 @@ jobs:
           python -m src.pipeline $ARGS
 
       - name: Commit results
+        id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           # graph/edges.jsonl은 수직축 누적 자산이라 커밋한다.
           # data/edges_*.jsonl(수평축)은 매일 재계산되므로 .gitignore에서 제외돼 있다.
           git add cases reports graph data/candidates_*.json data/analysis_*.json || true
-          if ! git diff --cached --quiet; then
-            git commit -m "chore: daily screen $(date +%Y-%m-%d)"
-            git push
+          if git diff --cached --quiet; then
+            echo "변경 없음"; exit 0
           fi
+          git commit -m "chore: daily screen $(date +%Y-%m-%d)"
+          # 파이프라인이 7~8분 도는 사이 브랜치가 앞서 나갈 수 있다. 그때 푸시가
+          # 거부되면 잡이 죽고, 그 뒤의 Pages 업로드·배포까지 통째로 안 돌아간다 —
+          # 리포트는 정상으로 만들어졌는데 사이트만 옛것으로 남는다. 실제로 그랬다.
+          # dart-extract·lead-lag에는 이 재시도를 넣어 두고 여기만 빠뜨렸다.
+          for i in 1 2 3 4 5; do
+            git push origin HEAD:${{ github.ref_name }} && exit 0
+            echo "푸시 거부 — 리베이스 후 재시도 ($i/5)"
+            git pull --rebase origin ${{ github.ref_name }} || exit 1
+            sleep $((i * 3))
+          done
+          echo "::error::5회 재시도 후에도 푸시하지 못했습니다"; exit 1
 
+      # 커밋이 실패해도 배포는 한다. 리포트는 이미 만들어졌고, 그게 사람이 보는
+      # 결과물이다. 커밋 실패는 누적 자산(graph/edges.jsonl)이 안 쌓인 문제라
+      # 잡을 빨갛게 남겨 알리되, 사이트를 옛것으로 두는 벌까지 줄 이유는 없다.
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        id: artifact
+        if: always() && steps.pipeline.conclusion == 'success'
+        run: echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-pages-artifact@v3
+        if: always() && steps.pipeline.conclusion == 'success'
         with:
           path: reports
 
   deploy:
     needs: run
+    if: always() && needs.run.outputs.deployable == 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
