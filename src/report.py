@@ -1049,7 +1049,7 @@ def render_company_trades(edges: list[dict], names: dict[str, str]) -> str:
             f'{len(order)}건입니다. 이 중 {with_share}건은 매출 비중까지 적혀 있어 '
             '파급 크기를 가늠할 수 있습니다. 산업이 아니라 <b>회사</b>가 이어진 '
             '것이라, 수혜주를 고르는 데는 이쪽이 직접적입니다.</p>'
-            '<div class="scroll"><table><tr><th>공급</th><th></th><th>수요</th>'
+            '<div class="scroll tallcap"><table><tr><th>공급</th><th></th><th>수요</th>'
             f'<th>무엇을</th><th>매출비중</th></tr>{body}</table></div></div>')
 
 
@@ -1148,6 +1148,12 @@ def render_valuechain(edges: list[dict], names: dict[str, str],
 .map .nd.pick rect { stroke:var(--accent); stroke-width:2.4; fill:var(--chip); }
 .axis { display:flex; justify-content:space-between; font-size:.74rem;
         color:var(--muted); margin:2px 0 6px; }
+/* 거래 153건을 그대로 펼치면 페이지가 5,470px가 된다. 표 안에서만 스크롤시켜
+   페이지를 짧게 두되, 행은 하나도 숨기지 않는다 — 접어 두면 안 보게 된다. */
+.tallcap { max-height:60vh; overflow-y:auto; }
+.tallcap table { width:100%; }
+.tallcap tr:first-child th { position:sticky; top:0; background:var(--card);
+                             box-shadow:0 1px 0 var(--line); }
 ul.mk { list-style:none; margin:10px 0 0; border-top:1px solid var(--line);
         padding-top:8px; }
 ul.mk li { display:flex; gap:10px; padding:3px 0; font-size:.82rem;
