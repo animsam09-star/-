@@ -21,6 +21,10 @@ on:
         description: "LLM 분석 생략"
         type: boolean
         default: false
+      dump_analysis_input:
+        description: "분석 프롬프트만 뽑아 커밋 (LLM 미호출). 429로 막혔을 때 쓴다"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -69,6 +73,7 @@ jobs:
           ARGS=""
           if [ -n "${{ inputs.date }}" ]; then ARGS="$ARGS --date ${{ inputs.date }}"; fi
           if [ "${{ inputs.skip_analyze }}" = "true" ]; then ARGS="$ARGS --skip-analyze"; fi
+          if [ "${{ inputs.dump_analysis_input }}" = "true" ]; then ARGS="$ARGS --dump-analysis-input"; fi
           python -m src.pipeline $ARGS
 
       - name: Commit results
@@ -79,6 +84,7 @@ jobs:
           # graph/edges.jsonl은 수직축 누적 자산이라 커밋한다.
           # data/edges_*.jsonl(수평축)은 매일 재계산되므로 .gitignore에서 제외돼 있다.
           git add cases reports graph data/candidates_*.json data/analysis_*.json || true
+          git add -f data/analysis_input_*.json 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "변경 없음"; exit 0
           fi
