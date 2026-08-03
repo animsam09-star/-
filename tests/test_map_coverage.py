@@ -148,3 +148,27 @@ class TestBudgetIsNotSpentOnStocksWithNoValuechain:
             encoding="utf-8")
         got = dart_extract.screening_tickers(10)
         assert got[0] == "119850", "시총이 작아도 실제 후보였던 종목이 앞이다"
+
+
+class TestIndustryVocabularyHasNoTickers:
+    """어휘 통제는 산업명만 다뤄야 한다.
+
+    known_industries가 관계 종류만 보고 dst를 가져와서, 회사 간 거래 엣지
+    (T:종목 -후방-> T:종목)의 dst인 티커가 산업명으로 섞였다. 어휘 133개 중
+    68개가 '005930', '000660' 같은 티커였다 — 추출 프롬프트에 "기존 산업
+    목록"이라며 티커를 나열해 준 셈이고, 그러면 어휘 통제가 절반만 작동한다.
+    회사 간 거래를 그래프에 넣으면서 생긴 구멍이다.
+    """
+
+    def test_company_trade_edges_do_not_leak_tickers(self):
+        edges = [
+            G.make_edge(G.industry_node("조선"), G.industry_node("철강"),
+                        G.REL_UPSTREAM, "dart", origin="009540", asof="20260731"),
+            G.make_edge(G.ticker_node("009540"), G.ticker_node("005490"),
+                        G.REL_UPSTREAM, "dart", origin="009540", asof="20260731"),
+            G.make_edge(G.ticker_node("005490"), G.industry_node("철강"),
+                        G.REL_MEMBER, "dart", origin="005490", asof="20260731"),
+        ]
+        got = dart_extract.known_industries(edges)
+        assert "철강" in got and "조선" in got
+        assert not any(v.isdigit() for v in got), f"티커가 섞였다: {got}"

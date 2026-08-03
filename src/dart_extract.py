@@ -191,8 +191,18 @@ def known_industries(existing_edges: list[dict]) -> list[str]:
     어휘 통제가 조용히 꺼진 채로 추출이 돌아 '시멘트'와 '시멘트 제조업'이
     각각 노드가 된다. 원천인 밸류체인 YAML을 함께 읽어 그 구멍을 막는다.
     """
-    names = {G.split_node(e["dst"])[1] for e in existing_edges
-             if e["rel"] in (G.REL_MEMBER, G.REL_UPSTREAM, G.REL_DOWNSTREAM)}
+    # **산업 노드만** 읽는다. 회사 간 거래 엣지는 T:종목 -후방-> T:종목이라
+    # 관계 종류만 보고 dst를 가져오면 티커가 산업명으로 섞인다. 실제로 어휘
+    # 133개 중 68개가 '005930', '000660' 같은 티커였다 — 추출 프롬프트에
+    # "기존 산업 목록"이라며 티커를 나열해 준 꼴이고, 어휘 통제가 절반만
+    # 작동하고 있었다. 회사 간 거래를 그래프에 넣으면서 생긴 구멍이다.
+    names = set()
+    for e in existing_edges:
+        if e["rel"] not in (G.REL_MEMBER, G.REL_UPSTREAM, G.REL_DOWNSTREAM):
+            continue
+        kind, name = G.split_node(e["dst"])
+        if kind == "I":
+            names.add(name)
     for f in sorted(p for p in graph_build.VALUECHAIN_DIR.glob("*.yaml")
                     if not p.name.startswith("_")):
         try:
