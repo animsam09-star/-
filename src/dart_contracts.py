@@ -43,14 +43,24 @@ _CORRECTION = re.compile(r"\[기재정정\]|\[정정\]|정정신고")
 
 
 def _num(text: str) -> float | None:
-    """'197,970,240,000' → 197970240000.0. 못 읽으면 None."""
-    m = re.search(r"[\d,]{4,}", str(text or ""))
-    if not m:
-        return None
-    try:
-        return float(m.group(0).replace(",", ""))
-    except ValueError:
-        return None
+    """'197,970,240,000' → 197970240000.0. 못 읽으면 None.
+
+    **연도를 금액으로 읽지 않는다.** 서식에 '최근 매출액(2019년)'처럼 연도가
+    먼저 오는 경우가 있어서, 첫 숫자만 집으면 매출액이 2,019원이 된다. 그러면
+    계약금액을 그걸로 나눠 매출액대비가 5,786,472,082%로 나온다(실제로 나왔다).
+    비율이 터무니없으면 눈에 띄지만, 그 뒤로 조용히 엣지가 빠지는 게 더 나쁘다.
+    """
+    for m in re.finditer(r"[\d,]{4,}", str(text or "")):
+        try:
+            v = float(m.group(0).replace(",", ""))
+        except ValueError:
+            continue
+        if 1900 <= v <= 2100 and "," not in m.group(0).rstrip("0"):
+            continue          # 연도로 보인다. 다음 숫자를 본다.
+        if 1900 <= v <= 2100:
+            continue          # '2,023'처럼 쉼표가 붙어도 연도 범위면 금액이 아니다
+        return v
+    return None
 
 
 def _date(text: str) -> str:
@@ -103,8 +113,11 @@ def parse_contract(text: str) -> dict:
             pct = float(rm.group(1))
         except ValueError:
             pct = None
-        # 100%를 넘는 값은 비중이 아니라 옆 항목의 금액을 끌어온 것이다.
-        ratio = round(pct / 100, 4) if pct is not None and 0 < pct <= 100 else None
+        # 100%로 자르면 안 된다. 다년 계약은 연매출을 넘는 게 정상이고, 그런
+        # 계약이야말로 그 회사에 가장 크게 걸리는 건이라 제일 필요한 값이다.
+        # (제이엔케이글로벌 → 현대건설 176%가 실제 계약이었다.)
+        # 100배를 넘으면 그건 비중이 아니라 옆 항목의 금액을 끌어온 것이다.
+        ratio = round(pct / 100, 4) if pct is not None and 0 < pct <= MAX_RATIO_PCT else None
 
     begin = _date(out["begin"]) or _date(out["period"])
     # 기간이 '2022-11-01 ~ 2026-07-29' 한 줄로 오면 두 번째 날짜가 종료일이다.
@@ -167,6 +180,12 @@ def _is_name(s: str) -> bool:
 # 3개월이라 했으니 80일로 잘라 여유를 둔다. 기간을 나눠 여러 번 부르면 되는
 # 문제라, 시장 전체를 훑는다는 이 경로의 전제는 그대로다.
 WINDOW_DAYS = 80
+
+# 매출액 대비 상한. 이 위는 비중이 아니라 금액을 잘못 읽은 것이다.
+MAX_RATIO_PCT = 10_000        # = 연매출의 100배
+
+# 상장사의 연매출이 이 밑이면 그 값은 매출액이 아니다(연도나 단위 오독).
+MIN_PLAUSIBLE_SALES = 100_000_000
 
 
 def _search_window(begin: str, end: str, page_limit: int) -> list[dict]:
@@ -244,8 +263,11 @@ def to_edges(contracts: list[dict], universe: Universe, asof: str
         if buyer == seller:
             continue
         ratio = info.get("sales_ratio")
-        if ratio is None and info.get("amount") and info.get("recent_sales"):
+        if (ratio is None and info.get("amount")
+                and (info.get("recent_sales") or 0) >= MIN_PLAUSIBLE_SALES):
             ratio = round(info["amount"] / info["recent_sales"], 4)
+        if ratio is not None and ratio > MAX_RATIO_PCT / 100:
+            ratio = None          # 비중으로 볼 수 없는 값이면 없는 편이 낫다
         edges.append(G.make_edge(
             G.ticker_node(seller), G.ticker_node(buyer), G.REL_DOWNSTREAM,
             "contract", origin=seller, asof=asof, weight=ratio,

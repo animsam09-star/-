@@ -189,3 +189,41 @@ class TestCounterpartyQuality:
                      "Hefei GoVisionox Technology Co., Ltd", "한국지능정보사회진흥원"]:
             got = dc.parse_contract(f"3. 계약상대 {name}\n4. 판매·공급지역 국내")
             assert got["counterparty"], f"{name}이 버려졌다"
+
+
+class TestAmountsAreNotYears:
+    """'최근 매출액(2019년)'처럼 연도가 먼저 오는 서식이 있다.
+
+    첫 숫자만 집으면 매출액이 2,019원이 되고, 계약금액을 그걸로 나눠
+    매출액대비가 5,786,472,082%로 나온다. 실제로 라이브 951건 중 21건이
+    그렇게 터졌다.
+    """
+
+    def test_year_before_the_amount_is_skipped(self):
+        assert dc._num("최근 매출액 (2019년) 202,504,829,183") == 202_504_829_183
+
+    def test_comma_formatted_year_is_not_money(self):
+        assert dc._num("2,023") is None
+
+    def test_plain_amount_still_reads(self):
+        assert dc._num("197,970,240,000") == 197_970_240_000
+
+    def test_large_multiyear_contract_keeps_its_ratio(self):
+        """다년 계약은 연매출을 넘는 게 정상이고, 그게 가장 큰 건이다."""
+        doc = "3. 계약상대 현대건설\n매출액대비(%) 176.3"
+        assert dc.parse_contract(doc)["sales_ratio"] == pytest.approx(1.763)
+
+    def test_absurd_ratio_is_dropped(self):
+        doc = "3. 계약상대 현대건설\n매출액대비(%) 5786472082"
+        assert dc.parse_contract(doc)["sales_ratio"] is None
+
+    def test_implausible_sales_does_not_produce_a_derived_ratio(self):
+        """매출액이 2,019원인 상장사는 없다. 그 값으로 나누면 안 된다."""
+        edges, _ = dc.to_edges([{
+            "stock_code": "033500", "corp_name": "동성화인텍",
+            "report_nm": "단일판매ㆍ공급계약 체결", "rcept_dt": "20260601",
+            "parsed": {"counterparty": "삼성중공업", "amount": 1e11,
+                       "recent_sales": 2019, "sales_ratio": None,
+                       "begin": "", "end": "", "product": "", "region": ""},
+        }], UNI, "20260803")
+        assert edges[0]["weight"] is None
