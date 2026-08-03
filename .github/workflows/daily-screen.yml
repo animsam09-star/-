@@ -87,7 +87,10 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           # graph/edges.jsonl은 수직축 누적 자산이라 커밋한다.
           # data/edges_*.jsonl(수평축)은 매일 재계산되므로 .gitignore에서 제외돼 있다.
-          git add cases reports graph data/candidates_*.json data/analysis_*.json || true
+          # screen_universe_*.json은 밸류체인 맵의 대상 선정에 쓰인다 —
+          # dart-extract가 다른 실행에서 읽으므로 커밋되어야 한다.
+          git add cases reports graph data/candidates_*.json data/analysis_*.json \
+                  data/screen_universe_*.json || true
           git add -f data/analysis_input_*.json 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "변경 없음"; exit 0

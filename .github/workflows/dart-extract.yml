@@ -13,8 +13,12 @@ on:
         description: "종목코드 쉼표 구분 (비우면 아래 기본 세트)"
         required: false
       top_n:
-        description: "tickers 대신 시총 상위 N종목 (KRX 시세 접근 필요)"
+        description: "tickers 대신 상위 N종목 (기본 100)"
         required: false
+      from_screening:
+        description: "스크리닝 유니버스 중 아직 맵에 없는 종목을 대상으로 (맵이 쓰이는 표본과 맞춘다). 끄면 시총 상위"
+        type: boolean
+        default: true
       mode:
         description: "fetch=공시만 받아 커밋(LLM 미호출) / extract=LLM으로 추출"
         type: choice
@@ -90,9 +94,17 @@ jobs:
         env:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
         run: |
-          DEFAULT="000720,300720,004020,009540,010140,006260,267260,000660"
-          TICKERS="${{ inputs.tickers }}"
-          python -m src.dart_extract --fetch-only --tickers "${TICKERS:-$DEFAULT}"
+          if [ -n "${{ inputs.tickers }}" ]; then
+            ARGS="--tickers ${{ inputs.tickers }}"
+          elif [ "${{ inputs.from_screening }}" = "true" ]; then
+            # 맵의 대상 선정을 맵이 **쓰이는 표본**에 맞춘다. 시총 상위로 채운
+            # 결과 20260731 후보 20종목 중 19종목이 맵에 없었다.
+            ARGS="--from-screening --top-n ${{ inputs.top_n || 100 }}"
+          else
+            ARGS="--top-n ${{ inputs.top_n || 100 }}"
+          fi
+          echo "실행: python -m src.dart_extract --fetch-only $ARGS"
+          python -m src.dart_extract --fetch-only $ARGS
 
       - name: Commit sections
         if: ${{ inputs.mode == 'fetch' }}
@@ -129,7 +141,9 @@ jobs:
           DEFAULT="000720,300720,004020,009540,010140,006260,267260,000660"
           ARGS="--tickers ${{ inputs.tickers || '' }}"
           if [ -z "${{ inputs.tickers }}" ]; then
-            if [ -n "${{ inputs.top_n }}" ]; then
+            if [ "${{ inputs.from_screening }}" = "true" ]; then
+              ARGS="--from-screening --top-n ${{ inputs.top_n || 100 }}"
+            elif [ -n "${{ inputs.top_n }}" ]; then
               ARGS="--top-n ${{ inputs.top_n }}"
             else
               ARGS="--tickers $DEFAULT"

@@ -863,9 +863,54 @@ def _default_tickers(top_n: int, base_date: str | None) -> list[str]:
     return [t for t, _ in ranked[:top_n]]
 
 
+def mapped_tickers() -> set[str]:
+    """이미 밸류체인 맵에 소속이 붙어 있는 종목. 다시 뽑을 이유가 없다."""
+    out = set()
+    for e in graph_build.G.load():
+        if e.get("rel") != G.REL_MEMBER:
+            continue
+        for node in (e["src"], e["dst"]):
+            kind, name = G.split_node(node)
+            if kind == "T":
+                out.add(name)
+    return out
+
+
+def screening_tickers(top_n: int, base_date: str | None = None) -> list[str]:
+    """**스크리닝 유니버스 중 아직 맵에 없는 종목**을 시총 순으로.
+
+    맵의 대상 선정이 시총 상위 100종목이었는데, 스크리너에 걸리는 건 급등한
+    중소형주다. 20260731 후보 20종목 중 19종목이 `소속 산업: 미분류`였다 —
+    맵을 만든 표본과 맵이 쓰이는 표본이 서로 달랐다는 뜻이다. 최종 목적이
+    '밸류체인 안에서 수혜주 찾기'인데 오르는 종목이 맵 밖에 있으면 맵은
+    그 판단에 참여하지 못한다. 맵이 예쁜 것과 값을 하는 것은 다르다.
+
+    유니버스 안에서 시총 순으로 고르는 이유는, 같은 산업이면 큰 회사의
+    사업보고서가 산업 구조를 더 명확히 적기 때문이다. 큰 것부터 채우면
+    같은 노력으로 산업 어휘가 먼저 자리를 잡는다.
+    """
+    files = sorted(DATA_DIR.glob("screen_universe_*.json"))
+    if base_date:
+        want = DATA_DIR / f"screen_universe_{base_date}.json"
+        files = [want] if want.exists() else files
+    if not files:
+        raise SystemExit(
+            "data/screen_universe_*.json이 없습니다. 파이프라인(daily-screen)을 "
+            "한 번 돌려 스크리닝 유니버스를 남긴 뒤 다시 실행하세요.")
+    rows = json.loads(files[-1].read_text(encoding="utf-8"))["tickers"]
+    have = mapped_tickers()
+    todo = [r for r in rows if r["ticker"] not in have]
+    print(f"스크리닝 유니버스 {len(rows)}종목 중 맵에 없는 {len(todo)}종목 "
+          f"(이미 매핑 {len(rows) - len(todo)}종목) → 상위 {min(top_n, len(todo))}종목 대상")
+    return [r["ticker"] for r in todo[:top_n]]
+
+
 def main():
     p = argparse.ArgumentParser(description="DART 사업보고서에서 수직축 엣지를 추출한다.")
     p.add_argument("--tickers", help="쉼표로 구분한 종목코드. 없으면 시총 상위 --top-n")
+    p.add_argument("--from-screening", action="store_true",
+                   help="시총 상위 대신 **스크리닝 유니버스 중 아직 맵에 없는 종목**을 "
+                        "대상으로 삼는다. 맵이 실제로 쓰이는 표본과 맞추기 위한 것이다")
     p.add_argument("--top-n", type=int, default=100, help="대상 종목 수 (기본 100)")
     p.add_argument("--date", help="종목 마스터 기준일 YYYYMMDD")
     p.add_argument("--model", help="config.yaml의 dart.model 덮어쓰기")
@@ -889,6 +934,14 @@ def main():
     if args.model:
         cfg["model"] = args.model
 
+    def pick() -> list[str]:
+        """대상 종목. --tickers > --from-screening > 시총 상위 순으로 정한다."""
+        if tickers:
+            return tickers
+        if args.from_screening:
+            return screening_tickers(args.top_n, args.date)
+        return _default_tickers(args.top_n, args.date)
+
     tickers = ([t.strip() for t in args.tickers.split(",") if t.strip()]
                if args.tickers else None)
     asof = args.date or __import__("datetime").datetime.now().strftime("%Y%m%d")
@@ -907,7 +960,7 @@ def main():
             print()
         return
     if args.fetch_only:
-        print(json.dumps(fetch_only(tickers or _default_tickers(args.top_n, args.date), cfg),
+        print(json.dumps(fetch_only(pick(), cfg),
                          ensure_ascii=False, indent=2))
         return
     if args.extractions:
@@ -921,7 +974,7 @@ def main():
     if args.preflight:
         raise SystemExit(0 if preflight(cfg["model"]) else 1)
 
-    tickers = tickers or _default_tickers(args.top_n, args.date)
+    tickers = pick()
     report = run(tickers, cfg, asof, use_batch=not args.no_batch)
     print(json.dumps(report, ensure_ascii=False, indent=2)[:1500])
 

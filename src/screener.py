@@ -154,6 +154,27 @@ def screen(end_date: str, cfg: dict) -> tuple[dict, pd.DataFrame]:
     (DATA_DIR / f"returns_{base_date}.json").write_text(
         json.dumps(returns, ensure_ascii=False), encoding="utf-8")
 
+    # 스크리닝 유니버스 = 시총·거래대금 필터를 통과해 **후보가 될 수 있는** 종목.
+    #
+    # 이 목록을 따로 남기는 이유는 밸류체인 맵의 대상 선정 때문이다. 맵은 시총
+    # 상위 100종목으로 채워 왔는데, 실제로 스크리너에 걸리는 건 급등한 중소형주다.
+    # 20260731 후보 20종목 중 19종목이 맵에 없었다 — 맵을 만든 표본과 맵이 쓰이는
+    # 표본이 달랐다. 최종 목적이 '밸류체인 안에서 수혜주 찾기'인데 오르는 종목이
+    # 맵 밖에 있으면 맵이 그 판단에 참여하지 못한다.
+    #
+    # returns_*.json에도 같은 종목이 들어 있지만 그건 .gitignore 대상이라(매일
+    # 재생성되는 수익률 스냅샷) 다른 워크플로에서 읽을 수 없다. 대상 선정에 쓸
+    # 목록은 커밋되어야 한다.
+    (DATA_DIR / f"screen_universe_{base_date}.json").write_text(json.dumps({
+        "base_date": base_date,
+        "min_market_cap": cfg["min_market_cap"],
+        "min_avg_turnover": cfg["min_avg_turnover"],
+        "tickers": [{"ticker": t, "name": names.get(t),
+                     "market_cap": int(sig.loc[t, "market_cap"]),
+                     "avg_turnover": int(sig.loc[t, "avg_turnover"])}
+                    for t in sig.sort_values("market_cap", ascending=False).index],
+    }, ensure_ascii=False, indent=1), encoding="utf-8")
+
     # 종목 마스터는 스크리닝 필터와 **독립적으로** 전 종목을 담아야 한다.
     # 같은 스냅샷에서 만들면 추가 조회가 없고, 시총 하한에 걸린 소형 후방
     # 소재주도 티커 해석이 된다.
