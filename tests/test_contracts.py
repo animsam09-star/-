@@ -153,3 +153,39 @@ class TestMarketWideSearchIsWindowed:
                "rcept_dt": "20260601", "corp_name": "A", "stock_code": "033500"}
         monkeypatch.setattr(dc, "_search_window", lambda *a: [dict(row)])
         assert len(dc.search(days_back=365)) == 1
+
+
+class TestCounterpartyQuality:
+    """못 읽은 것을 빈칸으로 두면 '거래처가 없다'로 읽히지만, 안내문을 이름으로
+    두면 없는 회사가 생긴다. 라이브 60건에서 둘 다 나왔다.
+    """
+
+    def test_corporate_suffix_is_not_eaten(self):
+        """'삼성전자(주)'가 '삼성전자('로 잘려 티커에 안 붙었다.
+
+        각주 표시 '주)'를 지우는 규칙이 회사명의 '(주)'를 먹었다.
+        """
+        p = dc.parse_contract("3. 계약상대 삼성전자(주)\n4. 판매·공급지역 국내")
+        assert p["counterparty"] in ("삼성전자(주)", "삼성전자")
+        assert not p["counterparty"].endswith("(")
+
+    def test_footnote_marker_is_still_removed(self):
+        p = dc.parse_contract("3. 계약상대 한신공영 주1) 최근 정정\n4. 판매·공급지역 국내")
+        assert p["counterparty"] == "한신공영"
+
+    def test_boilerplate_is_rejected_not_stored(self):
+        """'과 계약을 체결한 일자입니다. - 상기 8. 공시유보…'가 이름으로 들어갔다."""
+        doc = "3. 계약상대 과 계약을 체결한 일자입니다. - 상기 8. 공시유보 관련내용"
+        assert dc.parse_contract(doc)["counterparty"] == ""
+
+    def test_particle_fragment_is_rejected(self):
+        assert dc.parse_contract("3. 계약상대 과\n4. 판매·공급지역 국내")["counterparty"] == ""
+
+    def test_dangling_paren_only_is_rejected(self):
+        assert dc.parse_contract("3. 계약상대 (\n4. 판매·공급지역 국내")["counterparty"] == ""
+
+    def test_real_names_survive(self):
+        for name in ["SK하이닉스", "주식회사 티머니", "방위사업청",
+                     "Hefei GoVisionox Technology Co., Ltd", "한국지능정보사회진흥원"]:
+            got = dc.parse_contract(f"3. 계약상대 {name}\n4. 판매·공급지역 국내")
+            assert got["counterparty"], f"{name}이 버려졌다"

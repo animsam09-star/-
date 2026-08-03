@@ -114,8 +114,9 @@ def parse_contract(text: str) -> dict:
                            out["period"])
         end = _date(dates[1]) if len(dates) > 1 else ""
 
+    counterparty = _clean(out["counterparty"])
     return {
-        "counterparty": _clean(out["counterparty"]),
+        "counterparty": counterparty if _is_name(counterparty) else "",
         "product": _clean(out["product"])[:80],
         "amount": amount,
         "recent_sales": _num(out["recent_sales"]),
@@ -128,15 +129,37 @@ def parse_contract(text: str) -> dict:
 
 _NOISE = re.compile(r"^[\s:：·\-]+|[\s:：·\-]+$")
 
+# 값이 아니라 서식의 안내문·각주다. 이게 섞이면 '과 계약을 체결한 일자입니다. -
+# 상기 8. 공시유보…' 같은 문장이 거래처 이름으로 들어간다(실제로 60건 중 2건).
+_BOILERPLATE = re.compile(
+    r"입니다|상기\s*\d|해당사항|기재하지|참조|공시유보|계약을\s*체결")
+
 
 def _clean(s: str) -> str:
-    """항목 값에서 다음 항목 이름이 딸려 온 부분을 잘라낸다."""
+    """항목 값에서 다음 항목 이름과 안내문이 딸려 온 부분을 잘라낸다."""
     s = str(s or "").split("\n")[0]
     for pat in _FIELDS.values():
         s = re.split(pat, s)[0]
-    # 서식에 흔한 꼬리표들. 값이 아니라 안내문이다.
-    s = re.split(r"\(단위|주\)|※|비고", s)[0]
+    # 각주 표시는 '주1)' 또는 줄 앞의 '주)'다. 그냥 `주\)`로 자르면 회사명의
+    # **'(주)'를 먹는다** — '삼성전자(주)'가 '삼성전자('로 잘려 티커에 안 붙었다.
+    s = re.split(r"\(단위|(?<![(가-힣])주\d*\)|※|비고", s)[0]
+    # 짝이 안 맞는 여는 괄호 뒤는 잘린 조각이다. 괄호째 버린다.
+    if s.count("(") > s.count(")"):
+        s = s[:s.rfind("(")]
     return _NOISE.sub("", s)
+
+
+def _is_name(s: str) -> bool:
+    """거래처 이름으로 볼 만한가.
+
+    못 읽은 것을 빈칸으로 두면 '거래처가 없다'로 읽히지만, 안내문을 이름으로
+    두면 **없는 회사가 생긴다.** 후자가 나쁘므로 의심스러우면 버린다.
+    """
+    s = (s or "").strip()
+    if len(s) < 2 or _BOILERPLATE.search(s):
+        return False
+    # 조사 하나만 남은 조각('과', '와')이나 문장부호만 남은 것
+    return bool(re.search(r"[가-힣A-Za-z]{2,}", s))
 
 
 # corp_code 없이 조회할 때 DART가 허용하는 최대 기간.
