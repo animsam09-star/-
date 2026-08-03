@@ -876,6 +876,39 @@ def mapped_tickers() -> set[str]:
     return out
 
 
+# 밸류체인이 없는 업종. 은행·보험·증권은 원재료를 사서 전방산업에 파는 구조가
+# 아니라 '후방/전방 산업'이라는 질문 자체가 성립하지 않는다. 사업보고서를 넣어도
+# 나오는 게 없는데 추출 예산은 똑같이 든다. 유니버스 759종목 중 37종목이라
+# 시총 순으로 뽑으면 상위를 그대로 차지한다.
+_NO_VALUECHAIN = re.compile(
+    r"금융$|금융지주|은행$|은행지주|증권$|보험$|생명$|화재$|해상화재|손해보험|캐피탈$|"
+    r"자산운용|저축은행|카드$|스팩|제\d+호|리츠$")
+
+# 우선주는 본주의 소속을 그대로 물려받는다(graph_build.preferred_membership).
+# 공시를 따로 받을 이유가 없다.
+_PREFERRED_NAME = re.compile(r"\d*우[A-Z]?(?:\(.*\))?$")
+
+
+def _past_candidates() -> set[str]:
+    """지금까지 실제로 후보로 뽑힌 적 있는 종목.
+
+    '후보가 될 수 있다'보다 '후보가 됐다'가 강한 증거다. 이 종목들은 분석
+    단계까지 실제로 올라갔고, 그때 맵이 비어 있으면 곧바로 '소속 산업: 미분류'가
+    된다. 그래서 맨 앞에 둔다.
+    """
+    out: set[str] = set()
+    for f in list(DATA_DIR.glob("candidates_*.json")) + list(
+            (ROOT / "cases").glob("*.json")):
+        try:
+            doc = json.loads(f.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            continue
+        for c in doc.get("candidates") or []:
+            if c.get("ticker"):
+                out.add(c["ticker"])
+    return out
+
+
 def screening_tickers(top_n: int, base_date: str | None = None) -> list[str]:
     """**스크리닝 유니버스 중 아직 맵에 없는 종목**을 시총 순으로.
 
@@ -900,8 +933,26 @@ def screening_tickers(top_n: int, base_date: str | None = None) -> list[str]:
     rows = json.loads(files[-1].read_text(encoding="utf-8"))["tickers"]
     have = mapped_tickers()
     todo = [r for r in rows if r["ticker"] not in have]
-    print(f"스크리닝 유니버스 {len(rows)}종목 중 맵에 없는 {len(todo)}종목 "
-          f"(이미 매핑 {len(rows) - len(todo)}종목) → 상위 {min(top_n, len(todo))}종목 대상")
+
+    # 뽑아 봐야 나올 게 없는 종목을 먼저 걷어낸다. 둘 다 시총 순 상위를
+    # 차지하고 있어서, 안 걷어내면 예산이 통째로 여기로 간다.
+    pref = [r for r in todo if _PREFERRED_NAME.search(r["name"] or "")]
+    fin = [r for r in todo if _NO_VALUECHAIN.search(r["name"] or "")
+           and r not in pref]
+    skip = {id(r) for r in pref + fin}
+    todo = [r for r in todo if id(r) not in skip]
+
+    # '후보가 됐다'가 '후보가 될 수 있다'보다 강한 증거다. 실제로 분석까지
+    # 올라간 종목을 맨 앞에 두고, 나머지는 시총 순으로 잇는다.
+    seen = _past_candidates()
+    todo.sort(key=lambda r: (r["ticker"] not in seen, -r["market_cap"]))
+    hit = sum(1 for r in todo if r["ticker"] in seen)
+
+    print(f"스크리닝 유니버스 {len(rows)}종목 · 이미 매핑 {len(rows) - len(pref) - len(fin) - len(todo)}종목")
+    print(f"  제외 — 우선주 {len(pref)}종목(본주 소속을 물려받음), "
+          f"밸류체인 없는 업종 {len(fin)}종목(금융·지주·스팩)")
+    print(f"  대상 {len(todo)}종목 중 상위 {min(top_n, len(todo))}종목 "
+          f"(과거 후보였던 {hit}종목을 앞에 둠)")
     return [r["ticker"] for r in todo[:top_n]]
 
 

@@ -21,6 +21,9 @@ from src import graph as G
 def universe_file(tmp_path, monkeypatch):
     """스크리닝 유니버스 4종목. 시총 순으로 저장돼 있다."""
     monkeypatch.setattr(dart_extract, "DATA_DIR", tmp_path)
+    # ROOT도 함께 옮긴다 — 안 옮기면 저장소의 실제 cases/*.json을 읽어
+    # 과거 후보 우선순위가 끼어들고, 테스트가 저장소 상태에 따라 흔들린다.
+    monkeypatch.setattr(dart_extract, "ROOT", tmp_path)
     (tmp_path / "screen_universe_20260731.json").write_text(json.dumps({
         "base_date": "20260731",
         "tickers": [
@@ -88,3 +91,60 @@ def test_mapped_tickers_reads_membership_in_both_directions(monkeypatch):
                     G.REL_DOWNSTREAM, "dart", origin="005930", asof="20260731"),
     ])
     assert dart_extract.mapped_tickers() == {"005930"}, "산업 노드가 종목으로 섞였다"
+
+
+class TestBudgetIsNotSpentOnStocksWithNoValuechain:
+    """대상의 앞자리를 밸류체인이 없는 종목이 차지하고 있었다.
+
+    유니버스를 시총 순으로 세우니 상위가 삼성전자우·SK스퀘어·KB금융·삼성생명…
+    이었다. 우선주는 본주와 같은 회사고, 은행·보험·증권은 원재료를 사서 전방에
+    파는 구조가 아니라 '후방/전방 산업'이라는 질문 자체가 성립하지 않는다.
+    사업보고서를 넣어도 나올 게 없는데 추출 예산은 똑같이 든다.
+
+    759종목 중 우선주 19 + 금융·리츠 등 29 = 48종목이고, 전부 상위에 몰려 있다.
+    """
+
+    def _universe(self, tmp_path, monkeypatch, rows):
+        monkeypatch.setattr(dart_extract, "DATA_DIR", tmp_path)
+        monkeypatch.setattr(dart_extract, "ROOT", tmp_path)
+        (tmp_path / "screen_universe_20260731.json").write_text(
+            json.dumps({"base_date": "20260731", "tickers": rows},
+                       ensure_ascii=False), encoding="utf-8")
+        monkeypatch.setattr(dart_extract.graph_build.G, "load", lambda *a, **k: [])
+        return tmp_path
+
+    ROWS = [
+        {"ticker": "005935", "name": "삼성전자우", "market_cap": 900, "avg_turnover": 9},
+        {"ticker": "105560", "name": "KB금융", "market_cap": 800, "avg_turnover": 8},
+        {"ticker": "032830", "name": "삼성생명", "market_cap": 700, "avg_turnover": 7},
+        {"ticker": "00680K", "name": "미래에셋증권2우B", "market_cap": 650, "avg_turnover": 6},
+        {"ticker": "417310", "name": "코람코더원리츠", "market_cap": 600, "avg_turnover": 5},
+        {"ticker": "058610", "name": "에스피지", "market_cap": 300, "avg_turnover": 4},
+        {"ticker": "119850", "name": "지엔씨에너지", "market_cap": 200, "avg_turnover": 3},
+    ]
+
+    def test_preferred_and_financials_are_dropped(self, tmp_path, monkeypatch):
+        self._universe(tmp_path, monkeypatch, self.ROWS)
+        assert dart_extract.screening_tickers(10) == ["058610", "119850"]
+
+    def test_letter_suffixed_preferred_is_caught(self, tmp_path, monkeypatch):
+        """00680K처럼 끝자리가 문자인 우선주가 있어 티커 규칙은 샌다."""
+        assert dart_extract._PREFERRED_NAME.search("미래에셋증권2우B")
+        assert dart_extract._PREFERRED_NAME.search("한화3우B(전환)")
+        assert not dart_extract._PREFERRED_NAME.search("영원무역")
+
+    def test_exclusions_are_reported_not_silent(self, tmp_path, monkeypatch, capsys):
+        """조용히 빼면 '왜 이 종목이 안 뽑혔나'를 나중에 알 수 없다."""
+        self._universe(tmp_path, monkeypatch, self.ROWS)
+        dart_extract.screening_tickers(10)
+        out = capsys.readouterr().out
+        assert "우선주 2종목" in out and "3종목" in out
+
+    def test_past_candidates_come_first(self, tmp_path, monkeypatch):
+        """'후보가 됐다'가 '후보가 될 수 있다'보다 강한 증거다."""
+        d = self._universe(tmp_path, monkeypatch, self.ROWS)
+        (d / "candidates_20260731.json").write_text(json.dumps(
+            {"candidates": [{"ticker": "119850", "name": "지엔씨에너지"}]}),
+            encoding="utf-8")
+        got = dart_extract.screening_tickers(10)
+        assert got[0] == "119850", "시총이 작아도 실제 후보였던 종목이 앞이다"

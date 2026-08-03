@@ -13,6 +13,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import yaml
@@ -25,7 +26,7 @@ VALUECHAIN_DIR = ROOT / "valuechain"
 DATA_DIR = ROOT / "data"
 
 # "profile" — 기사·IR 자료로 채운 종목 프로필. 여기 없으면 매 실행 사라진다.
-PERSISTENT_SOURCES = ("valuechain", "dart", "llm", "profile", "contract")
+PERSISTENT_SOURCES = ("valuechain", "dart", "llm", "profile", "contract", "preferred")
 DAILY_SOURCES = ("theme_index", "etf_pdf", "factor_beta", "krx_sector")
 
 # 사전지식으로 손으로 쓴 맵이라는 사실을 신뢰도에 반영한다.
@@ -247,6 +248,56 @@ def profile_products(path: Path = PROFILES_FILE) -> dict[str, str]:
     return out
 
 
+def preferred_membership(edges: list[dict], universe: Universe,
+                         asof: str) -> tuple[list[dict], list[str]]:
+    """우선주에 본주의 소속을 물려준다. 공시도 LLM도 필요 없다.
+
+    우선주는 같은 회사의 다른 주식이다. 삼성전자우가 만드는 제품은 삼성전자가
+    만드는 제품이므로, 밸류체인 소속은 본주와 정의상 같다. 그런데 소속을 공시
+    추출로만 붙이다 보니 우선주가 통째로 '미분류'로 남아 있었다.
+
+    이게 공짜가 아닌 이유: 스크리닝 유니버스 759종목 중 우선주가 18종목이고,
+    삼성전자우는 거래대금 3위다. 후보로 뽑히면 그대로 '소속 산업: 미분류'로
+    분석에 들어간다. 본주가 바로 옆에 매핑돼 있는데도 그렇다.
+
+    티커 규칙(끝자리)에 기대지 않고 **본주 티커가 마스터에 실재하는지**로
+    판정한다. 00680K(미래에셋증권2우B)처럼 끝자리가 문자인 우선주가 있어서
+    숫자 규칙은 새고, 반대로 끝자리가 5인 보통주도 있다.
+    """
+    by_ticker: dict[str, list[dict]] = {}
+    for e in edges:
+        if e["rel"] == G.REL_MEMBER and e["src"].startswith("T:"):
+            by_ticker.setdefault(e["src"][2:], []).append(e)
+
+    out, orphaned = [], []
+    for ticker, entry in universe.entries.items():
+        if ticker in by_ticker:
+            continue
+        name = str(entry.get("name") or "")
+        if not _PREFERRED_NAME.search(name):
+            continue
+        common = ticker[:5] + "0"
+        parent = by_ticker.get(common)
+        if not parent:
+            # 본주도 아직 안 매핑됐다. 본주가 매핑되면 다음 실행에서 따라온다.
+            orphaned.append(f"{name}({ticker})")
+            continue
+        for e in parent:
+            out.append(G.make_edge(
+                G.ticker_node(ticker), e["dst"], G.REL_MEMBER, "preferred",
+                origin=common, asof=asof,
+                confidence=e.get("confidence", 0.5),
+                product=e.get("product"),
+                evidence=f"{name}는 {universe.name(common)}({common})의 우선주로 "
+                         f"같은 회사다. 소속은 본주와 같다."))
+    return out, orphaned
+
+
+# 우선주 이름 표기: '우', '우B', '2우B', '우C', '(전환)' 등. 끝의 괄호를 먼저 떼고
+# 본다 — '한화3우B(전환)'처럼 접미가 붙어 있으면 끝 글자 검사가 통째로 빗나간다.
+_PREFERRED_NAME = re.compile(r"\d*우[A-Z]?(?:\(.*\))?$")
+
+
 def build_persistent(universe: Universe, asof: str) -> tuple[list[dict], dict]:
     """수직축 엣지를 만들어 graph/edges.jsonl에 저장한다.
 
@@ -274,6 +325,11 @@ def build_persistent(universe: Universe, asof: str) -> tuple[list[dict], dict]:
     existing = [e for e in G.load() if e.get("source") in PERSISTENT_SOURCES]
     merged = G.merge(existing, vc_edges, prof_edges, co_edges, ct_edges)
 
+    # 우선주는 본주가 매핑된 **뒤에** 따라붙어야 하므로 병합 후에 만든다.
+    pref_edges, pref_orphaned = preferred_membership(merged, universe, asof)
+    if pref_edges:
+        merged = G.merge(merged, pref_edges)
+
     # 공시에 품목이 없는 소속 엣지에만 프로필 품목을 얹는다. 공시가 이긴다 —
     # 프로필은 기사·IR 자료라 1차 자료가 있으면 그쪽이 맞다.
     products = profile_products()
@@ -298,6 +354,12 @@ def build_persistent(universe: Universe, asof: str) -> tuple[list[dict], dict]:
           f"공급계약 {len(ct_edges)} 엣지)")
     print(f"  비상장·미확인 거래처 "
           f"{len({u for v in unlisted.values() for u in v}) + len(ct_unlisted)}곳")
+    if pref_edges:
+        print(f"  우선주 소속 승계 {len({e['src'] for e in pref_edges})}종목 "
+              f"(본주에서 물려받음, 공시 조회 없음)")
+    if pref_orphaned:
+        print(f"  본주가 아직 미매핑인 우선주 {len(pref_orphaned)}종목: "
+              f"{', '.join(pref_orphaned[:6])}")
     if prof_report["profiles"]:
         print(f"  종목 프로필 {prof_report['profiles']}건 — 품목 {filled}개 보충")
         if prof_report["profile_unresolved"]:
