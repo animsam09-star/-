@@ -104,3 +104,52 @@ class TestEdges:
         from src import company_chain
         edges, _ = self._one()
         assert edges[0]["confidence"] > 0.8
+
+
+class TestMarketWideSearchIsWindowed:
+    """corp_code 없이 조회하면 DART가 검색기간을 3개월로 제한한다.
+
+    'DART 오류 100: corp_code가 없는 경우 검색기간은 3개월만 가능합니다.'
+    365일을 한 번에 물었다가 그대로 죽었다. 기간을 잘라 이어 붙이면 되는
+    문제라, 시장 전체를 훑는다는 전제 자체는 그대로다.
+    """
+
+    def _calls(self, monkeypatch, days):
+        seen = []
+
+        def fake(begin, end, page_limit):
+            seen.append((begin, end))
+            return []
+        monkeypatch.setattr(dc, "_search_window", fake)
+        dc.search(days_back=days)
+        return seen
+
+    def test_long_period_is_split_into_windows(self, monkeypatch):
+        calls = self._calls(monkeypatch, 365)
+        assert len(calls) >= 5, f"365일이 한 번에 나갔다: {calls}"
+
+    def test_every_window_is_within_the_api_limit(self, monkeypatch):
+        from datetime import datetime
+        for begin, end in self._calls(monkeypatch, 365):
+            span = (datetime.strptime(end, "%Y%m%d")
+                    - datetime.strptime(begin, "%Y%m%d")).days
+            assert span <= 90, f"{begin}~{end}가 {span}일 — 3개월을 넘는다"
+
+    def test_windows_cover_the_whole_period_without_gaps(self, monkeypatch):
+        """창 사이가 벌어지면 그 구간 공시가 통째로 빠진다."""
+        from datetime import datetime
+        calls = sorted(self._calls(monkeypatch, 365))
+        for (b1, e1), (b2, e2) in zip(calls, calls[1:]):
+            gap = (datetime.strptime(b2, "%Y%m%d")
+                   - datetime.strptime(e1, "%Y%m%d")).days
+            assert gap <= 0, f"{e1}과 {b2} 사이에 {gap}일 구멍"
+
+    def test_short_period_is_a_single_window(self, monkeypatch):
+        assert len(self._calls(monkeypatch, 30)) == 1
+
+    def test_duplicates_across_windows_are_removed(self, monkeypatch):
+        """창 경계에 걸친 공시는 양쪽에서 잡힌다."""
+        row = {"rcept_no": "X", "report_nm": "단일판매ㆍ공급계약 체결",
+               "rcept_dt": "20260601", "corp_name": "A", "stock_code": "033500"}
+        monkeypatch.setattr(dc, "_search_window", lambda *a: [dict(row)])
+        assert len(dc.search(days_back=365)) == 1

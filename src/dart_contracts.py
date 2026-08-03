@@ -139,26 +139,25 @@ def _clean(s: str) -> str:
     return _NOISE.sub("", s)
 
 
-def search(days_back: int = 90, page_limit: int = 20) -> list[dict]:
-    """최근 N일치 공급계약 공시 목록. 회사 단위가 아니라 **시장 전체**를 훑는다.
+# corp_code 없이 조회할 때 DART가 허용하는 최대 기간.
+#   "DART 오류 100: corp_code가 없는 경우 검색기간은 3개월만 가능합니다."
+# 3개월이라 했으니 80일로 잘라 여유를 둔다. 기간을 나눠 여러 번 부르면 되는
+# 문제라, 시장 전체를 훑는다는 이 경로의 전제는 그대로다.
+WINDOW_DAYS = 80
 
-    corp_code를 안 주면 DART는 그 기간의 모든 공시를 준다. 그래서 종목 수와
-    무관하게 한 번에 돈다 — 이 경로가 152종목 제한을 푸는 이유다.
-    """
-    end = datetime.now().strftime("%Y%m%d")
-    begin = (datetime.now() - timedelta(days=days_back)).strftime("%Y%m%d")
+
+def _search_window(begin: str, end: str, page_limit: int) -> list[dict]:
     found: list[dict] = []
     for page in range(1, page_limit + 1):
         data = dart._get("list.json", {
             "bgn_de": begin, "end_de": end, "pblntf_ty": "I",
             "page_count": 100, "page_no": page}, timeout=30).json()
         status = data.get("status")
-        if status == "013":
+        if status == "013":          # 해당 기간에 공시 없음 — 정상적인 빈 결과
             break
         if status != "000":
             raise dart.DartError(f"DART 오류 {status}: {data.get('message')}")
-        rows = data.get("list") or []
-        for f in rows:
+        for f in data.get("list") or []:
             name = (f.get("report_nm") or "")
             if any(p in name for p in CONTRACT_PATTERNS):
                 found.append({"rcept_no": f["rcept_no"], "report_nm": name.strip(),
@@ -167,8 +166,32 @@ def search(days_back: int = 90, page_limit: int = 20) -> list[dict]:
                               "stock_code": (f.get("stock_code") or "").strip()})
         if page >= int(data.get("total_page") or 1):
             break
+    return found
+
+
+def search(days_back: int = 90, page_limit: int = 20) -> list[dict]:
+    """최근 N일치 공급계약 공시 목록. 회사 단위가 아니라 **시장 전체**를 훑는다.
+
+    corp_code를 안 주면 DART는 그 기간의 모든 공시를 준다. 그래서 종목 수와
+    무관하게 돈다 — 이 경로가 152종목 제한을 푸는 이유다. 다만 그때는 검색기간이
+    3개월로 제한되므로 요청 기간을 창으로 잘라 이어 붙인다.
+    """
+    now = datetime.now()
+    found: list[dict] = []
+    offset = 0
+    while offset < days_back:
+        span = min(WINDOW_DAYS, days_back - offset)
+        end = (now - timedelta(days=offset)).strftime("%Y%m%d")
+        begin = (now - timedelta(days=offset + span)).strftime("%Y%m%d")
+        found += _search_window(begin, end, page_limit)
+        offset += span
+
+    # 창 경계에서 같은 공시가 두 번 잡힐 수 있다. 접수번호로 겹치는 것을 지운다.
+    seen: dict[str, dict] = {}
+    for f in found:
+        seen[f["rcept_no"]] = f
     # 접수일 오름차순 — 정정공시가 원본을 덮게 하려면 나중 것이 뒤에 와야 한다.
-    return sorted(found, key=lambda f: f["rcept_dt"])
+    return sorted(seen.values(), key=lambda f: f["rcept_dt"])
 
 
 def to_edges(contracts: list[dict], universe: Universe, asof: str
