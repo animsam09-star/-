@@ -25,7 +25,7 @@ VALUECHAIN_DIR = ROOT / "valuechain"
 DATA_DIR = ROOT / "data"
 
 # "profile" — 기사·IR 자료로 채운 종목 프로필. 여기 없으면 매 실행 사라진다.
-PERSISTENT_SOURCES = ("valuechain", "dart", "llm", "profile")
+PERSISTENT_SOURCES = ("valuechain", "dart", "llm", "profile", "contract")
 DAILY_SOURCES = ("theme_index", "etf_pdf", "factor_beta", "krx_sector")
 
 # 사전지식으로 손으로 쓴 맵이라는 사실을 신뢰도에 반영한다.
@@ -262,12 +262,17 @@ def build_persistent(universe: Universe, asof: str) -> tuple[list[dict], dict]:
     # 파이프라인에서 따로 만들어 붙였더니 화면에 하나도 안 나왔다. 여기서 파일을
     # 저장한 **뒤에** 병합했고, 리포트는 메모리가 아니라 저장된 파일을 다시 읽기
     # 때문이다. 만드는 곳과 저장하는 곳이 갈리면 이런 순서 함정이 생긴다.
-    from . import company_chain, dart_extract
+    from . import company_chain, dart_contracts, dart_extract
     co_edges, unlisted = company_chain.from_extractions(
         dart_extract.load_extractions(), universe, asof)
 
+    # 공급계약 공시. 사업보고서 경로를 **대체하지 않고 보탠다** — 이쪽은 계약을
+    # 낸 회사만 잡히고, 저쪽은 계약이 없어도 서술로 잡힌다. 둘 다 있어야 메워진다.
+    ct_edges, ct_unlisted = dart_contracts.to_edges(
+        dart_contracts.load(), universe, asof)
+
     existing = [e for e in G.load() if e.get("source") in PERSISTENT_SOURCES]
-    merged = G.merge(existing, vc_edges, prof_edges, co_edges)
+    merged = G.merge(existing, vc_edges, prof_edges, co_edges, ct_edges)
 
     # 공시에 품목이 없는 소속 엣지에만 프로필 품목을 얹는다. 공시가 이긴다 —
     # 프로필은 기사·IR 자료라 1차 자료가 있으면 그쪽이 맞다.
@@ -289,8 +294,10 @@ def build_persistent(universe: Universe, asof: str) -> tuple[list[dict], dict]:
     print(f"수직축 엣지 {len(merged)}개 (밸류체인 {len(vc_edges)}개 반영, "
           f"산업 {len(report['industries'])}개)")
     print(f"  회사 간 거래 {len(trade_pairs)}건 "
-          f"(공시 {len(co_edges)}엣지 + 프로필 {len(prof_edges)}엣지) / "
-          f"비상장·미확인 거래처 {len({u for v in unlisted.values() for u in v})}곳")
+          f"(사업보고서 {len(co_edges)} + 프로필 {len(prof_edges)} + "
+          f"공급계약 {len(ct_edges)} 엣지)")
+    print(f"  비상장·미확인 거래처 "
+          f"{len({u for v in unlisted.values() for u in v}) + len(ct_unlisted)}곳")
     if prof_report["profiles"]:
         print(f"  종목 프로필 {prof_report['profiles']}건 — 품목 {filled}개 보충")
         if prof_report["profile_unresolved"]:
