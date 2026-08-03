@@ -1,0 +1,1022 @@
+[
+ {
+  "rcept_no": "20260730800713",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결(자회사의 주요경영사항)",
+  "rcept_dt": "20260730",
+  "corp_name": "코오롱",
+  "stock_code": "002020",
+  "parsed": {
+   "counterparty": "동북선경전철(",
+   "product": "",
+   "amount": 143772249100.0,
+   "recent_sales": 3358253405224.0,
+   "sales_ratio": 0.1047,
+   "begin": "20210715",
+   "end": "20271111",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260730800681",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260730",
+  "corp_name": "금호건설",
+  "stock_code": "002990",
+  "parsed": {
+   "counterparty": "동북선도시철도(",
+   "product": "",
+   "amount": 238499448200.0,
+   "recent_sales": 1297945638536.0,
+   "sales_ratio": 0.174,
+   "begin": "20210715",
+   "end": "20271111",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260730800630",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260730",
+  "corp_name": "코오롱글로벌",
+  "stock_code": "003070",
+  "parsed": {
+   "counterparty": "동북선경전철(",
+   "product": "",
+   "amount": 143772249100.0,
+   "recent_sales": 3358253405224.0,
+   "sales_ratio": 0.1047,
+   "begin": "20210715",
+   "end": "20271111",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260730900642",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260730",
+  "corp_name": "에이텍모빌리티",
+  "stock_code": "224110",
+  "parsed": {
+   "counterparty": "주식회사 티머니",
+   "product": "동북선 자동요금징수설비 공급",
+   "amount": 6664622197.0,
+   "recent_sales": 64276763286.0,
+   "sales_ratio": 0.0859,
+   "begin": "20230223",
+   "end": "20271111",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260730900543",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260730",
+  "corp_name": "서한",
+  "stock_code": "011370",
+  "parsed": {
+   "counterparty": "봉산동 주택재개발 정비사업 조합",
+   "product": "봉산동 주택재개발정비사업",
+   "amount": 155433439950.0,
+   "recent_sales": 645114000000.0,
+   "sales_ratio": 0.2409,
+   "begin": "20260526",
+   "end": "20290925",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260730900393",
+  "report_nm": "단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260730",
+  "corp_name": "에이럭스",
+  "stock_code": "475580",
+  "parsed": {
+   "counterparty": "국군중앙계약관",
+   "product": "교육용 상용드론(ll) 구매(제조) 사업",
+   "amount": 8445818182.0,
+   "recent_sales": 63015993000.0,
+   "sales_ratio": 0.3,
+   "begin": "20260730",
+   "end": "20261227",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260730900406",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260730",
+  "corp_name": "비아트론",
+  "stock_code": "141000",
+  "parsed": {
+   "counterparty": "Hefei GoVisionox Technology Co., Ltd.",
+   "product": "디스플레이 제조용 장비",
+   "amount": 8000000.0,
+   "recent_sales": 2025.0,
+   "sales_ratio": 0.1809,
+   "begin": "20260417",
+   "end": "20260731",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260730900394",
+  "report_nm": "단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260730",
+  "corp_name": "핀텔",
+  "stock_code": "291810",
+  "parsed": {
+   "counterparty": "한국지능정보사회진흥원",
+   "product": "NPU기반 지능형 영상감시체계 시범 구축(공군) 사업",
+   "amount": 757228182.0,
+   "recent_sales": 5771786570.0,
+   "sales_ratio": 0.131,
+   "begin": "20260729",
+   "end": "20261215",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260730800373",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결(자율공시)",
+  "rcept_dt": "20260730",
+  "corp_name": "디아이",
+  "stock_code": "003160",
+  "parsed": {
+   "counterparty": "삼성전자(",
+   "product": "",
+   "amount": 9555164000.0,
+   "recent_sales": 213957402579.0,
+   "sales_ratio": 0.9,
+   "begin": "20260303",
+   "end": "20261231",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260730900363",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260730",
+  "corp_name": "대아티아이",
+  "stock_code": "045390",
+  "parsed": {
+   "counterparty": "한신공영(",
+   "product": "위례선 도시철도 신호설비공사",
+   "amount": 21068000000.0,
+   "recent_sales": 116252752112.0,
+   "sales_ratio": 0.1812,
+   "begin": "20221221",
+   "end": "20260831",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260730800338",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260730",
+  "corp_name": "일진전기",
+  "stock_code": "103590",
+  "parsed": {
+   "counterparty": "과",
+   "product": "",
+   "amount": 94943240857.0,
+   "recent_sales": 932362520580.0,
+   "sales_ratio": 0.1018,
+   "begin": "20220616",
+   "end": "20260730",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260730900296",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260730",
+  "corp_name": "에이직랜드",
+  "stock_code": "445090",
+  "parsed": {
+   "counterparty": "주식회사 모빌린트",
+   "product": "단일판매ㆍ공급계약체결",
+   "amount": 15430623003.0,
+   "recent_sales": 94058022977.0,
+   "sales_ratio": 0.15,
+   "begin": "20221020",
+   "end": "20261231",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260730900277",
+  "report_nm": "단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260730",
+  "corp_name": "베노티앤알",
+  "stock_code": "206400",
+  "parsed": {
+   "counterparty": "(",
+   "product": "블라인드, 악세스, 카펫, 도배 공급",
+   "amount": 487000000.0,
+   "recent_sales": 4774718589.0,
+   "sales_ratio": 0.102,
+   "begin": "20260729",
+   "end": "20261231",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260730900247",
+  "report_nm": "단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260730",
+  "corp_name": "기가비스",
+  "stock_code": "420770",
+  "parsed": {
+   "counterparty": "일본 반도체 기판 제조회사",
+   "product": "반도체 기판 검사 및 수리장비 외",
+   "amount": 29986202480.0,
+   "recent_sales": 52434995936.0,
+   "sales_ratio": 0.5719,
+   "begin": "20260729",
+   "end": "20280101",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260730800221",
+  "report_nm": "단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260730",
+  "corp_name": "미래산업",
+  "stock_code": "025560",
+  "parsed": {
+   "counterparty": "SK하이닉스",
+   "product": "",
+   "amount": 3957000000.0,
+   "recent_sales": 50777866585.0,
+   "sales_ratio": 0.9,
+   "begin": "20260730",
+   "end": "20260930",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260730900213",
+  "report_nm": "단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260730",
+  "corp_name": "피앤에스로보틱스",
+  "stock_code": "460940",
+  "parsed": {
+   "counterparty": "멕시코 텔레톤 재단",
+   "product": "Walkbot-G 제품 및 서비스공급",
+   "amount": 1270287600.0,
+   "recent_sales": 7689478060.0,
+   "sales_ratio": 0.1663,
+   "begin": "20260730",
+   "end": "20261022",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260730900200",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260730",
+  "corp_name": "디와이피엔에프",
+  "stock_code": "104460",
+  "parsed": {
+   "counterparty": "한국남동발전(",
+   "product": "영흥1,2호기 환경설비 잔여사업",
+   "amount": 113888574116.0,
+   "recent_sales": 144055577245.0,
+   "sales_ratio": 0.795,
+   "begin": "20250221",
+   "end": "20260920",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260730900172",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260730",
+  "corp_name": "지엔씨에너지",
+  "stock_code": "119850",
+  "parsed": {
+   "counterparty": "삼성물산 주식회사",
+   "product": "국가AI컴퓨팅센터",
+   "amount": 95960987584.0,
+   "recent_sales": 262633597538.0,
+   "sales_ratio": 0.137,
+   "begin": "20260730",
+   "end": "20281031",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260730900138",
+  "report_nm": "단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260730",
+  "corp_name": "지엔씨에너지",
+  "stock_code": "119850",
+  "parsed": {
+   "counterparty": "삼성물산 주식회사",
+   "product": "국가AI컴퓨팅센터",
+   "amount": 35960987584.0,
+   "recent_sales": 262633597538.0,
+   "sales_ratio": 0.137,
+   "begin": "20260730",
+   "end": "20281031",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260730900136",
+  "report_nm": "단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260730",
+  "corp_name": "파두",
+  "stock_code": "440110",
+  "parsed": {
+   "counterparty": "Macnica Galaxy Inc.",
+   "product": "SSD 공급계약 체결",
+   "amount": 49551753848.0,
+   "recent_sales": 92419333233.0,
+   "sales_ratio": 0.5362,
+   "begin": "20260729",
+   "end": "20261230",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731801387",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약해지(자회사의 주요경영사항)",
+  "rcept_dt": "20260731",
+  "corp_name": "DL",
+  "stock_code": "000210",
+  "parsed": {
+   "counterparty": "상대원2구역 주택재개발정비사업 조합",
+   "product": "",
+   "amount": null,
+   "recent_sales": 7402425126660.0,
+   "sales_ratio": 0.133,
+   "begin": "20260411",
+   "end": "20260411",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731801378",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약해지",
+  "rcept_dt": "20260731",
+  "corp_name": "DL이앤씨",
+  "stock_code": "375500",
+  "parsed": {
+   "counterparty": "상대원2구역 주택재개발정비사업 조합",
+   "product": "",
+   "amount": null,
+   "recent_sales": 7402425126660.0,
+   "sales_ratio": 0.133,
+   "begin": "20260411",
+   "end": "20260411",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731801329",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260731",
+  "corp_name": "삼호개발",
+  "stock_code": "010960",
+  "parsed": {
+   "counterparty": "한신공영(",
+   "product": "",
+   "amount": 51462400000.0,
+   "recent_sales": 307522114170.0,
+   "sales_ratio": 0.1673,
+   "begin": "20240126",
+   "end": "20280331",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731901340",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260731",
+  "corp_name": "케이엔알시스템",
+  "stock_code": "199430",
+  "parsed": {
+   "counterparty": "부산 지방조달청",
+   "product": "PHWR 방사화구조물 절단 플랫폼 구매",
+   "amount": 2502409091.0,
+   "recent_sales": 18532994075.0,
+   "sales_ratio": 0.135,
+   "begin": "20260109",
+   "end": "20260807",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731901308",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260731",
+  "corp_name": "에코심플렉스",
+  "stock_code": "038870",
+  "parsed": {
+   "counterparty": "수도권매립지관리공사",
+   "product": "수도권매립지 발전 및 부대시설 운영관리 용역(3차)",
+   "amount": 6963039000.0,
+   "recent_sales": 18020084141.0,
+   "sales_ratio": 0.2226,
+   "begin": "20260101",
+   "end": "20260731",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731901286",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260731",
+  "corp_name": "아이씨디",
+  "stock_code": "040910",
+  "parsed": {
+   "counterparty": "엘지디스플레이(",
+   "product": "FPD제조장비",
+   "amount": 25100000000.0,
+   "recent_sales": 147615670947.0,
+   "sales_ratio": 0.17,
+   "begin": "20251103",
+   "end": "20260731",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731801220",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260731",
+  "corp_name": "대우건설",
+  "stock_code": "047040",
+  "parsed": {
+   "counterparty": "알제주 수자원국",
+   "product": "",
+   "amount": 2026.0,
+   "recent_sales": 7031863671636.0,
+   "sales_ratio": 0.0564,
+   "begin": "20120621",
+   "end": "20260731",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731901248",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260731",
+  "corp_name": "에이프로",
+  "stock_code": "262260",
+  "parsed": {
+   "counterparty": "Ultium Cells LLC",
+   "product": "2차전지 활성화장비 공급계약",
+   "amount": 27703908.0,
+   "recent_sales": 2022.0,
+   "sales_ratio": 0.4657,
+   "begin": "20240206",
+   "end": "20260731",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731801146",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260731",
+  "corp_name": "HD현대일렉트릭",
+  "stock_code": "267260",
+  "parsed": {
+   "counterparty": "HD Hyundai Electric America Corporation",
+   "product": "",
+   "amount": 61900000000.0,
+   "recent_sales": 2104500000000.0,
+   "sales_ratio": 0.0294,
+   "begin": "20231130",
+   "end": "20260731",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731901099",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260731",
+  "corp_name": "SG",
+  "stock_code": "255220",
+  "parsed": {
+   "counterparty": "조달청",
+   "product": "아스콘 납품계약",
+   "amount": 117002465491.0,
+   "recent_sales": 2022.0,
+   "sales_ratio": null,
+   "begin": "20240305",
+   "end": "20260731",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731901028",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260731",
+  "corp_name": "에이직랜드",
+  "stock_code": "445090",
+  "parsed": {
+   "counterparty": "",
+   "product": "주문형 반도체 설계 개발",
+   "amount": 14165383012.0,
+   "recent_sales": 74154339770.0,
+   "sales_ratio": 0.191,
+   "begin": "20240513",
+   "end": "20260731",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731901017",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260731",
+  "corp_name": "스코넥",
+  "stock_code": "276040",
+  "parsed": {
+   "counterparty": "과 협의 하에 현재 구체적인",
+   "product": "XR+Gen AI를 결합한 실시간 인터렉트型 '멀티 토론 롤플레잉 구현'",
+   "amount": 524000000.0,
+   "recent_sales": 4436480543.0,
+   "sales_ratio": 0.1181,
+   "begin": "20250828",
+   "end": "20260731",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731900925",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260731",
+  "corp_name": "E8",
+  "stock_code": "418620",
+  "parsed": {
+   "counterparty": "삼성전자 주식회사",
+   "product": "디지털트윈 상품 개발 공급",
+   "amount": 811823000.0,
+   "recent_sales": 2285497728.0,
+   "sales_ratio": 0.3552,
+   "begin": "20250905",
+   "end": "20260731",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731900892",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260731",
+  "corp_name": "티에스아이",
+  "stock_code": "277880",
+  "parsed": {
+   "counterparty": "해외 이차전지기업",
+   "product": "2차전지 믹싱시스템",
+   "amount": 34301666855.0,
+   "recent_sales": 261126660091.0,
+   "sales_ratio": 0.3,
+   "begin": "20240529",
+   "end": "20260731",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731800604",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260731",
+  "corp_name": "남광토건",
+  "stock_code": "001260",
+  "parsed": {
+   "counterparty": "한국토지주택공사",
+   "product": "",
+   "amount": 36457885000.0,
+   "recent_sales": 2023.0,
+   "sales_ratio": 0.5,
+   "begin": "20241007",
+   "end": "20290314",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731800547",
+  "report_nm": "단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260731",
+  "corp_name": "대우건설",
+  "stock_code": "047040",
+  "parsed": {
+   "counterparty": "국군재정관리단",
+   "product": "",
+   "amount": 241380850670.0,
+   "recent_sales": 8054627137857.0,
+   "sales_ratio": 0.03,
+   "begin": "20221114",
+   "end": "20270610",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731800520",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결(자율공시)",
+  "rcept_dt": "20260731",
+  "corp_name": "신성이엔지",
+  "stock_code": "011930",
+  "parsed": {
+   "counterparty": "주식회사 샘씨엔에스 (SEMCNS Co., Ltd.)",
+   "product": "",
+   "amount": 2025.0,
+   "recent_sales": 2025.0,
+   "sales_ratio": 0.1,
+   "begin": "20260507",
+   "end": "20260731",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731800502",
+  "report_nm": "단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260731",
+  "corp_name": "SK오션플랜트",
+  "stock_code": "100090",
+  "parsed": {
+   "counterparty": "SEONG HO SHIPPING CO.,LTD.",
+   "product": "",
+   "amount": 71824424000.0,
+   "recent_sales": 965388430763.0,
+   "sales_ratio": 0.0744,
+   "begin": "20260731",
+   "end": "20290331",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731900495",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결(자율공시)",
+  "rcept_dt": "20260731",
+  "corp_name": "앱클론",
+  "stock_code": "174900",
+  "parsed": {
+   "counterparty": "식품의약품안전처 식품의약품안전평가원",
+   "product": "식품의약품안전평가원 시약 및 실험기자재 구매입찰_2026년 4월1기(제2026-148호)",
+   "amount": 424056300.0,
+   "recent_sales": 4714084167.0,
+   "sales_ratio": 0.09,
+   "begin": "20260520",
+   "end": "20260731",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731900475",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260731",
+  "corp_name": "서한",
+  "stock_code": "011370",
+  "parsed": {
+   "counterparty": "두류동지역주택조합",
+   "product": "두류동지역주택조합 주상복합 신축공사(가칭)",
+   "amount": 125316000000.0,
+   "recent_sales": 485236330934.0,
+   "sales_ratio": 0.2583,
+   "begin": "20210720",
+   "end": "20260731",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731800484",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260731",
+  "corp_name": "현대오토에버",
+  "stock_code": "307950",
+  "parsed": {
+   "counterparty": "현대자동차 주식회사",
+   "product": "",
+   "amount": 114700000000.0,
+   "recent_sales": 3065015134000.0,
+   "sales_ratio": 0.0374,
+   "begin": "20241201",
+   "end": "20260731",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731900456",
+  "report_nm": "단일판매ㆍ공급계약체결(자율공시)",
+  "rcept_dt": "20260731",
+  "corp_name": "로지시스",
+  "stock_code": "067730",
+  "parsed": {
+   "counterparty": "주식회사 농협물류",
+   "product": "BPR 통합물류 용역 계약서(서울,충청권역)",
+   "amount": 4390701818.0,
+   "recent_sales": 48541050274.0,
+   "sales_ratio": 0.0905,
+   "begin": "20260801",
+   "end": "20270731",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731800442",
+  "report_nm": "단일판매ㆍ공급계약체결(자율공시)",
+  "rcept_dt": "20260731",
+  "corp_name": "SNT에너지",
+  "stock_code": "100840",
+  "parsed": {
+   "counterparty": "Black & Veatch",
+   "product": "",
+   "amount": 27020625000.0,
+   "recent_sales": 606119987434.0,
+   "sales_ratio": 0.0446,
+   "begin": "20260731",
+   "end": "20280928",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731800364",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260731",
+  "corp_name": "한신공영",
+  "stock_code": "004960",
+  "parsed": {
+   "counterparty": "라오스 참파삭주 공공사업교통국 (Department of Public Works and Transport(DPWT) in Champasack Province)",
+   "product": "",
+   "amount": null,
+   "recent_sales": 1221553531537.0,
+   "sales_ratio": 0.037,
+   "begin": "20240201",
+   "end": "20260731",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731800361",
+  "report_nm": "단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260731",
+  "corp_name": "SK오션플랜트",
+  "stock_code": "100090",
+  "parsed": {
+   "counterparty": "Seatrium Energy (Fixed Platforms) Pte Ltd.",
+   "product": "",
+   "amount": 160548682859.0,
+   "recent_sales": 965388430763.0,
+   "sales_ratio": 0.1663,
+   "begin": "20260730",
+   "end": "20300430",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731900358",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결(자율공시)",
+  "rcept_dt": "20260731",
+  "corp_name": "워트",
+  "stock_code": "396470",
+  "parsed": {
+   "counterparty": "유니램",
+   "product": "반도체 제조장비",
+   "amount": 846000000.0,
+   "recent_sales": 2024.0,
+   "sales_ratio": 0.0557,
+   "begin": "20260325",
+   "end": "20260904",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731900334",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260731",
+  "corp_name": "싸이버원",
+  "stock_code": "356890",
+  "parsed": {
+   "counterparty": "한국교육방송공사",
+   "product": "EBS ISMS-P 인증 대응 및 정보보안 거버넌스 개선 사업",
+   "amount": 3432500000.0,
+   "recent_sales": 22753888786.0,
+   "sales_ratio": 0.1508,
+   "begin": "20240101",
+   "end": "20261231",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731900257",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결(자회사의 주요경영사항)",
+  "rcept_dt": "20260731",
+  "corp_name": "하림지주",
+  "stock_code": "003380",
+  "parsed": {
+   "counterparty": "과 계약을 체결한 일자입니다. - 상기 8. 공시유보 관련내용: 본 건은 기공시(2026.02.11, 유형자산 취득결정)한 선박 10척 취득과 연계된 화물운송계약 승계 건입니다. 현재, 승계대상 선박 및 운송계약들의 거래대가 배분 협상이 종료되지 않아, 공급계약의 확정 금액 산출이 불가합니다. 이에 유보기한(2026.07.31) 내 합의가 완료되어 금액이",
+   "product": "",
+   "amount": 842275552722.0,
+   "recent_sales": 2025.0,
+   "sales_ratio": 0.155,
+   "begin": "20260211",
+   "end": "20260211",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731900261",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260731",
+  "corp_name": "프레스티지바이오로직스",
+  "stock_code": "334970",
+  "parsed": {
+   "counterparty": "",
+   "product": "의약품 위탁생산계약",
+   "amount": 1930399936.0,
+   "recent_sales": 3557303554371.0,
+   "sales_ratio": 0.154,
+   "begin": "20251208",
+   "end": "20260731",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731800210",
+  "report_nm": "단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260731",
+  "corp_name": "HD현대마린엔진",
+  "stock_code": "071970",
+  "parsed": {
+   "counterparty": "XIAMEN XMXYG SHIPBUILDING TRADING CO.,LTD.",
+   "product": "",
+   "amount": 47549382720.0,
+   "recent_sales": 402396221904.0,
+   "sales_ratio": 0.118,
+   "begin": "20260731",
+   "end": "20290823",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731800222",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260731",
+  "corp_name": "팬오션",
+  "stock_code": "028670",
+  "parsed": {
+   "counterparty": "과 계약을 체결한 일자입니다. - 상기 8. 공시유보 관련내용: 본 건은 기공시(2026.02.11, 유형자산 취득결정)한 선박 10척 취득과 연계된 화물운송계약 승계 건입니다. 현재, 승계대상 선박 및 운송계약들의 거래대가 배분 협상이 종료되지 않아, 공급계약의 확정 금액 산출이 불가합니다. 이에 유보기한(2026.07.31) 내 합의가 완료되어 금액이",
+   "product": "",
+   "amount": 842275552722.0,
+   "recent_sales": 2025.0,
+   "sales_ratio": 0.155,
+   "begin": "20260211",
+   "end": "20260211",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731800216",
+  "report_nm": "단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260731",
+  "corp_name": "한화오션",
+  "stock_code": "042660",
+  "parsed": {
+   "counterparty": "방위사업청",
+   "product": "",
+   "amount": 838000000000.0,
+   "recent_sales": 12783500000000.0,
+   "sales_ratio": 0.066,
+   "begin": "20260731",
+   "end": "20320630",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260731900003",
+  "report_nm": "[기재정정]단일판매ㆍ공급계약체결(자율공시)",
+  "rcept_dt": "20260731",
+  "corp_name": "워트",
+  "stock_code": "396470",
+  "parsed": {
+   "counterparty": "유니램",
+   "product": "반도체 제조장비",
+   "amount": 846000000.0,
+   "recent_sales": 15184230309.0,
+   "sales_ratio": 0.0557,
+   "begin": "20260325",
+   "end": "20260730",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260803800398",
+  "report_nm": "단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260803",
+  "corp_name": "삼성중공업",
+  "stock_code": "010140",
+  "parsed": {
+   "counterparty": "유럽 지역 선주",
+   "product": "",
+   "amount": 268000000000.0,
+   "recent_sales": 10650000000000.0,
+   "sales_ratio": 0.025,
+   "begin": "20260731",
+   "end": "20290831",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260803900396",
+  "report_nm": "단일판매ㆍ공급계약체결(자율공시)",
+  "rcept_dt": "20260803",
+  "corp_name": "엠아이큐브솔루션",
+  "stock_code": "373170",
+  "parsed": {
+   "counterparty": "(",
+   "product": "K-푸드 제조AX 선도를 위한 AI자율제조 구축 사업",
+   "amount": 1942800000.0,
+   "recent_sales": 25620442016.0,
+   "sales_ratio": 0.0758,
+   "begin": "20260629",
+   "end": "20270628",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260803900386",
+  "report_nm": "단일판매ㆍ공급계약체결(자율공시)",
+  "rcept_dt": "20260803",
+  "corp_name": "이노시뮬레이션",
+  "stock_code": "274400",
+  "parsed": {
+   "counterparty": "주식회사 이노션",
+   "product": "시뮬레이터 글로벌 롤아웃",
+   "amount": 1375000000.0,
+   "recent_sales": 14252194849.0,
+   "sales_ratio": 0.0965,
+   "begin": "20260731",
+   "end": "20271231",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260803900322",
+  "report_nm": "단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260803",
+  "corp_name": "엠아이큐브솔루션",
+  "stock_code": "373170",
+  "parsed": {
+   "counterparty": "주식회사 코스메카코리아",
+   "product": "K-뷰티 제조AX 선도를 위한 AI플랫폼 신속 상용화 사업",
+   "amount": 2744446000.0,
+   "recent_sales": 25620442016.0,
+   "sales_ratio": 0.1071,
+   "begin": "20260629",
+   "end": "20280628",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260803900306",
+  "report_nm": "단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260803",
+  "corp_name": "지엔씨에너지",
+  "stock_code": "119850",
+  "parsed": {
+   "counterparty": "주식회사 케이티",
+   "product": "SGC AI Infra 군산 데이터센터 발전기",
+   "amount": 75508619091.0,
+   "recent_sales": 262633597538.0,
+   "sales_ratio": 0.2875,
+   "begin": "20260731",
+   "end": "20271231",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260803800305",
+  "report_nm": "단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260803",
+  "corp_name": "우진아이엔에스",
+  "stock_code": "010400",
+  "parsed": {
+   "counterparty": "주식회사 디비월드건설",
+   "product": "",
+   "amount": 12203800000.0,
+   "recent_sales": 164457886988.0,
+   "sales_ratio": 0.0742,
+   "begin": "20260803",
+   "end": "20270801",
+   "region": ""
+  }
+ },
+ {
+  "rcept_no": "20260803900002",
+  "report_nm": "단일판매ㆍ공급계약체결",
+  "rcept_dt": "20260803",
+  "corp_name": "심플랫폼",
+  "stock_code": "444530",
+  "parsed": {
+   "counterparty": "한국알프스 주식회사",
+   "product": "AI 응용제품(NUBISON AX·DataLake 플랫폼) 및 하드웨어 공급",
+   "amount": 2528250000.0,
+   "recent_sales": 10404472896.0,
+   "sales_ratio": 0.243,
+   "begin": "20260629",
+   "end": "20280628",
+   "region": ""
+  }
+ }
+]
