@@ -56,8 +56,8 @@ def test_profile_confidence_is_below_disclosure(profiles):
 
 def test_unlisted_names_are_reported_not_silently_dropped(profiles):
     _, report = gb.from_profiles(UNI, "20260728", profiles)
-    assert any("없는회사" in u for u in report["unresolved"])
-    assert any("999999" in u for u in report["unresolved"])
+    assert any("없는회사" in u for u in report["profile_unresolved"])
+    assert any("999999" in u for u in report["profile_unresolved"])
 
 
 def test_profiles_do_not_create_membership(profiles):
@@ -128,3 +128,22 @@ class TestCompanyTradesReachTheSavedGraph:
         monkeypatch.setattr(dart_extract, "load_extractions", lambda: {})
         _, report = gb.build_persistent(UNI, "20260729")
         assert "company_trades" in report
+
+
+def test_profile_report_does_not_collide_with_valuechain_report():
+    """build_persistent가 두 리포트를 update()로 합친다. 키가 겹치면 덮어쓴다.
+
+    프로필 리포트가 'unresolved'라는 같은 이름을 쓰는 바람에 밸류체인의
+    {파일: [이름]} dict가 list로 바뀌었고, 리포트 렌더링이
+    AttributeError: 'list' object has no attribute 'values'로 죽었다.
+    파이프라인 전체가 마지막 단계에서 멈췄다.
+    """
+    _, vc_report = gb.from_valuechain(UNI, "20260729", tmp_empty_dir())
+    _, prof_report = gb.from_profiles(UNI, "20260729", __import__("pathlib").Path("nope"))
+    overlap = set(vc_report) & set(prof_report)
+    assert not overlap, f"두 리포트가 같은 키를 쓴다: {overlap}"
+
+
+def tmp_empty_dir():
+    import pathlib, tempfile
+    return pathlib.Path(tempfile.mkdtemp())

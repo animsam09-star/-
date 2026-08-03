@@ -202,7 +202,7 @@ def from_profiles(universe: Universe, asof: str,
     이 표가 하는 일은 이미 있는 소속에 '무엇을 만드는가'를 얹는 것뿐이다.
     """
     if not path.exists():
-        return [], {"profiles": 0, "unresolved": []}
+        return [], {"profiles": 0, "profile_unresolved": []}
 
     doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     edges: list[dict] = []
@@ -227,7 +227,11 @@ def from_profiles(universe: Universe, asof: str,
                     origin=ticker, asof=asof, confidence=PROFILE_CONFIDENCE,
                     product=" / ".join((prof or {}).get("products") or [])[:80],
                     evidence=src))
-    return edges, {"profiles": len(doc), "unresolved": unresolved}
+    # 키 이름을 'unresolved'로 두면 안 된다. build_persistent가 밸류체인
+    # 리포트에 update()로 얹는데, 밸류체인의 unresolved는 {파일: [이름]} dict이고
+    # 이쪽은 list라 통째로 덮어쓴다. 실제로 그 충돌로 리포트가 죽었다
+    # (AttributeError: 'list' object has no attribute 'values').
+    return edges, {"profiles": len(doc), "profile_unresolved": unresolved}
 
 
 def profile_products(path: Path = PROFILES_FILE) -> dict[str, str]:
@@ -289,8 +293,8 @@ def build_persistent(universe: Universe, asof: str) -> tuple[list[dict], dict]:
           f"비상장·미확인 거래처 {len({u for v in unlisted.values() for u in v})}곳")
     if prof_report["profiles"]:
         print(f"  종목 프로필 {prof_report['profiles']}건 — 품목 {filled}개 보충")
-        if prof_report["unresolved"]:
-            print(f"  프로필 미해석: {', '.join(prof_report['unresolved'][:8])}")
+        if prof_report["profile_unresolved"]:
+            print(f"  프로필 미해석: {', '.join(prof_report['profile_unresolved'][:8])}")
     return merged, report
 
 
