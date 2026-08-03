@@ -61,6 +61,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--date", help="기준일 YYYYMMDD (기본: 오늘 KST)")
     parser.add_argument("--skip-analyze", action="store_true", help="LLM 분석 생략")
+    # LLM 호출이 막혔을 때(429) 쓰는 두 갈래. 프롬프트를 뽑아 두고, 밖에서 답한
+    # 결과를 다시 넣는다. DART 추출의 --fetch-only/--extractions와 같은 구조다.
+    parser.add_argument("--dump-analysis-input", action="store_true",
+                        help="분석 프롬프트만 data/analysis_input_{날짜}.json에 저장하고 "
+                             "LLM은 부르지 않는다")
+    parser.add_argument("--analyses",
+                        help="{티커: 분석결과} JSON. LLM 대신 이 결과로 갭 주입·"
+                             "출처 표시·종합까지 그대로 돈다")
     # 끄는 플래그가 아니라 켜는 플래그다. 끄는 쪽이 기본이면 누군가 워크플로에서
     # 플래그를 빼는 순간 조용히 발송이 시작된다 — 실수의 방향이 나쁜 쪽이다.
     parser.add_argument("--notify", action="store_true",
@@ -170,11 +178,22 @@ def main():
             "min_edge_confidence": gcfg.get("min_edge_confidence", 0.0),
             "max_members_per_industry": gcfg.get("max_members_per_industry", 8),
             "max_drivers": gcfg.get("max_drivers", 6)}
-    if args.skip_analyze or not candidates:
+    if args.dump_analysis_input and candidates:
+        rows = analyze_mod.contexts(candidates, evidence, acfg, horizontal, uni,
+                                    relation_graph)
+        out = ROOT / "data" / f"analysis_input_{base_date}.json"
+        out.write_text(json.dumps(rows, ensure_ascii=False, indent=1), encoding="utf-8")
+        print(f"분석 프롬프트 {len(rows)}건 저장: {out}")
+        analysis = {"base_date": base_date, "analyses": [], "synthesis": None}
+    elif args.skip_analyze or not candidates:
         analysis = {"base_date": base_date, "analyses": [], "synthesis": None}
     else:
+        stored = None
+        if args.analyses:
+            stored = json.loads(Path(args.analyses).read_text(encoding="utf-8"))
+            print(f"저장된 분석 {len(stored)}건 사용 (LLM 미호출)")
         analysis = analyze_mod.analyze(candidates, evidence, base_date, acfg,
-                                       horizontal, uni, relation_graph)
+                                       horizontal, uni, relation_graph, stored=stored)
     analysis["valuechain_coverage"] = vc_report
     analysis["price_review"] = price_review
 

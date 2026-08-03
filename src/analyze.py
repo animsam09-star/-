@@ -219,11 +219,18 @@ def _extract_json(response) -> dict | None:
     return json.loads(text)
 
 
-def analyze_stock(client: Anthropic, cand: dict, evidence: dict, graph_ctx: str,
-                  horizontal_ctx: str, cfg: dict) -> dict | None:
+def build_stock_prompt(cand: dict, evidence: dict, graph_ctx: str,
+                       horizontal_ctx: str) -> str:
+    """분석 프롬프트. **호출과 분리해 둔다.**
+
+    LLM 호출이 막혔을 때(지금 OAuth 토큰은 Messages API에서 429가 난다) 이
+    프롬프트만 파일로 뽑아 세션 안에서 답하고, 그 답을 파이프라인이 읽어 나머지
+    단계를 그대로 돈다. DART 추출에서 쓴 것과 같은 구조다 — 비싸거나 막히는
+    한 단계만 밖으로 빼고, 검증·주입·종합은 코드에 남긴다.
+    """
     news = "\n".join(f"- [{n['date']}] {n['title']} — {n['description']}" for n in evidence.get("news", []))
     filings = "\n".join(f"- [{f['date']}] {f['title']}" for f in evidence.get("filings", []))
-    prompt = f"""다음 종목의 최근 주가 상승 원인을 분석하고, 산업공통 원인이면
+    return f"""다음 종목의 최근 주가 상승 원인을 분석하고, 산업공통 원인이면
 어느 축(수직/수평)으로 파급되는지 판단해 파급 경로와 수혜·피해 후보를 도출하라.
 
 ## 종목 정보
@@ -245,6 +252,10 @@ def analyze_stock(client: Anthropic, cand: dict, evidence: dict, graph_ctx: str,
 ## 수평 그래프 — 미반영 갭 (가격 데이터에서 계산된 사실)
 {horizontal_ctx}"""
 
+
+def analyze_stock(client: Anthropic, cand: dict, evidence: dict, graph_ctx: str,
+                  horizontal_ctx: str, cfg: dict) -> dict | None:
+    prompt = build_stock_prompt(cand, evidence, graph_ctx, horizontal_ctx)
     response = client.messages.create(
         model=cfg["model"],
         max_tokens=cfg["max_tokens"],
@@ -394,10 +405,35 @@ def synthesize(client: Anthropic, analyses: list[dict], cfg: dict) -> dict | Non
     return _extract_json(response)
 
 
+def contexts(candidates, evidence_all, cfg, horizontal, universe, relation_graph):
+    """후보별 (종목, 프롬프트). 호출 없이 프롬프트만 만든다."""
+    names = {t: universe.name(t) for t in universe.entries}
+    gap_by_ticker = {t: g["gap"] for t, g in best_gaps(horizontal or {}).items()}
+    out = []
+    for cand in candidates[: cfg["max_candidates"]]:
+        graph_ctx = G.render_subgraph(
+            relation_graph or G.Graph([]), cand["ticker"], universe,
+            gaps=gap_by_ticker, min_confidence=cfg.get("min_edge_confidence", 0.0),
+            max_members=cfg.get("max_members_per_industry", 8),
+            max_drivers=cfg.get("max_drivers", 6))
+        ctx = build_horizontal_context(cand["ticker"], horizontal or {}, names,
+                                       cfg.get("max_peers_per_group", 6))
+        out.append({"ticker": cand["ticker"], "name": cand["name"],
+                    "prompt": build_stock_prompt(
+                        cand, evidence_all.get(cand["ticker"], {}), graph_ctx, ctx)})
+    return out
+
+
 def analyze(candidates: list[dict], evidence_all: dict, base_date: str, cfg: dict,
             horizontal: dict | None = None, universe: Universe | None = None,
-            relation_graph: G.Graph | None = None) -> dict:
-    if not llm.has_credentials():
+            relation_graph: G.Graph | None = None,
+            stored: dict | None = None) -> dict:
+    """stored가 있으면 LLM을 부르지 않고 그 결과로 나머지 단계를 돈다.
+
+    갭 주입·출처 표시·종합은 코드가 하는 일이라, 분석 본문을 밖에서 받아도
+    그대로 돌아야 한다. 그러지 않으면 밖에서 만든 분석은 반쪽짜리가 된다.
+    """
+    if stored is None and not llm.has_credentials():
         print("Claude 인증 정보 미설정 — 원인 분석을 건너뜁니다.\n" + llm.MISSING_HINT)
         return {"analyses": [], "synthesis": None}
     if universe is None:
@@ -405,7 +441,7 @@ def analyze(candidates: list[dict], evidence_all: dict, base_date: str, cfg: dic
             "universe가 필요합니다. 종목명→티커 해석의 단일 출처이며, 없으면 "
             "수혜 후보의 갭 주입과 사후 채점이 통째로 비게 됩니다.")
 
-    client = llm.build_client()
+    client = llm.build_client() if stored is None else None
     horizontal = horizontal or {}
     relation_graph = relation_graph or G.Graph([])
 
@@ -425,12 +461,18 @@ def analyze(candidates: list[dict], evidence_all: dict, base_date: str, cfg: dic
             max_members=cfg.get("max_members_per_industry", 8),
             max_drivers=cfg.get("max_drivers", 6))
         ctx = build_horizontal_context(cand["ticker"], horizontal, names, max_peers)
-        try:
-            result = analyze_stock(client, cand, evidence_all.get(cand["ticker"], {}),
-                                   graph_ctx, ctx, cfg)
-        except Exception as e:
-            print(f"  분석 실패({cand['name']}): {e}")
-            continue
+        if stored is not None:
+            result = stored.get(cand["ticker"])
+            if not result:
+                print(f"  저장된 분석 없음: {cand['name']}({cand['ticker']})")
+                continue
+        else:
+            try:
+                result = analyze_stock(client, cand, evidence_all.get(cand["ticker"], {}),
+                                       graph_ctx, ctx, cfg)
+            except Exception as e:
+                print(f"  분석 실패({cand['name']}): {e}")
+                continue
         if result:
             result["ticker"] = cand["ticker"]
             result["name"] = cand["name"]
@@ -450,11 +492,16 @@ def analyze(candidates: list[dict], evidence_all: dict, base_date: str, cfg: dic
             reach.setdefault(t, via)
     annotate_provenance(_iter_beneficiaries(analyses, None), reach)
 
-    try:
-        synthesis = synthesize(client, analyses, cfg)
-    except Exception as e:
-        print(f"종합 분석 실패: {e}")
-        synthesis = None
+    # 종합도 LLM이라 밖에서 받는다. 없으면 개별 분석만으로 진행한다 —
+    # 종합이 비는 것과 분석 전체가 비는 것은 다르다.
+    if stored is not None:
+        synthesis = stored.get("_synthesis")
+    else:
+        try:
+            synthesis = synthesize(client, analyses, cfg)
+        except Exception as e:
+            print(f"종합 분석 실패: {e}")
+            synthesis = None
 
     # 종합 아이디어의 후보에도 주입한다(사후 채점이 이 티커를 읽는다)
     match_stats = check_priced_in(None, returns, universe, horizontal, synthesis)
