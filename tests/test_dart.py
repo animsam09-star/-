@@ -814,3 +814,61 @@ class TestReportFallbackWhenDocumentIsMissing:
                                  "20250318000111": self.SECTION})
         out = dart.fetch_business_section("005930", {"005930": "X"}, slim=False)
         assert out["rcept_no"] == "20260319000633", "최신 보고서를 건너뛰었다"
+
+
+class TestOneStockFailureDoesNotKillTheBatch:
+    """100종목을 한 번에 도는 작업에서 한 종목의 실패가 전부를 날리면 안 된다.
+
+    실제로 그랬다. 대상을 8종목에서 100종목으로 늘리자 최근 상장사에서 DART가
+    status 013(조회된 데이터 없음)을 돌려줬는데, find_business_reports가 그때
+    None을 반환하고 호출부가 그대로 for에 넣어 TypeError로 죽었다. 그 시점에
+    이미 87종목을 받아 둔 상태였고 잡이 실패해 커밋 단계까지 못 갔으니 25분치
+    수집이 통째로 날아갔다.
+    """
+
+    def test_no_filings_returns_empty_list_not_none(self, monkeypatch):
+        """list[dict]를 약속한 함수가 None을 돌려주면 호출부가 그 자리에서 죽는다."""
+        class Resp:
+            def json(self): return {"status": "013", "message": "조회된 데이타가 없습니다."}
+        monkeypatch.setattr(dart, "_get", lambda *a, **k: Resp())
+        got = dart.find_business_reports("00126380")
+        assert got == []
+        for _ in got:            # 호출부가 하는 일 그대로 — 여기서 터지면 안 된다
+            pass
+
+    def test_find_business_report_still_returns_none(self, monkeypatch):
+        """단수형은 계속 None을 돌려준다 — 그쪽 계약은 바뀌지 않았다."""
+        monkeypatch.setattr(dart, "find_business_reports", lambda *a, **k: [])
+        assert dart.find_business_report("00126380") is None
+
+    def test_unexpected_exception_skips_only_that_stock(self, monkeypatch, capsys):
+        """DartError만 잡으면 예상 못 한 예외에서 나머지를 다 잃는다."""
+        from src import dart_extract
+
+        monkeypatch.setattr(dart, "load_corp_codes", lambda: {})
+        monkeypatch.setattr(dart_extract.time, "sleep", lambda *a: None)
+
+        def flaky(fn, ticker, *a, **k):
+            if ticker == "000002":
+                raise TypeError("'NoneType' object is not iterable")
+            return {"ticker": ticker, "corp_name": ticker, "section": "본문"}
+
+        monkeypatch.setattr(dart, "retry", flaky)
+        docs, missing = dart_extract.collect_documents(
+            ["000001", "000002", "000003"], {})
+        assert [d["ticker"] for d in docs] == ["000001", "000003"]
+        assert missing == ["000002"]
+
+    def test_the_exception_type_is_reported(self, monkeypatch, capsys):
+        """티커만 남기면 '보고서가 없다'와 '코드가 터졌다'가 구분되지 않는다."""
+        from src import dart_extract
+
+        monkeypatch.setattr(dart, "load_corp_codes", lambda: {})
+        monkeypatch.setattr(dart_extract.time, "sleep", lambda *a: None)
+
+        def boom(fn, ticker, *a, **k):
+            raise TypeError("'NoneType' object is not iterable")
+
+        monkeypatch.setattr(dart, "retry", boom)
+        dart_extract.collect_documents(["000001"], {})
+        assert "TypeError" in capsys.readouterr().out

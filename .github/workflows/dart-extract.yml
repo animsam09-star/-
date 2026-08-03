@@ -106,8 +106,11 @@ jobs:
           echo "실행: python -m src.dart_extract --fetch-only $ARGS"
           python -m src.dart_extract --fetch-only $ARGS
 
+      # 수집이 도중에 죽어도 그때까지 받아 둔 공시는 커밋한다. 실제로 87종목을
+      # 받아 둔 상태에서 한 종목의 예외로 잡이 죽어 25분치가 통째로 날아갔다.
+      # 잡은 빨갛게 남겨 알리되, 받아 놓은 것까지 버릴 이유는 없다.
       - name: Commit sections
-        if: ${{ inputs.mode == 'fetch' }}
+        if: ${{ always() && inputs.mode == 'fetch' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

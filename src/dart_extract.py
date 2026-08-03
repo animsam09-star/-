@@ -573,6 +573,19 @@ def collect_documents(tickers: list[str], cfg: dict | None = None
                   flush=True)
             missing.append(t)
             continue
+        except Exception as e:
+            # DartError만 잡던 때, 한 종목에서 난 TypeError가 잡을 통째로 죽였다.
+            # 그 시점에 이미 87종목을 받아 둔 상태였고 커밋 단계까지 못 갔으니
+            # 25분치 수집이 전부 날아갔다. 100종목을 한 번에 도는 작업에서
+            # '예상 못 한 예외'는 언젠가 반드시 나오고, 그때 잃는 게 그 종목
+            # 하나여야지 나머지 99종목이어서는 안 된다.
+            #
+            # 예외 타입을 함께 찍는다 — 미확보 목록에 티커만 남으면 '보고서가
+            # 없는 것'과 '코드가 터진 것'이 구분되지 않는다.
+            print(f"  [{i}/{len(tickers)}] {t} 예외 {type(e).__name__} "
+                  f"({time.monotonic() - t0:.0f}s): {str(e)[:120]}", flush=True)
+            missing.append(t)
+            continue
         if doc:
             docs.append(doc)
             print(f"  [{i}/{len(tickers)}] {t} {doc.get('corp_name') or '':12}"

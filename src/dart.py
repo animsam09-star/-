@@ -124,8 +124,17 @@ def find_business_reports(corp_code: str, years_back: int = 2,
         raise DartError(f"공시 목록 조회 실패: {e}") from e
 
     status = data.get("status")
-    if status == "013":          # 조회된 데이터 없음 — 정상적인 빈 결과다
-        return None
+    if status == "013":
+        # 조회된 데이터 없음 — 오류가 아니라 정상적인 빈 결과다. 최근 상장사처럼
+        # 아직 정기보고서를 낸 적이 없으면 이 값이 온다.
+        #
+        # **빈 리스트를 돌려준다. None이 아니다.** 이 함수는 list[dict]를 약속하고
+        # 호출부가 그대로 for에 넣는다. None을 돌려주면 그 자리에서
+        # `TypeError: 'NoneType' object is not iterable`로 죽는다 — 실제로 대상을
+        # 8종목에서 100종목으로 늘리자마자 밟혔고, 그 전까지 87종목치 수집을
+        # 마친 잡이 통째로 실패해 커밋 단계에 못 갔다. 한 종목의 정상적인
+        # '보고서 없음'이 나머지 99종목의 결과를 날린 셈이다.
+        return []
     if status != "000":
         raise DartError(f"DART 오류 {status}: {data.get('message')}")
 
