@@ -166,9 +166,20 @@ class Graph:
             split_node(e["dst"])[1] for e in self.industries_of(ticker, min_confidence)))
 
     def members_of(self, industry: str, min_confidence: float = 0.0) -> list[str]:
-        """산업 소속 종목 티커. 시총 순 정렬은 호출부(Universe 필요)에서 한다."""
-        return [split_node(e["src"])[1]
-                for e in self.into(industry_node(industry), REL_MEMBER, min_confidence)]
+        """산업 소속 종목 티커(중복 제거). 시총 순 정렬은 호출부에서 한다.
+
+        바로 위 industry_names와 같은 이유로 중복을 걷어낸다 — 밸류체인과 DART가
+        같은 소속을 각각 주장하면 엣지가 둘이라 티커가 두 번 나온다. 이름을 그대로
+        나열하면 화면에 'LS ELECTRIC(010120) 갭+2.1%, LS ELECTRIC(010120) 갭+2.1%'로
+        찍히고, 더 나쁘게는 표시 한도(max_members 8종목)를 중복이 잡아먹어 진짜
+        이웃이 '외 5종목'으로 밀려난다. 수혜 후보를 고르는 화면에서 후보가 밀려나면
+        그건 표시 문제가 아니라 누락이다.
+
+        고침은 industry_names에만 들어가 있었다. 형제 메서드를 같이 안 고쳤다.
+        """
+        return list(dict.fromkeys(
+            split_node(e["src"])[1]
+            for e in self.into(industry_node(industry), REL_MEMBER, min_confidence)))
 
     def drivers_of(self, ticker: str, min_confidence: float = 0.0) -> list[dict]:
         return self.out(ticker_node(ticker), REL_EXPOSURE, min_confidence)

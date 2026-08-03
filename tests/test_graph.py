@@ -322,3 +322,40 @@ class TestIndustryGroupsDoNotBecomeDriverNodes:
         themes = [e for e in edges if e["dst"] == G.driver_node("테마:탄소중립")]
         assert len(themes) == 1
         assert themes[0]["source"] == "theme_index"
+
+
+class TestMembersAreNotListedTwice:
+    """밸류체인과 DART가 같은 소속을 각각 주장하면 소속 엣지가 둘이 된다.
+
+    industry_names는 이 이유로 중복을 걷어내는데, 바로 아래 members_of는
+    형제 메서드인데도 안 고쳐져 있었다. 실제 화면에 이렇게 찍혔다:
+
+        LS ELECTRIC(010120) 갭+2.1%, LS ELECTRIC(010120) 갭+2.1%, 현대로템…
+
+    보기 싫은 것으로 끝나지 않는다. 표시 한도(max_members)를 중복이 잡아먹어
+    진짜 이웃이 '외 N종목'으로 밀려난다. 수혜 후보를 고르는 화면에서 후보가
+    밀려나면 그건 표시 문제가 아니라 누락이다. 실측에서 산업자동화 소속이
+    15건 중 5건이 중복이라 한도 8칸의 3칸을 중복이 차지하고 있었다.
+    """
+
+    def _graph(self):
+        """같은 종목의 소속을 밸류체인과 DART가 각각 주장하는 상황."""
+        return G.Graph([
+            G.make_edge(G.ticker_node("010120"), G.industry_node("산업자동화"),
+                        G.REL_MEMBER, "valuechain", asof="20260731"),
+            G.make_edge(G.ticker_node("010120"), G.industry_node("산업자동화"),
+                        G.REL_MEMBER, "dart", origin="010120", asof="20260728"),
+            G.make_edge(G.ticker_node("064350"), G.industry_node("산업자동화"),
+                        G.REL_MEMBER, "valuechain", asof="20260731"),
+        ])
+
+    def test_duplicate_membership_yields_one_entry(self):
+        assert self._graph().members_of("산업자동화") == ["010120", "064350"]
+
+    def test_order_follows_first_appearance(self):
+        """중복 제거가 순서를 흩뜨리면 시총 순 정렬을 하는 호출부가 어긋난다."""
+        assert self._graph().members_of("산업자동화")[0] == "010120"
+
+    def test_peers_do_not_repeat_either(self):
+        """동종 목록도 같은 경로를 탄다 — 한쪽만 고치면 다른 쪽에서 다시 샌다."""
+        assert self._graph().peers("064350") == {"산업자동화": ["010120"]}
