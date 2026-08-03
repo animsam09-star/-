@@ -25,6 +25,9 @@ on:
         description: "분석 프롬프트만 뽑아 커밋 (LLM 미호출). 429로 막혔을 때 쓴다"
         type: boolean
         default: false
+      analyses:
+        description: "저장된 분석 JSON 경로 (예: data/analyses_20260731.json). LLM 대신 이 결과로 갭 주입·출처 표시·종합까지 그대로 돈다"
+        required: false
 
 permissions:
   contents: write
@@ -74,6 +77,7 @@ jobs:
           if [ -n "${{ inputs.date }}" ]; then ARGS="$ARGS --date ${{ inputs.date }}"; fi
           if [ "${{ inputs.skip_analyze }}" = "true" ]; then ARGS="$ARGS --skip-analyze"; fi
           if [ "${{ inputs.dump_analysis_input }}" = "true" ]; then ARGS="$ARGS --dump-analysis-input"; fi
+          if [ -n "${{ inputs.analyses }}" ]; then ARGS="$ARGS --analyses ${{ inputs.analyses }}"; fi
           python -m src.pipeline $ARGS
 
       - name: Commit results
