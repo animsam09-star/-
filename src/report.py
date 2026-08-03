@@ -892,7 +892,13 @@ def _vc_map(flow, members: dict, guessed: dict | None = None) -> tuple[str, int]
         chain = sorted({idx[m] for m in (up_all.get(n, set()) | down_all.get(n, set())
                                          | {n}) if m in idx})
         adj = sorted({idx[m] for m in near.get(n, ()) if m in idx})
+        # 소속 0개는 '아직 안 채운 칸'이 아니라 '국내에 상장 순수 플레이가 없는
+        # 단계'다(실리콘 웨이퍼 — SK실트론이 비상장). 같은 모양으로 두면 데이터
+        # 구멍으로 읽혀서, 있지도 않은 수혜주를 찾으러 가게 된다.
         cnt = len(members.get(n, ()))
+        dash = "" if cnt else ' stroke-dasharray="4 3"'
+        label_fill = "var(--fg)" if cnt else "var(--muted)"
+        badge = str(cnt) if cnt else "비상장"
         out.append(
             f'<g class="nd" data-i="{idx[n]}" data-chain="{",".join(map(str, chain))}" '
             f'data-near="{",".join(map(str, adj))}" data-ind="{_esc(n)}" '
@@ -900,9 +906,11 @@ def _vc_map(flow, members: dict, guessed: dict | None = None) -> tuple[str, int]
             f'<title>{_esc(n)} · 소속 {cnt}종목 · '
             f'후방 {len(up_all.get(n, ()))} / 전방 {len(down_all.get(n, ()))}</title>'
             f'<rect x="{x}" y="{y}" width="{_MAP_BOX_W}" height="{_MAP_BOX_H}" rx="7" '
-            f'fill="var(--card)" stroke="var(--line)"/>'
-            f'<text x="{x + _MAP_BOX_W / 2}" y="{y + 22}" text-anchor="middle" '
-            f'font-size="12.5" fill="var(--fg)">{_esc(n[:12])}</text></g>')
+            f'fill="var(--card)" stroke="var(--line)"{dash}/>'
+            f'<text x="{x + _MAP_BOX_W / 2 - 9}" y="{y + 22}" text-anchor="middle" '
+            f'font-size="12.5" fill="{label_fill}">{_esc(n[:12])}</text>'
+            f'<text x="{x + _MAP_BOX_W - 8}" y="{y + 22}" text-anchor="end" '
+            f'font-size="10" fill="var(--muted)">{badge}</text></g>')
 
     out.append("</svg>")
     return "".join(out), len(pos)
@@ -1238,7 +1246,12 @@ ul.mk .none { opacity:.55; font-style:italic; }
             '<div class="axis"><span>← 원류(원료·부품)</span>'
             '<span>실선 = 사업부문 확인 · 점선 = 부문 미확인(최대 매출 산업에 귀속)</span>'
             '<span>최종 수요 →</span></div>'
-            f'<div class="scroll">{chain_map}</div>{note}</div>')
+            f'<div class="scroll">{chain_map}</div>'
+            '<p class="muted">칸 오른쪽 숫자는 그 단계의 국내 상장 종목 수입니다. '
+            '<b>비상장</b>으로 적힌 칸은 자료가 덜 채워진 게 아니라 그 단계에 국내 '
+            '상장 순수 플레이가 없다는 뜻입니다(예: 실리콘 웨이퍼 — SK실트론 비상장). '
+            '수혜주를 찾을 때는 그 칸을 건너뛰고 바로 옆 단계를 보십시오.</p>'
+            f'{note}</div>')
 
     return (f"<!doctype html><html lang='ko'><head><meta charset='utf-8'>"
             f"<meta name='viewport' content='width=device-width,initial-scale=1'>"

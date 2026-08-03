@@ -404,3 +404,41 @@ class TestPriceReviewSurvivesSkippedPairs:
             pytest.skip("lead_lag.json 없음")
         table = json.loads(f.read_text(encoding="utf-8"))["lags"]
         assert report.render_price_review({"price_review": {"cycle_lags": table}})
+
+
+class TestEmptyStageIsLabelledNotLeftBlank:
+    """소속 종목이 0개인 산업은 '아직 안 채운 칸'이 아니다.
+
+    실리콘 웨이퍼가 그렇다 — SK실트론이 비상장이라 국내에 상장 순수 플레이가
+    없다. 다른 칸과 똑같이 그리면 데이터 구멍으로 읽혀서, 있지도 않은 수혜주를
+    찾으러 가게 된다. 최종 목적이 '밸류체인 안에서 수혜주 찾기'라 이 구분이
+    그대로 헛수고와 직결된다.
+    """
+
+    def _pieces(self):
+        flow = {("실리콘 웨이퍼", "반도체"): {"a"}, ("반도체", "서버"): {"a"}}
+        members = {"반도체": {"005930", "000660"}, "서버": {"009150"}}
+        return flow, members
+
+    def test_stage_without_listed_names_is_marked(self):
+        svg, _ = report._vc_map(*self._pieces())
+        assert ">비상장<" in svg
+        assert "stroke-dasharray" in svg
+
+    def test_filled_stage_shows_its_count_instead(self):
+        svg, _ = report._vc_map(*self._pieces())
+        assert ">2<" in svg and ">1<" in svg
+
+    def test_markup_stays_valid_svg(self):
+        """따옴표를 엔티티로 흘리면 속성이 통째로 깨진다 — 실제로 한 번 그랬다."""
+        import re
+        import xml.etree.ElementTree as ET
+        svg, _ = report._vc_map(*self._pieces())
+        ET.fromstring(svg)
+        assert "&quot;" not in re.sub(r">[^<]*<", "><", svg), "속성 안에 엔티티가 남았다"
+
+    def test_page_explains_what_the_label_means(self):
+        h = report.render_valuechain(
+            TestValuechainTabIsADiagram()._edges(),
+            TestValuechainTabIsADiagram.NAMES)
+        assert "국내 상장 순수 플레이가 없다" in h
