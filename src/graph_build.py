@@ -251,8 +251,19 @@ def build_persistent(universe: Universe, asof: str) -> tuple[list[dict], dict]:
     """
     vc_edges, report = from_valuechain(universe, asof)
     prof_edges, prof_report = from_profiles(universe, asof)
+
+    # 회사 간 거래도 **여기서** 만들어 같이 저장한다. 저장된 추출 결과에서
+    # 나오는 영속 자산이라 밸류체인·프로필과 성격이 같다.
+    #
+    # 파이프라인에서 따로 만들어 붙였더니 화면에 하나도 안 나왔다. 여기서 파일을
+    # 저장한 **뒤에** 병합했고, 리포트는 메모리가 아니라 저장된 파일을 다시 읽기
+    # 때문이다. 만드는 곳과 저장하는 곳이 갈리면 이런 순서 함정이 생긴다.
+    from . import company_chain, dart_extract
+    co_edges, unlisted = company_chain.from_extractions(
+        dart_extract.load_extractions(), universe, asof)
+
     existing = [e for e in G.load() if e.get("source") in PERSISTENT_SOURCES]
-    merged = G.merge(existing, vc_edges, prof_edges)
+    merged = G.merge(existing, vc_edges, prof_edges, co_edges)
 
     # 공시에 품목이 없는 소속 엣지에만 프로필 품목을 얹는다. 공시가 이긴다 —
     # 프로필은 기사·IR 자료라 1차 자료가 있으면 그쪽이 맞다.
@@ -267,12 +278,17 @@ def build_persistent(universe: Universe, asof: str) -> tuple[list[dict], dict]:
                 filled += 1
 
     G.save(merged)
+    trade_pairs = {(e["src"], e["dst"]) for e in merged
+                   if e["src"].startswith("T:") and e["dst"].startswith("T:")}
     report.update(prof_report)
+    report["company_trades"] = len(trade_pairs)
     print(f"수직축 엣지 {len(merged)}개 (밸류체인 {len(vc_edges)}개 반영, "
           f"산업 {len(report['industries'])}개)")
+    print(f"  회사 간 거래 {len(trade_pairs)}건 "
+          f"(공시 {len(co_edges)}엣지 + 프로필 {len(prof_edges)}엣지) / "
+          f"비상장·미확인 거래처 {len({u for v in unlisted.values() for u in v})}곳")
     if prof_report["profiles"]:
-        print(f"  종목 프로필 {prof_report['profiles']}건 — 품목 {filled}개 보충, "
-              f"회사 간 거래 {len(prof_edges)}건")
+        print(f"  종목 프로필 {prof_report['profiles']}건 — 품목 {filled}개 보충")
         if prof_report["unresolved"]:
             print(f"  프로필 미해석: {', '.join(prof_report['unresolved'][:8])}")
     return merged, report

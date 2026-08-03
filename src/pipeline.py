@@ -19,10 +19,7 @@ import yaml
 
 from . import analyze as analyze_mod
 from . import collect as collect_mod
-from . import company_chain
 from . import corr
-from . import dart_extract
-from . import graph as G
 from . import factors as factors_mod
 from . import graph_build
 from . import groups as groups_mod
@@ -98,20 +95,6 @@ def main():
     #    반영된다. 이번 실행의 소속 엣지를 그대로 넘긴다.
     print("== 3/8 수직 그래프 ==")
     persistent, vc_report = graph_build.build_persistent(uni, base_date)
-
-    # 3a. 회사 대 회사 거래. 산업 노드는 '어느 쪽으로 번지는가'까지만 말하고,
-    #     '누구를 사야 하는가'에는 답하지 않는다 — 같은 산업 안에서도 만드는
-    #     물건과 파는 상대가 다르기 때문이다. 공시에 이름이 적힌 거래만 잇는다.
-    company_edges: list[dict] = []
-    stored = dart_extract.load_extractions()
-    if stored:
-        company_edges, unlisted = company_chain.from_extractions(
-            stored, uni, base_date)
-        pairs = {(e["src"], e["dst"]) for e in company_edges}
-        named = len({u for v in unlisted.values() for u in v})
-        print(f"  회사 간 거래 {len(pairs)}건 (공시 {len(stored)}건에서)"
-              f" / 비상장·미확인 거래처 {named}곳")
-        persistent = G.merge(persistent, company_edges)
 
     # 시가총액은 여기서 한 번만 만든다. 시장 요인·산업 수익률·팩터가 모두 쓴다.
     caps = pd.Series({t: e["market_cap"] for t, e in uni.entries.items()
