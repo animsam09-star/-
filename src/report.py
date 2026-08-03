@@ -320,8 +320,12 @@ def render_price_review(analysis: dict, limit: int = 12) -> str:
     # 측정된 것과 건너뛴 것을 갈라야 한다. 구성 종목이 겹쳐 측정을 포기한 쌍은
     # corr 키 자체가 없어서, 섞어서 정렬하면 KeyError로 리포트가 통째로 죽는다.
     # corr.py에는 이 구분을 넣어 두고 여기서만 빠뜨려 실제로 파이프라인이 멈췄다.
-    measured = {k: v for k, v in lags.items() if "lag_months" in v}
-    skipped = {k: v for k, v in lags.items() if "lag_months" not in v}
+    # 반대 방향(mirrored)은 같은 측정의 부호 반전이다. 둘 다 실으면 'A→B +6개월'과
+    # 'B→A −6개월'이 서로 다른 발견인 양 나란히 앉는다.
+    measured = {k: v for k, v in lags.items()
+                if "lag_months" in v and not v.get("mirrored")}
+    skipped = {k: v for k, v in lags.items()
+               if "lag_months" not in v and not v.get("mirrored")}
     if not (measured or weak or cand):
         return ""
 

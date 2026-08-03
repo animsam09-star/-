@@ -69,6 +69,18 @@ LONG_PANEL_DAYS = (MAX_LAG_MONTHS + MIN_OBS_MONTHS + 2) * TRADING_DAYS_PER_MONTH
 WEAK_CORR = 0.15
 
 
+def corr_t(r: float, n: int) -> float:
+    """상관의 t값 |r|·√(n-2)/√(1-r²). 관측 수를 반영한 '증거의 무게'다.
+
+    시차마다 관측 수가 다른데 |r|만으로 비교하면 표본이 얇은 시차가 이긴다.
+    n이 3 미만이거나 |r|이 1이면 비교할 값이 없으므로 0을 돌려준다.
+    """
+    if n < 3:
+        return 0.0
+    r2 = min(abs(float(r)), 0.999999) ** 2
+    return abs(r) * math.sqrt(n - 2) / math.sqrt(1.0 - r2)
+
+
 def industry_returns(close: pd.DataFrame, caps: pd.Series | None,
                      members: dict[str, list[str]],
                      min_members: int = MIN_MEMBERS) -> pd.DataFrame:
@@ -139,8 +151,24 @@ def lead_lag(a: pd.Series, b: pd.Series, max_lag: int = MAX_LAG,
 
     시차는 **관계의 존재가 아니라 타이밍**을 위해 쓴다. 상관이 커서 엣지를
     만드는 게 아니라, 이미 있는 엣지가 언제 전달되는지를 재는 것이다.
+
+    ## 왜 |상관|이 아니라 t값으로 고르는가 — 최대값 선택 편향
+
+    시차를 밀수록 겹치는 구간이 짧아진다. 월간 42개월 패널에서 lag 0은 42개,
+    lag 18은 24개다. 그런데 상관의 표준오차는 대략 1/√(n-3)이라, **관측이 적은
+    시차일수록 잡음만으로도 큰 |상관|이 나온다.** 37개 시차를 훑어 최대값 하나를
+    고르면, 그 최대값은 구조가 아니라 표본이 가장 얇은 경계에서 나오기 쉽다.
+
+    실측이 정확히 그랬다 — 302건 중 경계(±14~18개월)에 116건이 몰렸고, 그
+    구간의 관측 중앙값은 27개월로 가장 적은데 |상관| 중앙값은 0.46으로 lag 1~6
+    구간(0.46)과 다르지 않았다. 구조가 아니라 자유도가 만든 분포다.
+
+    그래서 비교를 t = |r|·√(n-2)/√(1-r²)로 한다. 같은 |상관|이면 관측이 많은
+    쪽이 이긴다. 시차가 얼마든 **같은 증거의 무게**로 견주게 하는 게 목적이지,
+    긴 시차에 벌을 주려는 게 아니다.
     """
     best = (0, 0.0, 0)
+    best_t = -1.0
     for lag in range(-max_lag, max_lag + 1):
         # lag>0: a를 뒤로 밀어 b의 과거와 맞춘다 → a가 선행
         x, y = (a.shift(lag), b) if lag >= 0 else (a, b.shift(-lag))
@@ -150,8 +178,10 @@ def lead_lag(a: pd.Series, b: pd.Series, max_lag: int = MAX_LAG,
         c = pair.iloc[:, 0].corr(pair.iloc[:, 1])
         if pd.isna(c):
             continue
-        if abs(c) > abs(best[1]):
-            best = (lag, float(c), len(pair))
+        t = corr_t(float(c), len(pair))
+        # 동점이면 시차가 짧은 쪽을 남긴다. 같은 근거라면 더 단순한 설명이 낫다.
+        if t > best_t or (t == best_t and abs(lag) < abs(best[0])):
+            best, best_t = (lag, float(c), len(pair)), t
     return best
 
 
@@ -230,6 +260,18 @@ def estimate_cycle_lags(ind_ret_daily: pd.DataFrame, edges: list[dict], *,
     구조적으로 피할 수 없는 경우도 있다 — '후판·강재'는 '철강' 회사들의 제품
     라인이라 소속이 겹치는 게 정상이다. 그런 쌍은 **가격으로 분리할 수 없다**는
     사실을 기록으로 남기고(reason) 시차 추정에서 뺀다.
+
+    ## 한 쌍은 한 번만 잰다
+
+    그래프는 같은 관계를 후방·전방 두 방향으로 저장한다. 방향마다 따로 재면
+    A→B와 B→A가 각각 나오는데, 이 둘은 서로 다른 측정이 아니라 **같은 측정을
+    부호만 뒤집은 것**이다(lead_lag(a,b)의 최적 시차는 lead_lag(b,a)의 부호
+    반전과 같다). 실제로 302건이라던 표는 고유 쌍 148개가 정확히 두 번씩 들어간
+    것이었고, 그래서 시차 분포가 부호에 대해 완벽히 대칭이었다. 건수가 두 배로
+    보이면 표본이 두 배인 줄로 읽힌다.
+
+    한 번만 재고, 반대 방향은 `mirrored`를 달아 부호를 뒤집어 넣는다. 엣지에
+    붙일 때는 두 방향 모두 필요하므로 키는 그대로 둔다.
     """
     monthly = to_monthly(ind_ret_daily)
     members = members or {}
@@ -240,21 +282,26 @@ def estimate_cycle_lags(ind_ret_daily: pd.DataFrame, edges: list[dict], *,
         dk, dn = G.split_node(e["dst"])
         if sk != "I" or dk != "I":
             continue
-        if (sn, dn) in seen or sn not in monthly.columns or dn not in monthly.columns:
+        pair_key = tuple(sorted((sn, dn)))
+        if pair_key in seen or sn not in monthly.columns or dn not in monthly.columns:
             continue
-        seen.add((sn, dn))
+        seen.add(pair_key)
 
         ov = member_overlap(members.get(sn, []), members.get(dn, []))
         if ov >= max_overlap:
-            out[f"{sn}→{dn}"] = {"skipped": "구성 중복", "overlap": round(ov, 2)}
+            skip = {"skipped": "구성 중복", "overlap": round(ov, 2)}
+            out[f"{sn}→{dn}"] = skip
+            out[f"{dn}→{sn}"] = {**skip, "mirrored": True}
             continue
 
         lag, c, n = cycle_lead_lag(monthly[sn], monthly[dn],
                                    max_lag_months=max_lag_months,
                                    min_obs_months=min_obs_months)
         if n:
-            out[f"{sn}→{dn}"] = {"lag_months": lag, "corr": round(c, 3), "obs": n,
-                                 "overlap": round(ov, 2)}
+            row = {"lag_months": lag, "corr": round(c, 3), "obs": n,
+                   "overlap": round(ov, 2)}
+            out[f"{sn}→{dn}"] = row
+            out[f"{dn}→{sn}"] = {**row, "lag_months": -lag, "mirrored": True}
     return out
 
 
@@ -415,8 +462,12 @@ def render_markdown(table: dict, asof: str, panel_days: int) -> str:
         head += ["측정된 시차가 없습니다. 패널이 짧거나 산업별 소속 종목이 부족합니다.", ""]
         return "\n".join(head)
 
-    measured = {k: v for k, v in table.items() if "lag_months" in v}
-    skipped = {k: v for k, v in table.items() if "lag_months" not in v}
+    # 반대 방향(mirrored)은 같은 측정의 부호 반전이다. 표에 둘 다 실으면 건수가
+    # 두 배로 보이고, 읽는 쪽은 근거가 두 배인 줄 안다.
+    measured = {k: v for k, v in table.items()
+                if "lag_months" in v and not v.get("mirrored")}
+    skipped = {k: v for k, v in table.items()
+               if "lag_months" not in v and not v.get("mirrored")}
 
     head += ["| 선행 산업 | 후행 산업 | 시차 | 상관 | 소속 겹침 | 관측(개월) |",
              "|---|---|---:|---:|---:|---:|"]
@@ -481,8 +532,11 @@ def main() -> None:
     MD_FILE.write_text(render_markdown(table, base, len(dates)), encoding="utf-8")
 
     print(f"\n사이클 시차 {len(table)}건 → {out}, {MD_FILE}")
-    measured = {k: v for k, v in table.items() if "lag_months" in v}
-    skipped = {k: v for k, v in table.items() if "lag_months" not in v}
+    measured = {k: v for k, v in table.items()
+                if "lag_months" in v and not v.get("mirrored")}
+    skipped = {k: v for k, v in table.items()
+               if "lag_months" not in v and not v.get("mirrored")}
+    print(f"  고유 쌍 {len(measured)}개 측정 (반대 방향은 부호만 뒤집어 함께 저장)")
     for k, v in sorted(measured.items(), key=lambda kv: -abs(kv[1]["corr"]))[:25]:
         arrow = "선행" if v["lag_months"] > 0 else ("후행" if v["lag_months"] < 0 else "동행")
         print(f"  {k:44} {v['lag_months']:+3d}개월({arrow})  "

@@ -317,3 +317,97 @@ class TestOverlappingMembershipIsNotAFinding:
         assert "가격으로 분리할 수 없는 쌍" in md
         assert "철강 → 후판·강재" in md
         assert "소속 겹침" in md
+
+
+class TestMaximumSelectionBiasAtTheWindowEdge:
+    """37개 시차를 훑어 |상관| 최대값을 고르면 표본이 가장 얇은 경계가 이긴다.
+
+    실측이 그랬다 — 302건 중 경계(±14~18개월)에 116건이 몰렸고, 그 구간의 관측
+    중앙값은 27개월(가장 적음)인데 |상관| 중앙값은 0.46으로 lag 1~6 구간과
+    다르지 않았다. 구조가 만든 분포가 아니라 자유도가 만든 분포다.
+    """
+
+    def test_t_value_rewards_observations_at_equal_correlation(self):
+        assert corr.corr_t(0.5, 40) > corr.corr_t(0.5, 25)
+
+    def test_t_value_still_rewards_correlation_at_equal_observations(self):
+        assert corr.corr_t(0.6, 30) > corr.corr_t(0.3, 30)
+
+    def test_degenerate_inputs_do_not_explode(self):
+        assert corr.corr_t(0.5, 2) == 0.0
+        assert corr.corr_t(1.0, 30) > 0        # 1.0에서도 유한한 값
+
+    @staticmethod
+    def _max_abs_corr(a, b, max_lag, min_obs):
+        """이 파일이 고친 옛 규칙: |상관|이 가장 큰 시차를 그대로 고른다."""
+        best = (0, 0.0, 0)
+        for lag in range(-max_lag, max_lag + 1):
+            x, y = (a.shift(lag), b) if lag >= 0 else (a, b.shift(-lag))
+            pair = pd.concat([x, y], axis=1).dropna()
+            if len(pair) < min_obs:
+                continue
+            c = pair.iloc[:, 0].corr(pair.iloc[:, 1])
+            if not pd.isna(c) and abs(c) > abs(best[1]):
+                best = (lag, float(c), len(pair))
+        return best
+
+    def test_thin_edge_correlation_loses_to_thicker_interior(self):
+        """경계에서 잡음으로 뜬 큰 |상관|이 안쪽의 진짜 신호를 이기면 안 된다.
+
+        실제 설정(월 42개월 패널, 최대 시차 18, 최소 관측 24)에 시차 3을 심었다.
+        옛 규칙은 관측 30개짜리 시차 12(|r|=0.45)를 고르고, t값 규칙은 관측
+        39개짜리 시차 3(|r|=0.42)을 고른다. 상관은 옛쪽이 크지만 증거는 새쪽이
+        두껍다 — 그리고 새쪽이 심어 둔 답이다.
+        """
+        rng = np.random.default_rng(3)
+        a = pd.Series(rng.normal(0, 1, 42))
+        b = a.shift(3) * 0.45 + pd.Series(rng.normal(0, 1, 42))
+
+        old_lag, old_c, old_n = self._max_abs_corr(a, b, 18, 24)
+        assert old_lag == 12 and old_n < 32, "옛 규칙의 실패 방식이 바뀌었다"
+
+        lag, c, obs = corr.lead_lag(a, b, max_lag=18, min_obs=24)
+        assert lag == 3, f"심어 둔 시차 3 대신 {lag}이 뽑혔다 (corr={c:.2f}, n={obs})"
+        assert abs(c) < abs(old_c), "상관은 더 작은데 관측이 많아 이겼다는 게 요점이다"
+        assert obs > old_n
+
+    def test_ties_prefer_the_shorter_lag(self):
+        """같은 근거라면 더 단순한 설명을 남긴다."""
+        a = pd.Series([1.0, -1.0] * 40)         # 주기 2 — lag 0과 lag 2가 동일
+        lag, c, n = corr.lead_lag(a, a, max_lag=6, min_obs=30)
+        assert lag == 0
+
+
+class TestOneMeasurementPerPair:
+    """그래프는 같은 관계를 후방·전방 두 방향으로 저장한다. 방향마다 따로 재면
+    건수가 두 배로 보이고, 읽는 쪽은 표본이 두 배인 줄 안다. 실제로 '302건'이라던
+    표는 고유 쌍 148개가 두 번씩 들어간 것이었다 — 그래서 시차 분포가 부호에 대해
+    완벽히 대칭이었다.
+    """
+
+    def _both_directions(self):
+        return [
+            G.make_edge(G.industry_node("조선"), G.industry_node("조선 기자재"),
+                        G.REL_DOWNSTREAM, "valuechain", asof="20260728"),
+            G.make_edge(G.industry_node("조선 기자재"), G.industry_node("조선"),
+                        G.REL_UPSTREAM, "valuechain", asof="20260728"),
+        ]
+
+    def test_reverse_direction_is_the_same_measurement_negated(self, cycle_world):
+        table = corr.estimate_cycle_lags(cycle_world, self._both_directions())
+        fwd, rev = table["조선→조선 기자재"], table["조선 기자재→조선"]
+        assert fwd["lag_months"] == -rev["lag_months"]
+        assert fwd["corr"] == rev["corr"] and fwd["obs"] == rev["obs"]
+        assert rev["mirrored"] is True and "mirrored" not in fwd
+
+    def test_both_directions_still_attach_to_their_edges(self, cycle_world):
+        """중복을 없앤다고 반대 방향 엣지가 시차를 잃으면 안 된다."""
+        edges = self._both_directions()
+        out = corr.attach_cycle_lags(edges, corr.estimate_cycle_lags(cycle_world, edges))
+        assert out[0]["cycle_lag_months"] == 6
+        assert out[1]["cycle_lag_months"] == -6
+
+    def test_report_counts_unique_pairs_not_mirrors(self, cycle_world):
+        table = corr.estimate_cycle_lags(cycle_world, self._both_directions())
+        md = corr.render_markdown(table, "20260731", 924)
+        assert "총 1건" in md, "거울상까지 세어 건수를 부풀렸다"
