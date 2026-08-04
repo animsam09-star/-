@@ -172,3 +172,42 @@ class TestIndustryVocabularyHasNoTickers:
         got = dart_extract.known_industries(edges)
         assert "철강" in got and "조선" in got
         assert not any(v.isdigit() for v in got), f"티커가 섞였다: {got}"
+
+
+class TestDigestFindsProductsWhereverTheyAre:
+    """다이제스트가 비면 '자료가 없다'로 읽히지만, 대개는 '못 찾은 것'이다.
+
+    99종목을 훑는 동안 두 건을 건너뛸 뻔했다.
+
+      티엑스알로보틱스 — '사업의 개요'가 [주요 용어 해설] PLC·HMI·센서 설명으로
+                        시작한다. 앞에서 900자를 자르니 용어집만 남고 정작
+                        '물류자동화 및 로봇자동화 솔루션 전문기업'은 잘렸다.
+      바이오비쥬       — 남은 절이 통째로 '주요 제품 등의 가격 변동 추이'였다.
+                        DROP 정규식이 '가격변동추이'만 막고 있어 띄어쓴 제목이
+                        빠져나갔고, 다이제스트에 숫자만 남았다.
+
+    둘 다 원문에는 제품이 또렷이 적혀 있었다. 요약이 비었다고 자료가 없는 게 아니다.
+    """
+
+    def test_spaced_price_table_heading_is_dropped(self):
+        assert dart_extract._MEMBERSHIP_DROP.search("나. 주요 제품 등의 가격 변동 추이")
+        assert dart_extract._MEMBERSHIP_DROP.search("가격변동추이")
+
+    def test_glossary_heading_is_dropped(self):
+        assert dart_extract._MEMBERSHIP_DROP.search("[주요 용어 해설]")
+        assert not dart_extract._MEMBERSHIP_DROP.search("주요 제품 및 서비스")
+
+    def test_window_is_chosen_by_content_not_position(self):
+        """배경·정의를 앞에 길게 깔고 본론을 뒤에 두는 보고서가 흔하다."""
+        glossary = "PLC 논리연산 순서조작 타이머 카운터 정의 " * 30
+        meat = "당사는 물류자동화 솔루션 전문기업으로 휠소터를 제조 판매 공급하고 있습니다 "
+        got = dart_extract._best_window(glossary + meat, 300)
+        assert "휠소터" in got, "앞에서 잘라 본론을 놓쳤다"
+
+    def test_short_text_is_returned_whole(self):
+        assert dart_extract._best_window("당사는 타이어를 제조합니다", 300) == \
+            "당사는 타이어를 제조합니다"
+
+    def test_window_never_returns_empty(self):
+        """단서가 하나도 없어도 뭔가는 돌려줘야 한다 — 빈 값은 '자료 없음'으로 읽힌다."""
+        assert dart_extract._best_window("가나다라마바사" * 100, 50)

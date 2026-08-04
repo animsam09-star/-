@@ -681,7 +681,40 @@ def fetch_only(tickers: list[str], cfg: dict) -> dict:
 
 
 _MEMBERSHIP_KEEP = re.compile(r"사업의\s*개요|사업\s*개요|주요\s*제품|제품\s*및\s*서비스|매출실적")
-_MEMBERSHIP_DROP = re.compile(r"생산설비|생산\s*및\s*설비|유형자산|무형자산|가격변동추이")
+# 공백에 관대해야 한다. '가격변동추이'만 막고 있었더니 '주요 제품 등의 가격 변동
+# 추이'가 그대로 통과해, 바이오비쥬의 다이제스트가 통째로 가격표가 됐다 —
+# 제품명이 아니라 숫자만 남아서 '제품을 못 찾음'으로 보였다.
+_MEMBERSHIP_DROP = re.compile(
+    r"생산\s*설비|생산\s*및\s*설비|유형\s*자산|무형\s*자산|가격\s*변동\s*추이|"
+    r"용어\s*해설|용어\s*설명|주요\s*용어")
+
+# '이 회사가 무엇을 파는가'를 가리키는 표현. 창을 고를 때 밀도로 쓴다.
+_PRODUCT_CUE = re.compile(
+    r"제조|생산|판매|공급|영위|주력|전문\s*기업|주요\s*제품|품\s*목|사업부문|"
+    r"솔루션|서비스를\s*제공")
+
+
+def _best_window(text: str, budget: int) -> str:
+    """제품 단서가 가장 촘촘한 구간을 고른다. 앞에서 자르지 않는다.
+
+    티엑스알로보틱스의 '사업의 개요'는 [주요 용어 해설] PLC·HMI·센서 설명으로
+    시작한다. 앞에서 900자를 자르면 용어집만 남고, 정작 필요한 '물류자동화 및
+    로봇자동화 솔루션 전문기업' 한 줄은 잘려 나간다. 실제로 그래서 이 종목을
+    '제품을 못 찾음'으로 넘길 뻔했다.
+
+    보고서는 앞에 배경·정의를 길게 깔고 본론을 뒤에 두는 경우가 흔하다.
+    위치가 아니라 내용으로 골라야 한다.
+    """
+    if len(text) <= budget:
+        return text
+    step = max(1, budget // 4)
+    best, best_score = text[:budget], -1
+    for start in range(0, len(text) - budget + step, step):
+        w = text[start:start + budget]
+        score = len(_PRODUCT_CUE.findall(w))
+        if score > best_score:
+            best, best_score = w, score
+    return best
 
 
 def membership_digest(section: str, budget: int = 1200) -> str:
@@ -706,9 +739,9 @@ def membership_digest(section: str, budget: int = 1200) -> str:
         if _MEMBERSHIP_DROP.search(title) or not _MEMBERSHIP_KEEP.search(title):
             continue
         end = marks[i + 1][0] if i + 1 < len(marks) else len(section)
-        out.append(section[pos:end].strip()[:900])
+        out.append(_best_window(section[pos:end].strip(), 900))
     text = "\n\n".join(out).strip()
-    return (text or section)[:budget]
+    return _best_window(text or section, budget)
 
 
 def load_sections() -> dict[str, dict]:
