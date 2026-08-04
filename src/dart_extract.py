@@ -999,6 +999,19 @@ def screening_tickers(top_n: int, base_date: str | None = None) -> list[str]:
     have = mapped_tickers()
     todo = [r for r in rows if r["ticker"] not in have]
 
+    # 절을 이미 받아 둔 종목은 다시 받지 않는다. 매핑이 안 됐을 뿐 자료는 있다.
+    #
+    # 매핑 여부로만 걸렀더니 지주회사·금융처럼 '자료는 받았지만 밸류체인 소속이
+    # 성립하지 않아 건너뛴' 종목이 매 사이클 다시 대상이 됐다. 실측으로 148건을
+    # 받았는데 새 파일은 50개뿐이었다 — 3분의 2가 재수집이었다.
+    #
+    # 이건 조회 대상에서만 빼는 것이지 '끝났다'는 뜻이 아니다. 절이 있는데 아직
+    # 소속이 없는 종목은 따로 세어 알린다 — 그쪽은 공시를 더 받을 게 아니라
+    # 읽어서 매핑하면 되는 몫이다.
+    fetched = {p.stem for p in SECTIONS_DIR.glob("*.json")} if SECTIONS_DIR.exists() else set()
+    pending = [r for r in todo if r["ticker"] in fetched]
+    todo = [r for r in todo if r["ticker"] not in fetched]
+
     # 뽑아 봐야 나올 게 없는 종목을 먼저 걷어낸다. 둘 다 시총 순 상위를
     # 차지하고 있어서, 안 걷어내면 예산이 통째로 여기로 간다.
     pref = [r for r in todo if _PREFERRED_NAME.search(r["name"] or "")]
@@ -1013,10 +1026,14 @@ def screening_tickers(top_n: int, base_date: str | None = None) -> list[str]:
     todo.sort(key=lambda r: (r["ticker"] not in seen, -r["market_cap"]))
     hit = sum(1 for r in todo if r["ticker"] in seen)
 
-    print(f"스크리닝 유니버스 {len(rows)}종목 · 이미 매핑 {len(rows) - len(pref) - len(fin) - len(todo)}종목")
+    mapped = len(rows) - len(pref) - len(fin) - len(pending) - len(todo)
+    print(f"스크리닝 유니버스 {len(rows)}종목 · 이미 매핑 {mapped}종목")
     print(f"  제외 — 우선주 {len(pref)}종목(본주 소속을 물려받음), "
           f"밸류체인 없는 업종 {len(fin)}종목(금융·지주·스팩)")
-    print(f"  대상 {len(todo)}종목 중 상위 {min(top_n, len(todo))}종목 "
+    if pending:
+        print(f"  절은 확보했으나 아직 소속 없음 {len(pending)}종목 — 조회가 아니라 "
+              f"읽어서 매핑할 몫이다(--digest로 확인)")
+    print(f"  새로 조회할 대상 {len(todo)}종목 중 상위 {min(top_n, len(todo))}종목 "
           f"(과거 후보였던 {hit}종목을 앞에 둠)")
     return [r["ticker"] for r in todo[:top_n]]
 

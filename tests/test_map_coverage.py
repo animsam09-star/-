@@ -24,6 +24,9 @@ def universe_file(tmp_path, monkeypatch):
     # ROOT도 함께 옮긴다 — 안 옮기면 저장소의 실제 cases/*.json을 읽어
     # 과거 후보 우선순위가 끼어들고, 테스트가 저장소 상태에 따라 흔들린다.
     monkeypatch.setattr(dart_extract, "ROOT", tmp_path)
+    # 절 디렉터리도 옮긴다 — 안 옮기면 저장소의 실제 data/dart_sections를 보고
+    # '이미 받았다'로 걸러져 대상이 통째로 빈다.
+    monkeypatch.setattr(dart_extract, "SECTIONS_DIR", tmp_path / "sections")
     (tmp_path / "screen_universe_20260731.json").write_text(json.dumps({
         "base_date": "20260731",
         "tickers": [
@@ -107,6 +110,7 @@ class TestBudgetIsNotSpentOnStocksWithNoValuechain:
     def _universe(self, tmp_path, monkeypatch, rows):
         monkeypatch.setattr(dart_extract, "DATA_DIR", tmp_path)
         monkeypatch.setattr(dart_extract, "ROOT", tmp_path)
+        monkeypatch.setattr(dart_extract, "SECTIONS_DIR", tmp_path / "sections")
         (tmp_path / "screen_universe_20260731.json").write_text(
             json.dumps({"base_date": "20260731", "tickers": rows},
                        ensure_ascii=False), encoding="utf-8")
@@ -261,3 +265,46 @@ class TestRelationsNeedAnAnchorIndustry:
         rels = {(e["src"], e["dst"], e["rel"]) for e in got}
         assert ("I:타이어", "I:완성차", G.REL_DOWNSTREAM) in rels
         assert ("I:완성차", "I:타이어", G.REL_UPSTREAM) in rels, "양방향이어야 한다"
+
+
+class TestAlreadyFetchedSectionsAreNotRefetched:
+    """매핑 여부로만 거르면 '자료는 있는데 아직 안 읽은' 종목을 매번 다시 받는다.
+
+    실측: 150종목을 요청해 148건을 받았는데 새 파일은 50개뿐이었다. 3분의 2가
+    재수집이다. 원인은 지주회사·금융처럼 절은 받아 뒀지만 밸류체인 소속이
+    성립하지 않아 건너뛴 종목이 매 사이클 다시 대상이 되기 때문이다.
+
+    조회에서 빼는 것과 '끝났다'는 다르다. 절이 있는데 소속이 없는 종목은 따로
+    세어 알린다 — 그쪽은 공시를 더 받을 게 아니라 읽어서 매핑할 몫이다.
+    """
+
+    def _world(self, tmp_path, monkeypatch, fetched):
+        monkeypatch.setattr(dart_extract, "DATA_DIR", tmp_path)
+        monkeypatch.setattr(dart_extract, "ROOT", tmp_path)
+        monkeypatch.setattr(dart_extract, "SECTIONS_DIR", tmp_path / "sections")
+        (tmp_path / "sections").mkdir()
+        for t in fetched:
+            (tmp_path / "sections" / f"{t}.json").write_text("{}", encoding="utf-8")
+        (tmp_path / "screen_universe_20260731.json").write_text(json.dumps({
+            "base_date": "20260731",
+            "tickers": [
+                {"ticker": "005930", "name": "삼성전자", "market_cap": 900, "avg_turnover": 9},
+                {"ticker": "058610", "name": "에스피지", "market_cap": 300, "avg_turnover": 5},
+                {"ticker": "119850", "name": "지엔씨에너지", "market_cap": 200, "avg_turnover": 4},
+            ]}, ensure_ascii=False), encoding="utf-8")
+        monkeypatch.setattr(dart_extract.graph_build.G, "load", lambda *a, **k: [])
+
+    def test_fetched_tickers_are_skipped(self, tmp_path, monkeypatch):
+        self._world(tmp_path, monkeypatch, fetched=["005930", "058610"])
+        assert dart_extract.screening_tickers(10) == ["119850"]
+
+    def test_pending_count_is_reported_separately(self, tmp_path, monkeypatch, capsys):
+        """조용히 빼면 '왜 매핑이 안 늘지'를 알 수 없다."""
+        self._world(tmp_path, monkeypatch, fetched=["005930", "058610"])
+        dart_extract.screening_tickers(10)
+        out = capsys.readouterr().out
+        assert "아직 소속 없음 2종목" in out
+
+    def test_nothing_fetched_yet_targets_everything(self, tmp_path, monkeypatch):
+        self._world(tmp_path, monkeypatch, fetched=[])
+        assert len(dart_extract.screening_tickers(10)) == 3
