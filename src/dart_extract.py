@@ -717,13 +717,27 @@ def _best_window(text: str, budget: int) -> str:
     if len(text) <= budget:
         return text
     step = max(1, budget // 4)
-    best, best_score = text[:budget], -1
+    best, best_score = text[:budget], -1.0
     for start in range(0, len(text) - budget + step, step):
         w = text[start:start + budget]
-        score = len(_PRODUCT_CUE.findall(w))
+        # '당사·회사'는 보고서를 낸 회사 자신을 가리킨다. 사업보고서에는 경쟁사·
+        # 계열사 이야기도 길게 나오는데, 제품 단서 밀도만 보면 그쪽 문단이 이길
+        # 수 있다. 실제로 덕산네오룩스(OLED 유기재료)의 다이제스트가 계열사
+        # 터보기계 문단으로 잡혔다 — 자기 이야기를 우대해 자리를 되돌린다.
+        #
+        # 그리고 **뒤로 갈수록 벌점**을 준다. '사업의 개요'의 첫 문단은 거의
+        # 언제나 자기 소개다. 밀도만 보면 뒤쪽 계열사·시장 서술이 이기는데,
+        # 그건 대개 이 회사가 뭘 파는지와 무관하다. 뒤쪽 창이 이기려면 앞쪽보다
+        # 확실히 나아야 한다는 뜻이고, 그게 실제 보고서 구조와 맞는다.
+        span = max(1, len(text) - budget)
+        score = (len(_PRODUCT_CUE.findall(w)) + 0.5 * len(_SELF_REF.findall(w))
+                 - 3.0 * (start / span))
         if score > best_score:
             best, best_score = w, score
     return best
+
+
+_SELF_REF = re.compile(r"당사|당행|연결실체|연결회사")
 
 
 def membership_digest(section: str, budget: int = 1200) -> str:
