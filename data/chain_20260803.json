@@ -1,0 +1,368 @@
+{
+ "251970": {
+  "products": [
+   {
+    "industry": "화장품 용기·부자재",
+    "product": "화장품 펌프·용기·튜브",
+    "quote": "화장품 용기를 전문으로 펌프 및 용기류, 튜브류, 콤팩트류, 스포이드류, 스틱류 등의 용기를 제조판매",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "화장품",
+    "quote": "주요 고객은 국내외 화장품완제품 Brand 업체, ODM / OEM 업체, Sales Partner사 등이며",
+    "tier": "B",
+    "customer": "화장품 완제품 브랜드 업체",
+    "segment": "화장품 용기·부자재"
+   },
+   {
+    "industry": "화장품 ODM",
+    "quote": "주요 고객은 국내외 화장품완제품 Brand 업체, ODM / OEM 업체, Sales Partner사 등이며",
+    "tier": "B",
+    "customer": "화장품 ODM/OEM 업체",
+    "segment": "화장품 용기·부자재"
+   }
+  ],
+  "unmapped": ""
+ },
+ "192820": {
+  "products": [
+   {
+    "industry": "화장품 ODM",
+    "product": "화장품 ODM/OEM(기초·색조)",
+    "quote": "자체 개발 화장품과 주문 화장품을 생산 ㆍ 납품",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "화장품",
+    "quote": "자체 개발 화장품과 주문 화장품을 생산 ㆍ 납품하고 있습니다",
+    "tier": "C",
+    "customer": "화장품 브랜드사(주문 생산)",
+    "segment": "화장품 ODM"
+   }
+  ],
+  "unmapped": ""
+ },
+ "241710": {
+  "products": [
+   {
+    "industry": "화장품 ODM",
+    "product": "화장품 ODM/OEM",
+    "quote": "코스메카코리아는 화장품 ODM/OEM 기업으로서",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "화장품",
+    "quote": "글로벌 선두 기업을 포함한 국내외 다수의 화장품 브랜드 업체를 고객사로 확보",
+    "tier": "B",
+    "customer": "국내외 화장품 브랜드 업체",
+    "segment": "화장품 ODM"
+   }
+  ],
+  "unmapped": ""
+ },
+ "068790": {
+  "products": [
+   {
+    "industry": "디스플레이 장비",
+    "product": "습식공정 세정장비(HDC)",
+    "quote": "디스플레이 패널 제작의 핵심인 습식 공정(Wet Process) 장비 전반을 다루고 있으며",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "디스플레이",
+    "quote": "디스플레이 패널 제작의 핵심인 습식 공정(Wet Process) 장비 전반을 다루고 있으며",
+    "tier": "B",
+    "customer": "디스플레이 패널 제조사",
+    "segment": "디스플레이 장비"
+   }
+  ],
+  "unmapped": ""
+ },
+ "034220": {
+  "products": [
+   {
+    "industry": "디스플레이",
+    "product": "OLED·TFT-LCD 패널",
+    "quote": "OLED 및 TFT-LCD등 디스플레이 기술을 활용한 관련 제품의 연구, 개발, 제조, 판매",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "서버·전자기기",
+    "quote": "Global Set Maker가 주된 고객으로, 상위 10개 고객사향 매출이 전체 매출의 약 92%를 차지",
+    "tier": "A",
+    "customer": "글로벌 세트 제조사",
+    "segment": "디스플레이"
+   }
+  ],
+  "unmapped": ""
+ },
+ "399720": {
+  "products": [
+   {
+    "industry": "반도체 설계",
+    "product": "시스템 반도체 설계(디자인하우스)",
+    "quote": "시스템 반도체 설계 전문 기업으로, 삼성 파운드리의 공식 디자인 솔루션 파트너",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "반도체",
+    "quote": "디자인 솔루션 기업은 팹리스(Fabless)와 파운드리(Foundry) 사이에서 가교 역할을 수행하며",
+    "tier": "B",
+    "customer": "파운드리·팹리스 고객사",
+    "segment": "반도체 설계"
+   }
+  ],
+  "unmapped": ""
+ },
+ "009150": {
+  "products": [
+   {
+    "industry": "기판·패키징",
+    "product": "반도체 패키지기판",
+    "quote": "반도체패키지기판을 생산하는 패키지솔루션 사업부문",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "서버·전자기기",
+    "quote": "당사는 스마트폰, 전장용, PC, 디스플레이, TV 부품 등을 생산, 판매하고 있습니다",
+    "tier": "B",
+    "customer": "스마트폰·PC·TV 세트",
+    "segment": "기판·패키징"
+   },
+   {
+    "industry": "자동차 부품·모듈",
+    "quote": "당사는 스마트폰, 전장용, PC, 디스플레이, TV 부품 등을 생산, 판매하고 있습니다",
+    "tier": "B",
+    "customer": "전장 고객사",
+    "segment": "기판·패키징"
+   }
+  ],
+  "unmapped": ""
+ },
+ "332570": {
+  "products": [
+   {
+    "industry": "부품·구동·광학",
+    "product": "전력증폭기 모듈(PAM)·RF FEM",
+    "quote": "이동통신용 단말기에 탑재되는 전력증폭기 모듈(Power Amplifier Module, 약칭 PAM) 개발, 제조 및 판매",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "서버·전자기기",
+    "quote": "당사의 제품은 모바일용 RFFE와 차량용 RFFE, 자동화 장비 부문으로 매출을 인식하고 있습니다",
+    "tier": "B",
+    "customer": "스마트폰 세트 제조사",
+    "segment": "부품·구동·광학"
+   },
+   {
+    "industry": "자동차 부품·모듈",
+    "quote": "당사의 제품은 모바일용 RFFE와 차량용 RFFE, 자동화 장비 부문으로 매출을 인식하고 있습니다",
+    "tier": "B",
+    "customer": "차량용 RFFE 고객사",
+    "segment": "부품·구동·광학"
+   }
+  ],
+  "unmapped": ""
+ },
+ "264850": {
+  "products": [
+   {
+    "industry": "부품·구동·광학",
+    "product": "감속모터·노즐·댐퍼·펌프",
+    "quote": "주요 제품 노즐, 댐퍼 ,펌프 외 감속모터 , 모티스 , 스테핑모터 외",
+    "tier": "A",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "가전",
+    "quote": "감속모터 각종 전자제품에 적용되는 기어드 모터로주로 디지털도어록에 공급",
+    "tier": "A",
+    "customer": "생활가전·도어록 제조사",
+    "segment": "부품·구동·광학"
+   }
+  ],
+  "unmapped": ""
+ },
+ "413630": {
+  "products": [
+   {
+    "industry": "산업자동화",
+    "product": "케이블체인·플렉시블 튜브(케이블 보호장치)",
+    "quote": "케이블 보호용?케이블체인(CABLE CHAIN), 플렉시블 튜브(CPSFLEX)",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "반도체",
+    "quote": "반도체, 디스플레이, 2차전지, 자동차, 조선, 철도, 로봇 등 다양한 산업군에 제품을 공급",
+    "tier": "B",
+    "customer": "반도체 장비·공정",
+    "segment": "산업자동화"
+   },
+   {
+    "industry": "디스플레이",
+    "quote": "반도체, 디스플레이, 2차전지, 자동차, 조선, 철도, 로봇 등 다양한 산업군에 제품을 공급",
+    "tier": "B",
+    "customer": "디스플레이 공정",
+    "segment": "산업자동화"
+   },
+   {
+    "industry": "이차전지",
+    "quote": "반도체, 디스플레이, 2차전지, 자동차, 조선, 철도, 로봇 등 다양한 산업군에 제품을 공급",
+    "tier": "B",
+    "customer": "2차전지 제조 설비",
+    "segment": "산업자동화"
+   },
+   {
+    "industry": "조선",
+    "quote": "반도체, 디스플레이, 2차전지, 자동차, 조선, 철도, 로봇 등 다양한 산업군에 제품을 공급",
+    "tier": "B",
+    "customer": "조선 설비",
+    "segment": "산업자동화"
+   },
+   {
+    "industry": "철도차량",
+    "quote": "반도체, 디스플레이, 2차전지, 자동차, 조선, 철도, 로봇 등 다양한 산업군에 제품을 공급",
+    "tier": "B",
+    "customer": "철도 차량·설비",
+    "segment": "산업자동화"
+   }
+  ],
+  "unmapped": ""
+ },
+ "119850": {
+  "products": [
+   {
+    "industry": "산업용 엔진·발전기",
+    "product": "비상·상용 발전기, 바이오가스 발전",
+    "quote": "비상 및 상용 발전기 사업과 바이오가스 발전사업을 주력으로",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "데이터센터·건설",
+    "quote": "DC(데이터센터), R&D센터, 발전소 및 플랜트, 대형 복합쇼핑몰, 주택 및 일반 건축물 등 다양한 수요처를 확보",
+    "tier": "B",
+    "customer": "데이터센터",
+    "segment": "산업용 엔진·발전기"
+   },
+   {
+    "industry": "유틸리티·발전",
+    "quote": "DC(데이터센터), R&D센터, 발전소 및 플랜트, 대형 복합쇼핑몰, 주택 및 일반 건축물 등 다양한 수요처를 확보",
+    "tier": "B",
+    "customer": "발전소 및 플랜트",
+    "segment": "산업용 엔진·발전기"
+   },
+   {
+    "industry": "건설·EPC",
+    "quote": "DC(데이터센터), R&D센터, 발전소 및 플랜트, 대형 복합쇼핑몰, 주택 및 일반 건축물 등 다양한 수요처를 확보",
+    "tier": "B",
+    "customer": "일반 건축물·복합쇼핑몰",
+    "segment": "산업용 엔진·발전기"
+   }
+  ],
+  "unmapped": ""
+ },
+ "073240": {
+  "products": [
+   {
+    "industry": "타이어",
+    "product": "승용·트럭·버스용 타이어",
+    "quote": "타이어 제조, 판매 기업입니다",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [
+   {
+    "industry": "석유화학",
+    "quote": "합성고무 410,199 24.7 금호석유화학, LG화학 외",
+    "tier": "A",
+    "material": "합성고무",
+    "segment": "타이어",
+    "cost_share": null
+   },
+   {
+    "industry": "석유화학",
+    "quote": "카본블랙 202,462 12.2 BCK, OCI, OEC 외",
+    "tier": "A",
+    "material": "카본블랙",
+    "segment": "타이어",
+    "cost_share": null
+   }
+  ],
+  "downstream": [
+   {
+    "industry": "완성차",
+    "quote": "타이어 제조, 판매 기업입니다",
+    "tier": "C",
+    "customer": "신차용(OE) 타이어 공급",
+    "segment": "타이어"
+   }
+  ],
+  "unmapped": ""
+ },
+ "161390": {
+  "products": [
+   {
+    "industry": "타이어",
+    "product": "승용·트럭·버스·산업차량용 타이어",
+    "quote": "타이어 승용차,트럭,버스산업차량용 HANKOOK VENTUS",
+    "tier": "A",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "완성차",
+    "quote": "제품이 개발되어 생산되는 시점에 가격이 결정되며 완성차업체의 사양변경 등으로 다소 변동되는 추세임",
+    "tier": "B",
+    "customer": "완성차업체(OE)",
+    "segment": "타이어"
+   }
+  ],
+  "unmapped": ""
+ }
+}

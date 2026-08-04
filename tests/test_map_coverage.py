@@ -211,3 +211,53 @@ class TestDigestFindsProductsWhereverTheyAre:
     def test_window_never_returns_empty(self):
         """단서가 하나도 없어도 뭔가는 돌려줘야 한다 — 빈 값은 '자료 없음'으로 읽힌다."""
         assert dart_extract._best_window("가나다라마바사" * 100, 50)
+
+
+class TestRelationsNeedAnAnchorIndustry:
+    """관계는 '어느 산업에서 출발하는가'가 있어야 만들 수 있다.
+
+    출발 산업은 products(소속)에서 나온다. 소속과 관계를 다른 파일로 나눴더니
+    관계 파일의 products가 비어, 인용 검증을 24건 통과하고도 엣지가 0개로
+    나왔다. 아무 말도 없어서 원인을 찾는 데 한 사이클이 들었다.
+    """
+
+    def _vocab(self):
+        return dart_extract.IndustryVocab(["타이어", "완성차"])
+
+    def test_relations_without_products_produce_nothing(self, capsys):
+        got = dart_extract.to_edges("073240", {
+            "products": [],
+            "upstream": [], "unmapped": "",
+            "downstream": [{"industry": "완성차", "quote": "완성차업체에 공급",
+                            "tier": "B", "customer": "완성차", "segment": "타이어"}],
+        }, self._vocab(), "20260731")
+        assert got == []
+
+    def test_it_says_why_instead_of_failing_silently(self, capsys):
+        dart_extract.to_edges("073240", {
+            "products": [],
+            "upstream": [], "unmapped": "",
+            "downstream": [{"industry": "완성차", "quote": "완성차업체에 공급",
+                            "tier": "B", "customer": "완성차", "segment": "타이어"}],
+        }, self._vocab(), "20260731")
+        out = capsys.readouterr().out
+        assert "products" in out and "073240" in out
+
+    def test_no_noise_when_there_is_nothing_to_relate(self, capsys):
+        """관계도 없고 소속도 없으면 할 말이 없다 — 경고는 신호일 때만 값이 있다."""
+        dart_extract.to_edges("073240", {"products": [], "upstream": [],
+                                         "downstream": [], "unmapped": ""},
+                              self._vocab(), "20260731")
+        assert capsys.readouterr().out == ""
+
+    def test_with_products_the_relation_is_built(self):
+        got = dart_extract.to_edges("073240", {
+            "products": [{"industry": "타이어", "quote": "타이어를 제조합니다",
+                          "tier": "B", "product": "타이어", "revenue_share": None}],
+            "upstream": [], "unmapped": "",
+            "downstream": [{"industry": "완성차", "quote": "완성차업체에 공급",
+                            "tier": "B", "customer": "완성차", "segment": "타이어"}],
+        }, self._vocab(), "20260731")
+        rels = {(e["src"], e["dst"], e["rel"]) for e in got}
+        assert ("I:타이어", "I:완성차", G.REL_DOWNSTREAM) in rels
+        assert ("I:완성차", "I:타이어", G.REL_UPSTREAM) in rels, "양방향이어야 한다"

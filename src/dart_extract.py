@@ -383,6 +383,15 @@ def to_edges(ticker: str, extraction: dict, vocab: IndustryVocab,
             evidence=f"{evidence_prefix}{str(p['quote'])[:150]}", asof=asof))
 
     if not products:
+        # 관계는 '어느 산업에서 출발하는가'가 있어야 만들 수 있고, 그 산업은
+        # products에서 나온다. 그런데 조용히 빈 목록을 돌려주면 인용 검증을
+        # 24건 통과하고도 엣지가 0개인 상태가 아무 말 없이 나온다 — 실제로
+        # 소속과 관계를 파일로 나눴다가 한 사이클을 그렇게 날렸다.
+        n = len(extraction.get("upstream") or []) + len(extraction.get("downstream") or [])
+        if n:
+            print(f"  {ticker}: 후방·전방 {n}건이 있으나 products가 비어 있어 "
+                  f"관계를 붙일 기준 산업이 없습니다 — 같은 추출에 소속(products)을 "
+                  f"함께 넣어야 합니다", flush=True)
         return edges
     # 기준 산업 = 매출 비중이 가장 큰 산업. 비중이 없으면 첫 항목.
     with_share = [p for p in products.values() if p["share"] is not None]
