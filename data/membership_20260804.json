@@ -1,0 +1,1080 @@
+{
+ "0009K0": {
+  "products": [
+   {
+    "industry": "제약·바이오",
+    "product": "ADC 기반 항암제",
+    "quote": "항체-약물 접합체(ADC, Antibody-Drug Conjugate) 기반 항암제를 개발하는 글로벌 혁신 신약개발 바이오텍",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "006280": {
+  "products": [
+   {
+    "industry": "제약·바이오",
+    "product": "혈액제제·백신제제",
+    "quote": "혈액제제와 백신제제를 필두로 전문의약품, OTC제제 등의 의약품을 제조 및 판매",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "009420": {
+  "products": [
+   {
+    "industry": "제약·바이오",
+    "product": "합성의약품·바이오신약",
+    "quote": "주요 사업은 합성의약품과 바이오의약품의 연구개발 및 제조, 판매이며",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "068760": {
+  "products": [
+   {
+    "industry": "제약·바이오",
+    "product": "전문의약품(정제·경질캡슐제)",
+    "quote": "정제, 경질캡슐제 등의 전문의약품(전문의의 진단과 처방이 필요)을 생산",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "069620": {
+  "products": [
+   {
+    "industry": "제약·바이오",
+    "product": "전문의약품",
+    "quote": "의약품 생산 및 판매를 주요 사업으로 영위",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "087010": {
+  "products": [
+   {
+    "industry": "제약·바이오",
+    "product": "약효지속성 개량신약(SmartDepot)",
+    "quote": "당사의 기반기술인 SmartDepot 기술(초음파분무건조기술)을 적용",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "096530": {
+  "products": [
+   {
+    "industry": "제약·바이오",
+    "product": "분자진단 시약·장비",
+    "quote": "질환의 원인을 검출하는 분자진단 사업에 주력",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "140410": {
+  "products": [
+   {
+    "industry": "제약·바이오",
+    "product": "단심실증·폐동맥고혈압 치료제",
+    "quote": "설립 이래로 글로벌 신약 개발에 주력하고 있습니다",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "226950": {
+  "products": [
+   {
+    "industry": "제약·바이오",
+    "product": "RNA간섭(siRNA) 신약",
+    "quote": "RNA간섭(RNA interference; RNAi) 플랫폼 기술을 기반으로",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "237690": {
+  "products": [
+   {
+    "industry": "제약·바이오",
+    "product": "올리고뉴클레오타이드 원료의약품(CDMO)",
+    "quote": "주요 제품은 신약 원료의약품이며 세부적으로 RNA 치료제의 주원료인 올리고",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "302440": {
+  "products": [
+   {
+    "industry": "제약·바이오",
+    "product": "백신 위탁개발생산(CDMO)",
+    "quote": "위탁개발생산 계약(CDMO) 및 기술도입(License-in) 계약을 체결했습니다",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "310210": {
+  "products": [
+   {
+    "industry": "제약·바이오",
+    "product": "표적항암 신약(초기 임상)",
+    "quote": "폐암 및 유방암 등 항암제 분야 표적치료제 개발에 집중",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "347850": {
+  "products": [
+   {
+    "industry": "제약·바이오",
+    "product": "GLP-1 경구 전환 플랫폼(ORALINK)",
+    "quote": "제제로 전환시키는 플랫폼 기술(ORALINK) 등 약물전달기술을 활용하여",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "214370": {
+  "products": [
+   {
+    "industry": "제약·바이오",
+    "product": "펩타이드·성장인자 단백질",
+    "quote": "펩타이드(Biomimetic Peptide)와 성장인자 단백질(Growth Factor)에 대한 연구 개발을 기반으로",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "145020": {
+  "products": [
+   {
+    "industry": "의료기기",
+    "product": "보툴리눔 톡신(보툴렉스)·필러(더채움)",
+    "quote": "Toxin 보툴렉스 230,499 54.22%",
+    "tier": "A",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "214150": {
+  "products": [
+   {
+    "industry": "의료기기",
+    "product": "미용 의료기기(HIFU·RF)·소모품",
+    "quote": "미용목적을 위한 의료기기 사업을 영위",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "290650": {
+  "products": [
+   {
+    "industry": "의료기기",
+    "product": "인체조직이식재(무세포동종진피 MegaDerm)",
+    "quote": "대표 제품은 무세포동종진피(ADM: Acellular Dermal Matrix) MegaDerm",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "095610": {
+  "products": [
+   {
+    "industry": "전공정 장비",
+    "product": "PECVD 증착·건식식각 장비",
+    "quote": "반도체 소자 생산에 필요한 전공정 장비 제조를 주력사업으로 영위",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "089970": {
+  "products": [
+   {
+    "industry": "전공정 장비",
+    "product": "건식 식각장비(Dry Etcher)",
+    "quote": "반도체 제조 전공정 장비인 건식 식각장비(Dry Etcher) 제조업체",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "281820": {
+  "products": [
+   {
+    "industry": "전공정 장비",
+    "product": "CMP·Wet Cleaning 장비, CMP 슬러리",
+    "quote": "반도체 장비 제품으로는 CMP, Wet Cleaning System이 있으며",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "403870": {
+  "products": [
+   {
+    "industry": "전공정 장비",
+    "product": "고압 수소 어닐링 장비(GENI-SYS)",
+    "quote": "당사의 GENI-SYS 장비는 전 세계 고압 관련 인증을 획득한 유일한 고압 수소 어닐링 장비",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "140860": {
+  "products": [
+   {
+    "industry": "전공정 장비",
+    "product": "원자현미경(AFM) 나노계측장비",
+    "quote": "첨단 나노계측장비인 원자현미경(Atomic Force Microscope)을 개발, 생산하여",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "031980": {
+  "products": [
+   {
+    "industry": "후공정·HBM 장비",
+    "product": "반도체 패키징 장비(Descum·Reflow)",
+    "quote": "반도체 장비(패키징 장비)의 제조와 판매",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "067310": {
+  "products": [
+   {
+    "industry": "후공정·HBM 장비",
+    "product": "반도체 패키징·실리콘 파츠",
+    "quote": "반도체 제품(패키징) 생산 및 반도체 재료(반도체 식각공정용 실리콘 Part)제품의 생산을 주요 사업으로 영위",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "095340": {
+  "products": [
+   {
+    "industry": "후공정·HBM 장비",
+    "product": "반도체 테스트 소켓",
+    "quote": "주력사업은 반도체 칩을 테스트하는 반도체테스트 소켓",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "131290": {
+  "products": [
+   {
+    "industry": "후공정·HBM 장비",
+    "product": "프로브카드·인터페이스 보드·테스트 소켓",
+    "quote": "반도체 검사장비 Probe Card, Interface Board, Test Socket",
+    "tier": "A",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "420770": {
+  "products": [
+   {
+    "industry": "후공정·HBM 장비",
+    "product": "반도체 기판 자동광학검사기(AOI/AOR)",
+    "quote": "반도체 기판 자동광학검사기(AOI: Automatic Optical Inspection) 및 자동광학수리기(AOR: Automatic Optical Repair)를 제작/판매",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "098460": {
+  "products": [
+   {
+    "industry": "후공정·HBM 장비",
+    "product": "3D SPI 납도포 검사기",
+    "quote": "3D SPI 와 연계하는 AI 솔루션을 활용해 3D SPI 시장 내 경쟁력을 더욱 강화",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "080220": {
+  "products": [
+   {
+    "industry": "반도체 설계",
+    "product": "모바일 메모리(NAND MCP·CRAM·DRAM)",
+    "quote": "주로 모바일용 메모리를 생산, 공급하고 있습니다",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "011170": {
+  "products": [
+   {
+    "industry": "석유화학",
+    "product": "PE·PP 등 기초유분·합성수지",
+    "quote": "납사 분해설비 등을 통해 생산되는 에틸렌, 프로필렌, Xylene류의 기초 유분",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "011780": {
+  "products": [
+   {
+    "industry": "석유화학",
+    "product": "합성고무(SBR·BR·NBR)·합성수지",
+    "quote": "합성고무 SBR, BR, NBR, LATEX 등",
+    "tier": "A",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "457190": {
+  "products": [
+   {
+    "industry": "석유화학",
+    "product": "정밀화학(TDM·IPA)·황화리튬",
+    "quote": "TDM, NOM/NDM, IPA, Special Solvent 등 정밀화학제품의 생산 및 판매업",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "120110": {
+  "products": [
+   {
+    "industry": "석유화학",
+    "product": "산업자재(타이어코드·아라미드)·화학소재",
+    "quote": "산업자재군, 화학소재군, 패션군, 기타사업군으로 구성",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "014680": {
+  "products": [
+   {
+    "industry": "소재(전구체·특수가스·CMP)",
+    "product": "과산화수소·정밀화학 소재",
+    "quote": "반도체, 디스플레이, 제지 및 섬유에 사용되는 과산화수소",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "298020": {
+  "products": [
+   {
+    "industry": "석유화학",
+    "product": "스판덱스·폴리에스터/나일론 원사",
+    "quote": "스판덱스,폴리에스터원사,나이론 원사,직물/염색",
+    "tier": "A",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "010170": {
+  "products": [
+   {
+    "industry": "통신장비·케이블",
+    "product": "광섬유·광케이블·OPGW",
+    "quote": "국내유일 광섬유-광케이블 일관생산체제를 갖춘 업체로서 통신 및 전력 케이블 제조업을 영위",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "060370": {
+  "products": [
+   {
+    "industry": "통신장비·케이블",
+    "product": "해저·지중 케이블 시공 및 유지보수",
+    "quote": "해저케이블과 지중케이블의 시공 및 유지보수 사업을 영위",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "336260": {
+  "products": [
+   {
+    "industry": "신재생",
+    "product": "발전용 연료전지 기자재·장기유지보수",
+    "quote": "핵심 사업은 발전용 연료전지 사업으로, 발전용 연료전지 기자재 공급",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "032820": {
+  "products": [
+   {
+    "industry": "원전 기자재",
+    "product": "원전 제어시스템·해상풍력·방위",
+    "quote": "시스템사업, SOC사업, 임대사업, 해상풍력사업, 스마트팜사업, 방위사업",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "082920": {
+  "products": [
+   {
+    "industry": "이차전지",
+    "product": "리튬 일차전지(고온전지·앰플전지)",
+    "quote": "배터리 및 리튬전지의 생산 및 판매 등을 주 영업목적으로",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "108490": {
+  "products": [
+   {
+    "industry": "산업자동화",
+    "product": "로봇 액추에이터(다이나믹셀)·자율주행로봇",
+    "quote": "액츄에이터 37,829,622,435(97.14%)",
+    "tier": "A",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "319400": {
+  "products": [
+   {
+    "industry": "산업자동화",
+    "product": "물류자동화 설비·승강장안전문(PSD)",
+    "quote": "각 장비의 원활한 운영을 위한 자동창고 운영 프로그램",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "022100": {
+  "products": [
+   {
+    "industry": "산업자동화",
+    "product": "공장자동화(전기·계측·제어)·IT서비스",
+    "quote": "자동화(전기/계측/제어기술을 활용한 공장자동화), IT서비스",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "017800": {
+  "products": [
+   {
+    "industry": "승강기",
+    "product": "엘리베이터·에스컬레이터·무빙워크",
+    "quote": "엘리베이터, 에스컬레이터, 무빙워크 등을 생산, 판매, 설치 및 유지보수 하는 운반기계산업을 영위",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "097230": {
+  "products": [
+   {
+    "industry": "조선",
+    "product": "상선(유조선·컨테이너선)·특수선",
+    "quote": "유조선, 컨테이너선, 벌크선, 가스선 등 국내 및 해외 선주로부터 수주받은 선박을 건조하는 사업",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "439260": {
+  "products": [
+   {
+    "industry": "조선",
+    "product": "원유·석유제품 운반선(Aframax·Suezmax)",
+    "quote": "중형(Aframax) 및 준대형(Suezmax) 선박의 설계 및 건조에 특화된 기업",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "000240": {
+  "products": [
+   {
+    "industry": "자동차 부품·모듈",
+    "product": "축전지(자동차용 배터리)",
+    "quote": "축전지 제조 및 판매를 핵심 사업으로 하고",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "007340": {
+  "products": [
+   {
+    "industry": "자동차 부품·모듈",
+    "product": "방진부품·자동차용 튜브·축전지",
+    "quote": "지주회사 및 자동차용 부품, 튜브, 축전지 제조, 판매",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "004370": {
+  "products": [
+   {
+    "industry": "식음료",
+    "product": "라면·스낵·생수·음료",
+    "quote": "심으로 생수, 탄산음료 및 주스 카테고리에서 점유율 확대에 주력",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "007310": {
+  "products": [
+   {
+    "industry": "식음료",
+    "product": "조미식품·라면·냉동식품",
+    "quote": "식품 제조 및 판매 (주)오뚜기오뚜기냉동식품",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "006040": {
+  "products": [
+   {
+    "industry": "식음료",
+    "product": "참치통조림·수산·식품가공",
+    "quote": "식품가공유통부문 제/상품 참치통조림 외 식용 동원참치 외",
+    "tier": "A",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "026960": {
+  "products": [
+   {
+    "industry": "식음료",
+    "product": "커피·다류·식자재",
+    "quote": "제조부문 포장재, 다류, 커피제품 포장/판매",
+    "tier": "A",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "097950": {
+  "products": [
+   {
+    "industry": "식음료",
+    "product": "설탕·밀가루·식용유·바이오(아미노산)",
+    "quote": "식품 설탕, 밀가루, 식용유 등 11,522,251 42%",
+    "tier": "A",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "007070": {
+  "products": [
+   {
+    "industry": "유통·리테일",
+    "product": "편의점(GS25)·수퍼마켓·홈쇼핑",
+    "quote": "소매유통업으로 편의점 GS25, 수퍼마켓 GS THE FRESH, 홈쇼핑 GS SHOP 등을 운영",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "282330": {
+  "products": [
+   {
+    "industry": "유통·리테일",
+    "product": "편의점(CU) 프랜차이즈",
+    "quote": "당사만의 PB상품, 24시간 콜센터 운영 등 편의점 관련 시스템",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "139480": {
+  "products": [
+   {
+    "industry": "유통·리테일",
+    "product": "대형마트·창고형 할인점",
+    "quote": "있는 플랫폼 기반의 서비스를 제공하고 있습니다",
+    "tier": "C",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "069960": {
+  "products": [
+   {
+    "industry": "유통·리테일",
+    "product": "백화점·면세점",
+    "quote": "백화점 부문(현대시티몰 가든파이브점 외 4개 점포) 및 면세점 부문",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "257720": {
+  "products": [
+   {
+    "industry": "유통·리테일",
+    "product": "K-뷰티 글로벌 유통(StyleKorean)",
+    "quote": "2B 전용 주문 플랫폼(StyleKorean Wholesale) 을 각각 운영",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "005440": {
+  "products": [
+   {
+    "industry": "유통·리테일",
+    "product": "단체급식·식자재·홈쇼핑",
+    "quote": "푸드서비스업 ㆍ단체급식 등 1,112,762",
+    "tier": "A",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "008770": {
+  "products": [
+   {
+    "industry": "호텔·면세",
+    "product": "면세점(TR)·호텔·레저",
+    "quote": "TR부문, 호텔&레저부문으로 2개 사업부문을 영위",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "161890": {
+  "products": [
+   {
+    "industry": "화장품 ODM",
+    "product": "화장품 ODM·제약·건강기능식품",
+    "quote": "H&B 컨디션, 헛개수, 홍삼진 등 건강기능식품",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "007390": {
+  "products": [
+   {
+    "industry": "화장품",
+    "product": "줄기세포배양액 화장품(닥터쥬크르)·건강음료",
+    "quote": "양액 원료 화장품 라인을 개발, 판매하는 사업을 영위",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "081660": {
+  "products": [
+   {
+    "industry": "의류·패션",
+    "product": "FILA 등 패션 브랜드, Titleist 골프용품",
+    "quote": "Misto 부문은 'FILA', 'Alife', 'Pairs'를 포함한 자체 브랜드",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "383220": {
+  "products": [
+   {
+    "industry": "의류·패션",
+    "product": "DISCOVERY·MLB 등 패션 브랜드",
+    "quote": "라이센스 브랜드인 DISCOVERY, MLB, MLB KIDS 및 자체브랜드인 DUVETICA, SUPRA를 생산 및 판매",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "009970": {
+  "products": [
+   {
+    "industry": "의류·패션",
+    "product": "아웃도어·스포츠 의류 OEM, SCOTT",
+    "quote": "제조OEM 상품제품 아웃도어/스포츠 의류신발, Backpack 등",
+    "tier": "A",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "192080": {
+  "products": [
+   {
+    "industry": "게임",
+    "product": "소셜카지노·캐주얼 게임",
+    "quote": "다양한 소셜카지노, 캐주얼 게임을 개발 및 서비스",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "251270": {
+  "products": [
+   {
+    "industry": "게임",
+    "product": "모바일 게임 개발·퍼블리싱",
+    "quote": "연결실체는 모바일 게임 개발 및 퍼블리싱 사업을 영위",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "263750": {
+  "products": [
+   {
+    "industry": "게임",
+    "product": "PC·콘솔 게임(검은사막·EVE)",
+    "quote": "게임소프트웨어의 개발 및 퍼블리싱 사업 등을 영위",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "462870": {
+  "products": [
+   {
+    "industry": "게임",
+    "product": "모바일·콘솔 게임 개발",
+    "quote": "글로벌 게임 개발사로 게임 개발을 주요 사업으로 영위",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "035900": {
+  "products": [
+   {
+    "industry": "엔터테인먼트",
+    "product": "음반·음원 제작, 아티스트 매니지먼트",
+    "quote": "사업부문은 음반사업과 매니지먼트사업으로 분류",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "041510": {
+  "products": [
+   {
+    "industry": "엔터테인먼트",
+    "product": "음반·음원, 매니지먼트, 광고",
+    "quote": "연결기준 매출 중 엔터테인먼트 사업부문의 매출 비중이 93.7%",
+    "tier": "A",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "030000": {
+  "products": [
+   {
+    "industry": "광고·마케팅",
+    "product": "광고 기획·제작, 매체 대행",
+    "quote": "광고업을 주요 사업으로 광고주의 마케팅 성과 극대화 니즈에 알맞은 다양한 마케팅 솔루션을 제시",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "035250": {
+  "products": [
+   {
+    "industry": "레저·카지노",
+    "product": "카지노·리조트 운영",
+    "quote": "카지노 부문, 숙박, 레저 등의 리조트 부문, 기타 부문",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "023590": {
+  "products": [
+   {
+    "industry": "IT서비스·SI",
+    "product": "메시징(뿌리오)·시스템 구축",
+    "quote": "문자메세지, 이메일, 팩스, 우편 등을 대량발송하는 '뿌리오'",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "012750": {
+  "products": [
+   {
+    "industry": "보안·바이오인식",
+    "product": "물리보안·출동경비·부동산 관리",
+    "quote": "시큐리티 사업은 크게 물리보안과 디지털보안 분야로 구분",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "489790": {
+  "products": [
+   {
+    "industry": "보안·바이오인식",
+    "product": "영상보안(CCTV)·시큐리티 솔루션",
+    "quote": "사업지주회사로서 시큐리티 부문의 사업을 직접 영위",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "001120": {
+  "products": [
+   {
+    "industry": "물류·포워딩",
+    "product": "종합상사·물류(해운·포워딩)",
+    "quote": "SCFI (Shanghai Containerized Freight Index)",
+    "tier": "C",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ }
+}
