@@ -24,59 +24,133 @@ ROOT = Path(__file__).resolve().parent.parent
 REPORTS_DIR = ROOT / "reports"
 
 CSS = """
-:root { --bg:#f6f6f9; --card:#fff; --fg:#16161f; --muted:#6a6a80; --line:#e4e4ee;
-        --up:#c0392b; --down:#2471a3; --accent:#5b4b8a; --chip:#efeaf9;
-        --good:#1e8449; --warn:#b7791f; --grid:#f0f0f6; }
+/* 색·간격·그림자를 토큰으로 모아 둔다. 값을 여기저기 흩어 두면 화면마다
+   조금씩 다른 회색이 생기고, 그게 '칙칙하다'는 인상의 실제 원인이 된다. */
+:root {
+  --bg:#f7f8fc; --bg-2:#eef0f8; --card:#fff; --card-2:#fafbff;
+  --fg:#111827; --fg-2:#374151; --muted:#6b7280; --line:#e6e8f0; --line-2:#eef0f6;
+  /* 한국 시장 관행: 상승 빨강 / 하락 파랑. 바꾸면 오히려 오독을 부른다. */
+  --up:#d92d20; --down:#1570ef; --accent:#5145cd; --accent-2:#7a5af8;
+  --chip:#eeecfd; --good:#079455; --warn:#b54708; --grid:#f1f2f8;
+  --shadow-sm:0 1px 2px rgba(16,24,40,.05);
+  --shadow:0 1px 3px rgba(16,24,40,.08), 0 6px 16px -6px rgba(16,24,40,.08);
+  --shadow-lg:0 2px 6px rgba(16,24,40,.06), 0 18px 40px -12px rgba(16,24,40,.16);
+  --r:14px; --r-sm:10px;
+}
 @media (prefers-color-scheme: dark) {
-  :root { --bg:#101018; --card:#1b1b26; --fg:#e9e9f2; --muted:#9494ab; --line:#2f2f43;
-          --up:#ff7f6d; --down:#69b4ff; --accent:#ad9bea; --chip:#2a2340;
-          --good:#4ade80; --warn:#fbbf24; --grid:#22222f; } }
+  :root {
+    --bg:#0b0c14; --bg-2:#11121c; --card:#151725; --card-2:#1a1c2c;
+    --fg:#eceef6; --fg-2:#c7cad8; --muted:#8b8fa6; --line:#262a3d; --line-2:#202333;
+    --up:#ff8a7a; --down:#7cb8ff; --accent:#a5a0ff; --accent-2:#c4b5fd;
+    --chip:#232043; --good:#4ade80; --warn:#fbbf24; --grid:#1b1e2c;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+    --shadow:0 1px 3px rgba(0,0,0,.5), 0 8px 20px -8px rgba(0,0,0,.6);
+    --shadow-lg:0 2px 8px rgba(0,0,0,.5), 0 22px 48px -14px rgba(0,0,0,.75);
+  }
+}
 * { box-sizing:border-box; margin:0; }
-body { background:var(--bg); color:var(--fg);
-       font-family:'Apple SD Gothic Neo','Malgun Gothic',-apple-system,sans-serif;
-       line-height:1.6; padding:0 0 48px; }
-main { max-width:1080px; margin:0 auto; padding:0 16px; }
-header { background:var(--card); border-bottom:1px solid var(--line); padding:22px 16px 16px;
-         margin-bottom:22px; }
-header .inner { max-width:1080px; margin:0 auto; }
-h1 { font-size:1.45rem; letter-spacing:-.01em; }
-h2 { font-size:1.1rem; margin:34px 0 12px; color:var(--accent);
-     display:flex; align-items:center; gap:8px; }
+html { -webkit-text-size-adjust:100%; }
+body {
+  background:
+    radial-gradient(1100px 520px at 12% -8%, var(--bg-2) 0%, transparent 62%),
+    var(--bg);
+  color:var(--fg);
+  font-family:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,
+              'Apple SD Gothic Neo','Segoe UI','Malgun Gothic',system-ui,sans-serif;
+  /* 숫자를 표에서 세로로 맞춘다. 수익률·갭을 눈으로 비교하는 화면이라
+     자릿수가 흔들리면 읽는 속도가 그대로 떨어진다. */
+  font-variant-numeric:tabular-nums;
+  line-height:1.62; letter-spacing:-.003em; padding:0 0 64px;
+  -webkit-font-smoothing:antialiased;
+}
+main { max-width:1120px; margin:0 auto; padding:0 20px; }
+
+header {
+  background:linear-gradient(180deg, var(--card) 0%, var(--card-2) 100%);
+  border-bottom:1px solid var(--line); padding:26px 20px 20px; margin-bottom:26px;
+  box-shadow:var(--shadow-sm);
+}
+header .inner { max-width:1120px; margin:0 auto; }
+h1 { font-size:1.6rem; font-weight:750; letter-spacing:-.022em; }
+h2 { font-size:1.06rem; font-weight:700; margin:38px 0 14px; color:var(--fg);
+     display:flex; align-items:center; gap:10px; letter-spacing:-.012em; }
+h2::before { content:''; width:3px; height:1.05em; border-radius:2px;
+             background:linear-gradient(180deg,var(--accent),var(--accent-2)); }
 h2::after { content:''; flex:1; height:1px; background:var(--line); }
-h3 { font-size:1.02rem; margin-bottom:6px; }
+h3 { font-size:1rem; font-weight:650; margin-bottom:6px; letter-spacing:-.01em; }
 .sub { color:var(--muted); font-size:.88rem; }
-a { color:var(--accent); }
+a { color:var(--accent); text-decoration-color:color-mix(in srgb,var(--accent) 35%,transparent);
+    text-underline-offset:2px; }
+a:hover { text-decoration-color:currentColor; }
 
-/* KPI 스트립 — 오늘 무슨 일이 있었는지 한 줄로 */
-.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(132px,1fr)); gap:10px;
-        margin-top:14px; }
-.kpi { background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
-.kpi .v { font-size:1.35rem; font-weight:700; line-height:1.2; }
-.kpi .l { font-size:.74rem; color:var(--muted); }
+/* KPI — 오늘 무슨 일이 있었는지 한 줄로 */
+.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px;
+        margin-top:18px; }
+.kpi { position:relative; background:var(--card); border:1px solid var(--line);
+       border-radius:var(--r-sm); padding:13px 15px 12px; box-shadow:var(--shadow-sm);
+       overflow:hidden; }
+.kpi::before { content:''; position:absolute; inset:0 auto auto 0; width:100%; height:2px;
+               background:linear-gradient(90deg,var(--accent),var(--accent-2)); opacity:.85; }
+.kpi .v { font-size:1.5rem; font-weight:750; line-height:1.15; letter-spacing:-.02em; }
+.kpi .l { font-size:.74rem; color:var(--muted); margin-top:1px; }
 
-nav.jump { display:flex; flex-wrap:wrap; gap:6px; margin-top:14px; }
-nav.jump a { font-size:.78rem; background:var(--chip); color:var(--accent);
-             border-radius:99px; padding:3px 11px; text-decoration:none; }
+nav.jump { display:flex; flex-wrap:wrap; gap:7px; margin-top:16px; }
+nav.jump a { font-size:.78rem; background:var(--chip); color:var(--accent); font-weight:600;
+             border-radius:99px; padding:4px 13px; text-decoration:none;
+             border:1px solid transparent; transition:border-color .15s, transform .15s; }
+nav.jump a:hover { border-color:color-mix(in srgb,var(--accent) 30%,transparent);
+                   transform:translateY(-1px); }
 
-.card { background:var(--card); border:1px solid var(--line); border-radius:12px;
-        padding:16px 18px; margin-bottom:12px; }
-.grid2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:12px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:var(--r);
+        padding:18px 20px; margin-bottom:14px; box-shadow:var(--shadow);
+        transition:box-shadow .18s, transform .18s, border-color .18s; }
+.card:hover { box-shadow:var(--shadow-lg); border-color:color-mix(in srgb,var(--accent) 18%,var(--line)); }
+.grid2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(330px,1fr)); gap:14px; }
 .chip { display:inline-block; background:var(--chip); color:var(--accent); border-radius:99px;
-        padding:1px 10px; font-size:.76rem; margin-left:6px; vertical-align:middle; }
-.up { color:var(--up); font-weight:600; } .down { color:var(--down); font-weight:600; }
+        padding:2px 11px; font-size:.75rem; font-weight:650; margin-left:7px;
+        vertical-align:middle; letter-spacing:0; }
+.up { color:var(--up); font-weight:650; } .down { color:var(--down); font-weight:650; }
 .muted { color:var(--muted); font-size:.85rem; }
-table { width:100%; border-collapse:collapse; font-size:.86rem; }
-th,td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); white-space:nowrap; }
-th { color:var(--muted); font-weight:600; }
+
+table { width:100%; border-collapse:separate; border-spacing:0; font-size:.86rem; }
+th,td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line-2);
+        white-space:nowrap; }
+thead th { position:sticky; top:0; z-index:1; background:var(--card);
+           color:var(--muted); font-weight:650; font-size:.78rem; letter-spacing:.01em;
+           border-bottom:1px solid var(--line); }
+tbody tr { transition:background .12s; }
+tbody tr:hover { background:var(--grid); }
+tr:last-child td { border-bottom:none; }
 td.wide { white-space:normal; }
-.scroll { overflow-x:auto; }
-.path { border-left:3px solid var(--accent); padding:6px 12px; margin:8px 0; }
-ul.dates { list-style:none; } ul.dates li { padding:6px 0; border-bottom:1px solid var(--line); }
-.badge-mi { color:var(--good); font-weight:600; } .badge-gi { color:var(--muted); }
+.scroll { overflow-x:auto; border-radius:var(--r-sm); }
+/* 스크롤 상자 안의 그림은 줄이지 않는다. 공통 규칙(svg{max-width:100%})에 걸리면
+   1,758px짜리 사슬이 1,080px로 눌려 12.5px 글자가 8px가 되고 아무것도 안 읽힌다.
+   지도(.map)에 같은 고침을 해 놓고 산업 카드의 사슬에는 빠뜨려서, 타이어 카드가
+   6단계로 늘어난 순간 글자가 통째로 뭉갰다. 가로로 넓은 그림은 줄일 게 아니라
+   스크롤할 것이다. */
+.scroll > svg { max-width:none; width:auto; }
+
+.path { border-left:3px solid var(--accent); border-radius:0 var(--r-sm) var(--r-sm) 0;
+        background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 6%,transparent),transparent 60%);
+        padding:9px 14px; margin:10px 0; }
+ul.dates { list-style:none; }
+ul.dates li { padding:9px 2px; border-bottom:1px solid var(--line-2); }
+ul.dates li:last-child { border-bottom:none; }
+.badge-mi { color:var(--good); font-weight:650; } .badge-gi { color:var(--muted); }
+
 svg { display:block; max-width:100%; height:auto; }
-.legend { display:flex; gap:14px; flex-wrap:wrap; font-size:.76rem; color:var(--muted);
-          margin:6px 0 2px; }
-.legend i { display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:4px; }
+.legend { display:flex; gap:16px; flex-wrap:wrap; font-size:.76rem; color:var(--muted);
+          margin:8px 0 2px; }
+.legend i { display:inline-block; width:9px; height:9px; border-radius:3px; margin-right:5px; }
+
+@media (max-width:640px) {
+  main { padding:0 14px; }
+  h1 { font-size:1.35rem; }
+  .card { padding:15px 15px; border-radius:12px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  * { transition:none !important; }
+}
 """
 
 
@@ -143,7 +217,7 @@ def _ripple_svg(source: str, paths: list[dict], max_bens: int = 4) -> str:
            f'aria-label="{_esc(source)} 파급 경로">']
 
     # 왼쪽: 출발 종목
-    out.append(f'<rect x="{x_src}" y="{mid - 15:.0f}" width="180" height="30" rx="7" '
+    out.append(f'<rect x="{x_src}" y="{mid - 15:.0f}" width="180" height="30" rx="9" '
                f'fill="var(--chip)" stroke="var(--accent)"/>'
                f'<text x="{x_src + 90}" y="{mid + 5:.0f}" text-anchor="middle" '
                f'font-size="13" font-weight="600" fill="var(--accent)">{_esc(source[:14])}</text>')
@@ -809,8 +883,9 @@ def _vc_box(x: float, y: float, name: str, members: list[str], *,
     fill = "var(--chip)" if accent else "var(--card)"
     stroke = "var(--accent)" if accent else "var(--line)"
     weight = "700" if accent else "500"
-    out = [f'<rect x="{x}" y="{y}" width="{_VC_BOX_W}" height="46" rx="8" '
-           f'fill="{fill}" stroke="{stroke}" stroke-width="{2 if accent else 1}"/>',
+    out = [f'<rect class="{"self" if accent else "peer"}" x="{x}" y="{y}" '
+           f'width="{_VC_BOX_W}" height="46" rx="11" '
+           f'fill="{fill}" stroke="{stroke}" stroke-width="{2 if accent else 1.2}"/>',
            f'<text x="{x + _VC_BOX_W / 2}" y="{y + 19}" text-anchor="middle" '
            f'font-size="12.5" font-weight="{weight}" fill="var(--fg)">'
            f'{_esc(name[:13])}</text>']
@@ -829,11 +904,12 @@ def _vc_link(x1: float, y1: float, x2: float, y2: float, strength: int) -> str:
     몇 개 회사가 독립적으로 같은 말을 했는지가 이 그래프에서 가장 믿을 만한
     품질 신호라, 그걸 굵기로 드러낸다. 숫자를 읽지 않아도 눈에 들어온다.
     """
-    w = min(4.0, 1.0 + strength * 0.7)
-    op = min(0.85, 0.35 + strength * 0.15)
+    w = min(4.2, 1.2 + strength * 0.7)
+    op = min(0.8, 0.32 + strength * 0.14)
     mx = (x1 + x2) / 2
     return (f'<path d="M{x1} {y1} C {mx} {y1}, {mx} {y2}, {x2} {y2}" fill="none" '
-            f'stroke="var(--accent)" stroke-width="{w:.1f}" opacity="{op:.2f}"/>')
+            f'stroke="var(--accent)" stroke-width="{w:.1f}" stroke-linecap="round" '
+            f'opacity="{op:.2f}"/>')
 
 
 def _vc_map(flow, members: dict, guessed: dict | None = None) -> tuple[str, int]:
@@ -905,7 +981,7 @@ def _vc_map(flow, members: dict, guessed: dict | None = None) -> tuple[str, int]
             f'tabindex="0" role="button" aria-label="{_esc(n)} 자세히 보기">'
             f'<title>{_esc(n)} · 소속 {cnt}종목 · '
             f'후방 {len(up_all.get(n, ()))} / 전방 {len(down_all.get(n, ()))}</title>'
-            f'<rect x="{x}" y="{y}" width="{_MAP_BOX_W}" height="{_MAP_BOX_H}" rx="7" '
+            f'<rect x="{x}" y="{y}" width="{_MAP_BOX_W}" height="{_MAP_BOX_H}" rx="9" '
             f'fill="var(--card)" stroke="var(--line)"{dash}/>'
             f'<text x="{x + _MAP_BOX_W / 2 - 9}" y="{y + 22}" text-anchor="middle" '
             f'font-size="12.5" fill="{label_fill}">{_esc(n[:12])}</text>'
@@ -1280,7 +1356,10 @@ def render_valuechain(edges: list[dict], names: dict[str, str],
 .map { max-width:none; width:auto; }
 .map .nd { cursor:pointer; }
 .map .nd:focus { outline:none; }
-.map .nd rect { transition:opacity .12s, stroke .12s; }
+.map .nd rect { transition:opacity .15s, stroke .15s, fill .15s; }
+.map .nd:hover rect { stroke:var(--accent); }
+.map .nd:focus-visible rect { stroke:var(--accent); stroke-width:2.4; }
+.map .lk { transition:opacity .15s; }
 /* 고른 산업 > 바로 붙은 산업 > 사슬의 나머지 > 사슬 밖. 사슬을 통째로 같은
    밝기로 켜면 62개 중 28개가 켜져 여전히 못 읽는다. 단계를 줘야 눈이 따라간다. */
 .map.sel .nd { opacity:.12; }
@@ -1290,9 +1369,10 @@ def render_valuechain(edges: list[dict], names: dict[str, str],
 .map.sel .lk.ch { opacity:.3 !important; }
 .map.sel .lk.on { opacity:.85 !important; }
 .map .nd.pick { opacity:1 !important; }
-.map .nd.pick rect { stroke:var(--accent); stroke-width:2.4; fill:var(--chip); }
-.axis { display:flex; justify-content:space-between; font-size:.74rem;
-        color:var(--muted); margin:2px 0 6px; }
+.map .nd.pick rect { stroke:var(--accent); stroke-width:2.6; fill:var(--chip); }
+.axis { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;
+        font-size:.74rem; color:var(--muted); margin:4px 0 10px; padding:7px 12px;
+        background:var(--bg); border:1px solid var(--line-2); border-radius:var(--r-sm); }
 /* 거래 153건을 그대로 펼치면 페이지가 5,470px가 된다. 표 안에서만 스크롤시켜
    페이지를 짧게 두되, 행은 하나도 숨기지 않는다 — 접어 두면 안 보게 된다. */
 .tallcap { max-height:60vh; overflow-y:auto; }
@@ -1337,7 +1417,16 @@ ul.mk .none { opacity:.55; font-style:italic; }
           "if(mapc)mapc.hidden=true;cards.forEach(c=>{c.hidden=c!==hit;});"
           "hit.classList.add('zoom');f.hidden=true;bar.hidden=false;fn.textContent=ind;"
           "if(push)history.pushState({ind},'','#'+encodeURIComponent(ind));"
-          "window.scrollTo({top:0});};"
+          "window.scrollTo({top:0});"
+          # 사슬이 화면보다 넓으면 정작 고른 산업이 오른쪽 밖으로 밀려난다.
+          # 가운데 상자를 기준으로 가로 스크롤을 맞춘다 — 누른 산업이 안 보이면
+          # 확대의 의미가 없다.
+          "const sc=hit.querySelector('.scroll'),sv=sc&&sc.querySelector('svg'),"
+          "pk=sv&&sv.querySelector('rect.self');"
+          "if(pk){const vw=+sv.getAttribute('width')||1,"
+          "cx=(+pk.getAttribute('x')+ +pk.getAttribute('width')/2)/vw"
+          "*sv.getBoundingClientRect().width;"
+          "sc.scrollLeft=Math.max(0,cx-sc.clientWidth/2);}};"
           "const back=push=>{focused=null;if(mapc)mapc.hidden=false;"
           "cards.forEach(c=>c.classList.remove('zoom'));f.hidden=false;bar.hidden=true;"
           "filter();if(push)history.pushState({},'',location.pathname);};"
@@ -1398,8 +1487,11 @@ ul.mk .none { opacity:.55; font-style:italic; }
             f'<p class="sub">사업보고서에서 추출한 산업 간 흐름 · '
             f'<a href="index.html">리포트로</a></p>'
             f'<div class="kpis">{kpis}</div></div></header><main>'
-            # 지도는 산업을 고르면 숨긴다 — 그래서 감싸는 컨테이너에 id가 필요하다.
-            f'<div id="mapc">{map_block}</div>{trades_block}'
+            # 산업을 고르면 전체 화면(지도 + 기업 간 거래)을 접는다. 거래 표를
+            # 밖에 두었더니, 타이어를 눌렀는데 화면 맨 위에 153건짜리 거래 표가
+            # 그대로 남아 정작 타이어 카드는 한참 아래에 있었다. 고른 산업만
+            # 남기는 게 이 동작의 요점이다.
+            f'<div id="mapc">{map_block}{trades_block}</div>'
             f'<h2>산업별 상세</h2>'
             # 포커스 바. 스크립트가 fback·fbar·fname을 찾는데 이 마크업이 통째로
             # 빠져 있었다. getElementById('fback')이 null이라 addEventListener에서

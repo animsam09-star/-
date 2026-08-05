@@ -492,7 +492,7 @@ class TestValuechainCardShowsTheWholeChain:
         import xml.etree.ElementTree as ET
         ET.fromstring(svg)
         assert "원유" in svg and "완성차" in svg
-        xs = sorted({float(x) for x in re.findall(r'<rect x="([0-9.]+)"', svg)})
+        xs = sorted({float(x) for x in re.findall(r'<rect[^>]*\sx="([0-9.]+)"', svg)})
         assert len(xs) >= 5, f"열이 {len(xs)}개뿐이다 — 여러 단계가 안 그려졌다"
 
     def test_leaf_industry_still_renders(self):
