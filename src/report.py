@@ -23,134 +23,131 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 REPORTS_DIR = ROOT / "reports"
 
+# Pretendard — 한국어 화면에서 시스템 폴백(맑은 고딕·애플 SD 고딕)과 인상 차이가
+# 가장 큰 한 가지다. 자간·획 두께가 라틴 문자와 맞아 숫자·영문 티커가 섞인 표에서
+# 특히 다르다. CDN이 막혀도 아래 폴백으로 그대로 읽히므로 안전하다.
+FONT_LINK = (
+    '<link rel="preconnect" href="https://cdn.jsdelivr.net">'
+    '<link rel="stylesheet" '
+    'href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/'
+    'pretendard-dynamic-subset.min.css">')
+
 CSS = """
-/* 색·간격·그림자를 토큰으로 모아 둔다. 값을 여기저기 흩어 두면 화면마다
-   조금씩 다른 회색이 생기고, 그게 '칙칙하다'는 인상의 실제 원인이 된다. */
+/* 색은 데이터가 갖는다. 구조(카드·테두리·제목)는 무채색으로 두고, 빨강·파랑은
+   등락에만 쓴다. 보라 그라디언트로 UI를 칠하면 정작 수익률 색이 묻힌다. */
 :root {
-  --bg:#f7f8fc; --bg-2:#eef0f8; --card:#fff; --card-2:#fafbff;
-  --fg:#111827; --fg-2:#374151; --muted:#6b7280; --line:#e6e8f0; --line-2:#eef0f6;
-  /* 한국 시장 관행: 상승 빨강 / 하락 파랑. 바꾸면 오히려 오독을 부른다. */
-  --up:#d92d20; --down:#1570ef; --accent:#5145cd; --accent-2:#7a5af8;
-  --chip:#eeecfd; --good:#079455; --warn:#b54708; --grid:#f1f2f8;
-  --shadow-sm:0 1px 2px rgba(16,24,40,.05);
-  --shadow:0 1px 3px rgba(16,24,40,.08), 0 6px 16px -6px rgba(16,24,40,.08);
-  --shadow-lg:0 2px 6px rgba(16,24,40,.06), 0 18px 40px -12px rgba(16,24,40,.16);
-  --r:14px; --r-sm:10px;
+  --bg:#fafaf9; --bg-2:#f5f5f4; --card:#fff; --card-2:#fcfcfb;
+  --fg:#0c0a09; --fg-2:#44403c; --muted:#78716c; --line:#e7e5e4; --line-2:#f0efee;
+  /* 한국 시장 관행: 상승 빨강 / 하락 파랑 */
+  --up:#dc2626; --down:#2563eb;
+  /* 상호작용용 단일 강조. 데이터 색과 겹치지 않게 짙은 청록으로 둔다. */
+  --accent:#0f766e; --accent-2:#115e59; --chip:#f0fdfa;
+  --good:#15803d; --warn:#b45309; --grid:#fafaf9;
+  --shadow-sm:0 1px 2px rgba(12,10,9,.04);
+  --shadow:0 1px 2px rgba(12,10,9,.04), 0 4px 12px -4px rgba(12,10,9,.06);
+  --shadow-lg:0 2px 4px rgba(12,10,9,.05), 0 16px 32px -12px rgba(12,10,9,.14);
+  --r:12px; --r-sm:8px;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg:#0b0c14; --bg-2:#11121c; --card:#151725; --card-2:#1a1c2c;
-    --fg:#eceef6; --fg-2:#c7cad8; --muted:#8b8fa6; --line:#262a3d; --line-2:#202333;
-    --up:#ff8a7a; --down:#7cb8ff; --accent:#a5a0ff; --accent-2:#c4b5fd;
-    --chip:#232043; --good:#4ade80; --warn:#fbbf24; --grid:#1b1e2c;
-    --shadow-sm:0 1px 2px rgba(0,0,0,.4);
-    --shadow:0 1px 3px rgba(0,0,0,.5), 0 8px 20px -8px rgba(0,0,0,.6);
-    --shadow-lg:0 2px 8px rgba(0,0,0,.5), 0 22px 48px -14px rgba(0,0,0,.75);
+    --bg:#0c0a09; --bg-2:#131110; --card:#1c1917; --card-2:#211e1c;
+    --fg:#fafaf9; --fg-2:#d6d3d1; --muted:#a8a29e; --line:#2c2825; --line-2:#242120;
+    --up:#f87171; --down:#60a5fa;
+    --accent:#5eead4; --accent-2:#99f6e4; --chip:#134e4a;
+    --good:#4ade80; --warn:#fbbf24; --grid:#151312;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.5);
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 6px 16px -6px rgba(0,0,0,.6);
+    --shadow-lg:0 2px 6px rgba(0,0,0,.5), 0 20px 44px -14px rgba(0,0,0,.8);
   }
 }
 * { box-sizing:border-box; margin:0; }
 html { -webkit-text-size-adjust:100%; }
 body {
-  background:
-    radial-gradient(1100px 520px at 12% -8%, var(--bg-2) 0%, transparent 62%),
-    var(--bg);
-  color:var(--fg);
-  font-family:'Pretendard Variable',Pretendard,-apple-system,BlinkMacSystemFont,
+  background:var(--bg); color:var(--fg);
+  font-family:Pretendard,'Pretendard Variable',-apple-system,BlinkMacSystemFont,
               'Apple SD Gothic Neo','Segoe UI','Malgun Gothic',system-ui,sans-serif;
-  /* 숫자를 표에서 세로로 맞춘다. 수익률·갭을 눈으로 비교하는 화면이라
+  /* 표에서 숫자를 세로로 맞춘다. 수익률·갭을 눈으로 비교하는 화면이라
      자릿수가 흔들리면 읽는 속도가 그대로 떨어진다. */
   font-variant-numeric:tabular-nums;
-  line-height:1.62; letter-spacing:-.003em; padding:0 0 64px;
-  -webkit-font-smoothing:antialiased;
+  font-size:15px; line-height:1.65; letter-spacing:-.011em; padding:0 0 72px;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
 }
-main { max-width:1120px; margin:0 auto; padding:0 20px; }
+main { max-width:1140px; margin:0 auto; padding:0 22px; }
 
-header {
-  background:linear-gradient(180deg, var(--card) 0%, var(--card-2) 100%);
-  border-bottom:1px solid var(--line); padding:26px 20px 20px; margin-bottom:26px;
-  box-shadow:var(--shadow-sm);
-}
-header .inner { max-width:1120px; margin:0 auto; }
-h1 { font-size:1.6rem; font-weight:750; letter-spacing:-.022em; }
-h2 { font-size:1.06rem; font-weight:700; margin:38px 0 14px; color:var(--fg);
-     display:flex; align-items:center; gap:10px; letter-spacing:-.012em; }
-h2::before { content:''; width:3px; height:1.05em; border-radius:2px;
-             background:linear-gradient(180deg,var(--accent),var(--accent-2)); }
+header { background:var(--card); border-bottom:1px solid var(--line);
+         padding:30px 22px 22px; margin-bottom:28px; }
+header .inner { max-width:1140px; margin:0 auto; }
+h1 { font-size:1.75rem; font-weight:800; letter-spacing:-.033em; line-height:1.25; }
+h2 { font-size:.82rem; font-weight:700; margin:44px 0 14px; color:var(--muted);
+     text-transform:uppercase; letter-spacing:.09em;
+     display:flex; align-items:center; gap:12px; }
 h2::after { content:''; flex:1; height:1px; background:var(--line); }
-h3 { font-size:1rem; font-weight:650; margin-bottom:6px; letter-spacing:-.01em; }
-.sub { color:var(--muted); font-size:.88rem; }
-a { color:var(--accent); text-decoration-color:color-mix(in srgb,var(--accent) 35%,transparent);
-    text-underline-offset:2px; }
-a:hover { text-decoration-color:currentColor; }
+h3 { font-size:1.02rem; font-weight:700; margin-bottom:6px; letter-spacing:-.018em; }
+.sub { color:var(--muted); font-size:.88rem; margin-top:3px; }
+a { color:var(--accent); text-decoration:none;
+    border-bottom:1px solid color-mix(in srgb,var(--accent) 30%,transparent); }
+a:hover { border-bottom-color:currentColor; }
 
-/* KPI — 오늘 무슨 일이 있었는지 한 줄로 */
-.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px;
-        margin-top:18px; }
-.kpi { position:relative; background:var(--card); border:1px solid var(--line);
-       border-radius:var(--r-sm); padding:13px 15px 12px; box-shadow:var(--shadow-sm);
-       overflow:hidden; }
-.kpi::before { content:''; position:absolute; inset:0 auto auto 0; width:100%; height:2px;
-               background:linear-gradient(90deg,var(--accent),var(--accent-2)); opacity:.85; }
-.kpi .v { font-size:1.5rem; font-weight:750; line-height:1.15; letter-spacing:-.02em; }
-.kpi .l { font-size:.74rem; color:var(--muted); margin-top:1px; }
+/* KPI — 장식을 걷어내고 숫자만 크게. 그라디언트 막대는 값을 가릴 뿐이다. */
+.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(136px,1fr));
+        gap:1px; margin-top:22px; background:var(--line);
+        border:1px solid var(--line); border-radius:var(--r); overflow:hidden; }
+.kpi { background:var(--card); padding:14px 16px 13px; }
+.kpi .v { font-size:1.7rem; font-weight:800; line-height:1.1; letter-spacing:-.035em; }
+.kpi .l { font-size:.7rem; color:var(--muted); text-transform:uppercase;
+          letter-spacing:.07em; margin-top:3px; }
 
-nav.jump { display:flex; flex-wrap:wrap; gap:7px; margin-top:16px; }
-nav.jump a { font-size:.78rem; background:var(--chip); color:var(--accent); font-weight:600;
-             border-radius:99px; padding:4px 13px; text-decoration:none;
-             border:1px solid transparent; transition:border-color .15s, transform .15s; }
-nav.jump a:hover { border-color:color-mix(in srgb,var(--accent) 30%,transparent);
-                   transform:translateY(-1px); }
+nav.jump { display:flex; flex-wrap:wrap; gap:6px; margin-top:18px; }
+nav.jump a { font-size:.78rem; color:var(--fg-2); font-weight:600; border:1px solid var(--line);
+             border-radius:7px; padding:4px 11px; background:var(--card);
+             transition:border-color .15s, color .15s; }
+nav.jump a:hover { border-color:var(--accent); color:var(--accent); }
 
 .card { background:var(--card); border:1px solid var(--line); border-radius:var(--r);
-        padding:18px 20px; margin-bottom:14px; box-shadow:var(--shadow);
-        transition:box-shadow .18s, transform .18s, border-color .18s; }
-.card:hover { box-shadow:var(--shadow-lg); border-color:color-mix(in srgb,var(--accent) 18%,var(--line)); }
+        padding:20px 22px; margin-bottom:14px; box-shadow:var(--shadow-sm);
+        transition:box-shadow .2s, border-color .2s; }
+.card:hover { box-shadow:var(--shadow); }
 .grid2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(330px,1fr)); gap:14px; }
-.chip { display:inline-block; background:var(--chip); color:var(--accent); border-radius:99px;
-        padding:2px 11px; font-size:.75rem; font-weight:650; margin-left:7px;
-        vertical-align:middle; letter-spacing:0; }
-.up { color:var(--up); font-weight:650; } .down { color:var(--down); font-weight:650; }
+.chip { display:inline-block; background:var(--chip); color:var(--accent-2);
+        border:1px solid color-mix(in srgb,var(--accent) 22%,transparent);
+        border-radius:6px; padding:1px 8px; font-size:.72rem; font-weight:700;
+        margin-left:8px; vertical-align:middle; letter-spacing:0; }
+.up { color:var(--up); font-weight:700; } .down { color:var(--down); font-weight:700; }
 .muted { color:var(--muted); font-size:.85rem; }
 
 table { width:100%; border-collapse:separate; border-spacing:0; font-size:.86rem; }
-th,td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line-2);
+th,td { text-align:left; padding:9px 10px; border-bottom:1px solid var(--line-2);
         white-space:nowrap; }
-thead th { position:sticky; top:0; z-index:1; background:var(--card);
-           color:var(--muted); font-weight:650; font-size:.78rem; letter-spacing:.01em;
-           border-bottom:1px solid var(--line); }
+thead th { position:sticky; top:0; z-index:1; background:var(--card); color:var(--muted);
+           font-weight:700; font-size:.7rem; text-transform:uppercase;
+           letter-spacing:.07em; border-bottom:1px solid var(--line); }
 tbody tr { transition:background .12s; }
-tbody tr:hover { background:var(--grid); }
+tbody tr:hover { background:var(--bg-2); }
 tr:last-child td { border-bottom:none; }
 td.wide { white-space:normal; }
-.scroll { overflow-x:auto; border-radius:var(--r-sm); }
+.scroll { overflow-x:auto; }
 /* 스크롤 상자 안의 그림은 줄이지 않는다. 공통 규칙(svg{max-width:100%})에 걸리면
-   1,758px짜리 사슬이 1,080px로 눌려 12.5px 글자가 8px가 되고 아무것도 안 읽힌다.
-   지도(.map)에 같은 고침을 해 놓고 산업 카드의 사슬에는 빠뜨려서, 타이어 카드가
-   6단계로 늘어난 순간 글자가 통째로 뭉갰다. 가로로 넓은 그림은 줄일 게 아니라
-   스크롤할 것이다. */
+   1,758px짜리 사슬이 눌려 12.5px 글자가 8px가 되고 아무것도 안 읽힌다. */
 .scroll > svg { max-width:none; width:auto; }
 
-.path { border-left:3px solid var(--accent); border-radius:0 var(--r-sm) var(--r-sm) 0;
-        background:linear-gradient(90deg,color-mix(in srgb,var(--accent) 6%,transparent),transparent 60%);
-        padding:9px 14px; margin:10px 0; }
+.path { border-left:2px solid var(--accent); padding:8px 14px; margin:10px 0; }
 ul.dates { list-style:none; }
-ul.dates li { padding:9px 2px; border-bottom:1px solid var(--line-2); }
+ul.dates li { padding:11px 2px; border-bottom:1px solid var(--line-2); }
 ul.dates li:last-child { border-bottom:none; }
-.badge-mi { color:var(--good); font-weight:650; } .badge-gi { color:var(--muted); }
+.badge-mi { color:var(--good); font-weight:700; } .badge-gi { color:var(--muted); }
 
 svg { display:block; max-width:100%; height:auto; }
-.legend { display:flex; gap:16px; flex-wrap:wrap; font-size:.76rem; color:var(--muted);
+.legend { display:flex; gap:16px; flex-wrap:wrap; font-size:.75rem; color:var(--muted);
           margin:8px 0 2px; }
 .legend i { display:inline-block; width:9px; height:9px; border-radius:3px; margin-right:5px; }
 
 @media (max-width:640px) {
-  main { padding:0 14px; }
-  h1 { font-size:1.35rem; }
-  .card { padding:15px 15px; border-radius:12px; }
+  main { padding:0 15px; }
+  h1 { font-size:1.4rem; }
+  .card { padding:16px; }
+  .kpis { grid-template-columns:repeat(2,1fr); }
 }
-@media (prefers-reduced-motion:reduce) {
-  * { transition:none !important; }
-}
+@media (prefers-reduced-motion:reduce) { * { transition:none !important; } }
 """
 
 
@@ -584,7 +581,8 @@ def render_html(base_date: str, candidates: list[dict], analysis: dict, site_tit
 
     return (f"<!doctype html><html lang='ko'><head><meta charset='utf-8'>"
             f"<meta name='viewport' content='width=device-width,initial-scale=1'>"
-            f"<title>{_esc(site_title)} {date_fmt}</title><style>{CSS}</style></head>"
+            f"<title>{_esc(site_title)} {date_fmt}</title>{FONT_LINK}"
+            f"<style>{CSS}</style></head>"
             f"<body>{head}{body}</body></html>")
 
 
@@ -594,7 +592,8 @@ def render_index(site_title: str) -> str:
     latest = f'<meta http-equiv="refresh" content="0; url={dates[0]}.html">' if dates else ""
     return (f"<!doctype html><html lang='ko'><head><meta charset='utf-8'>{latest}"
             f"<meta name='viewport' content='width=device-width,initial-scale=1'>"
-            f"<title>{_esc(site_title)}</title><style>{CSS}</style></head><body><main>"
+            f"<title>{_esc(site_title)}</title>{FONT_LINK}"
+            f"<style>{CSS}</style></head><body><main>"
             f"<h1>{_esc(site_title)}</h1><p class='sub'>일자별 리포트 · "
             f"<a href='valuechain.html'>밸류체인</a></p>"
             f"<ul class='dates'>{items}</ul></main></body></html>")
@@ -1201,7 +1200,7 @@ def _vc_makes(industry: str, members: dict, makes: dict) -> str:
     for name in sorted(who, key=lambda n: (not m.get(n), n)):
         prods = " · ".join(sorted(m.get(name, ())))
         rows.append(
-            f'<li><b>{_esc(name)}</b>'
+            f'<li data-name="{_esc(name)}"><b>{_esc(name)}</b>'
             + (f'<span>{_esc(prods[:70])}</span>' if prods
                else '<span class="none">공시에서 품목 미추출</span>')
             + '</li>')
@@ -1346,10 +1345,26 @@ def render_valuechain(edges: list[dict], names: dict[str, str],
 #fback { padding:7px 13px; border-radius:8px; border:1px solid var(--line);
          background:var(--card); color:var(--fg); cursor:pointer; font-size:.9rem; }
 #fback:hover { border-color:var(--accent); }
+.sbox { position:relative; margin-top:18px; }
+#f { width:100%; padding:12px 15px; border-radius:10px; border:1px solid var(--line);
+     background:var(--bg); color:var(--fg); font:inherit; font-size:.95rem; }
+#f:focus { outline:none; border-color:var(--accent);
+           box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 14%,transparent); }
+#sres { position:absolute; z-index:30; left:0; right:0; top:calc(100% + 6px);
+        background:var(--card); border:1px solid var(--line); border-radius:10px;
+        box-shadow:var(--shadow-lg); overflow:hidden; max-height:52vh; overflow-y:auto; }
+#sres[hidden] { display:none; }
+.sr { display:flex; justify-content:space-between; align-items:center; gap:12px;
+      padding:9px 14px; cursor:pointer; font-size:.9rem; }
+.sr + .sr { border-top:1px solid var(--line-2); }
+.sr span { color:var(--muted); font-size:.78rem; }
+.sr.on { background:var(--chip); }
+.sr.none { cursor:default; color:var(--muted); justify-content:center; }
+/* 검색으로 들어온 기업은 목록에서 눈에 띄어야 한다 — 그 기업을 보러 온 것이다. */
+.mk li.hit { background:var(--chip); border-radius:7px;
+             box-shadow:inset 2px 0 0 var(--accent); }
 .legend2 { display:flex; gap:18px; flex-wrap:wrap; align-items:center;
            font-size:.78rem; color:var(--muted); margin:10px 0 4px; }
-#f { width:100%; padding:10px 13px; border-radius:9px; border:1px solid var(--line);
-     background:var(--card); color:var(--fg); font-size:.95rem; margin:14px 0 2px; }
 /* 전체 지도는 줄이지 않는다. 공통 규칙(svg{max-width:100%})에 걸리면 2292px
    짜리 지도가 1010px로 눌리고, 11px 글자가 5px가 되어 아무것도 안 읽힌다.
    가로로 넓은 그림은 줄일 게 아니라 스크롤할 것이다. */
@@ -1393,13 +1408,40 @@ ul.mk .none { opacity:.55; font-style:italic; }
     # 방식으로는 상자가 작아 기업명이 안 들어가고, 결국 아래 카드를 손으로
     # 찾아 내려가야 했다. 되돌아오는 길(뒤로 버튼 · Esc · 브라우저 뒤로)을
     # 반드시 같이 둔다 — 들어갔다가 못 나오면 확대가 아니라 함정이다.
+    # 검색 인덱스. **기업을 찾으면 그 기업의 밸류체인이 나와야 한다** — 종목마다
+    # 소속 산업을 함께 실어, 고르는 즉시 그 산업의 사슬로 이동한다. 종목이
+    # 여러 산업에 속하면 각각 항목이 되는 게 맞다(겸업이면 사슬도 둘이다).
+    idx = [{"t": "i", "n": i} for i in sorted(set(members) | set(ups) | set(downs))]
+    for ind, who in sorted(members.items()):
+        for nm in sorted(who):
+            idx.append({"t": "s", "n": nm, "i": ind})
+    search_json = json.dumps(idx, ensure_ascii=False, separators=(",", ":"))
+
     js = ("<script>(function(){"
+          f"const IDX={search_json};"
           "const f=document.getElementById('f'),m=document.querySelector('.map'),"
           "bar=document.getElementById('fbar'),fn=document.getElementById('fname'),"
           "mapc=document.getElementById('mapc'),cards=[...document.querySelectorAll('.vc')];"
           "let focused=null;"
-          "const filter=()=>{const q=f.value.trim().toLowerCase();"
-          "cards.forEach(c=>{c.hidden=!!q&&!c.dataset.k.toLowerCase().includes(q);});};"
+          "const res=document.getElementById('sres');let sel=-1,hits=[];"
+          # 검색은 두 종류를 함께 찾는다. 기업을 고르면 그 기업이 속한 산업의
+          # 사슬로 바로 간다 — '기업을 검색하면 전후방사가 나와야 한다'가 요점이다.
+          "const rank=(o,q)=>{const n=o.n.toLowerCase();"
+          "return n===q?0:n.startsWith(q)?1:n.includes(q)?2:9;};"
+          "const draw=()=>{const q=f.value.trim().toLowerCase();"
+          "if(!q){res.hidden=true;res.innerHTML='';hits=[];sel=-1;"
+          "f.setAttribute('aria-expanded','false');cards.forEach(c=>{if(!focused)c.hidden=false;});return;}"
+          "hits=IDX.map(o=>[rank(o,q),o]).filter(r=>r[0]<9)"
+          ".sort((a,b)=>a[0]-b[0]||a[1].n.length-b[1].n.length).slice(0,12).map(r=>r[1]);"
+          "sel=hits.length?0:-1;"
+          "res.innerHTML=hits.length?hits.map((o,i)=>"
+          "`<div class=\"sr${i===0?' on':''}\" role=\"option\" data-i=\"${i}\">`"
+          "+`<b>${o.n}</b><span>${o.t==='s'?o.i:'산업'}</span></div>`).join('')"
+          ":'<div class=\"sr none\">일치하는 산업·기업이 없습니다</div>';"
+          "res.hidden=false;f.setAttribute('aria-expanded','true');};"
+          "const pick=i=>{const o=hits[i];if(!o)return;"
+          "res.hidden=true;f.value='';f.setAttribute('aria-expanded','false');"
+          "show(o.t==='s'?o.i:o.n,true,o.t==='s'?o.n:null);};"
           "const hover=g=>{if(focused||!m)return;m.classList.add('sel');"
           "m.querySelectorAll('.on,.ch,.pick').forEach(e=>e.classList.remove('on','ch','pick'));"
           "const i=g.dataset.i,s=new Set(g.dataset.chain.split(',')),"
@@ -1412,10 +1454,15 @@ ul.mk .none { opacity:.55; font-style:italic; }
           "else if(s.has(a)&&s.has(b))l.classList.add('ch');});};"
           "const unhover=()=>{if(focused||!m)return;m.classList.remove('sel');"
           "m.querySelectorAll('.on,.ch,.pick').forEach(e=>e.classList.remove('on','ch','pick'));};"
-          "const show=(ind,push)=>{const hit=cards.find(c=>c.dataset.ind===ind);"
+          "const show=(ind,push,who)=>{const hit=cards.find(c=>c.dataset.ind===ind);"
           "if(!hit)return;focused=ind;unhover();"
           "if(mapc)mapc.hidden=true;cards.forEach(c=>{c.hidden=c!==hit;});"
-          "hit.classList.add('zoom');f.hidden=true;bar.hidden=false;fn.textContent=ind;"
+          "hit.classList.add('zoom');bar.hidden=false;"
+          # 기업으로 들어왔으면 제목에 기업명을 앞세운다. 무엇을 눌러 여기 왔는지
+          # 안 보이면 같은 화면이 두 가지 뜻을 갖는다.
+          "fn.textContent=who?who+' · '+ind:ind;"
+          "hit.querySelectorAll('.mk li').forEach(li=>li.classList.toggle('hit',"
+          "!!who&&li.dataset.name===who));"
           "if(push)history.pushState({ind},'','#'+encodeURIComponent(ind));"
           "window.scrollTo({top:0});"
           # 사슬이 화면보다 넓으면 정작 고른 산업이 오른쪽 밖으로 밀려난다.
@@ -1428,9 +1475,23 @@ ul.mk .none { opacity:.55; font-style:italic; }
           "*sv.getBoundingClientRect().width;"
           "sc.scrollLeft=Math.max(0,cx-sc.clientWidth/2);}};"
           "const back=push=>{focused=null;if(mapc)mapc.hidden=false;"
-          "cards.forEach(c=>c.classList.remove('zoom'));f.hidden=false;bar.hidden=true;"
-          "filter();if(push)history.pushState({},'',location.pathname);};"
-          "f.addEventListener('input',filter);"
+          "cards.forEach(c=>{c.classList.remove('zoom');c.hidden=false;});"
+          "document.querySelectorAll('.mk li.hit').forEach(li=>li.classList.remove('hit'));"
+          "bar.hidden=true;f.value='';draw();"
+          "if(push)history.pushState({},'',location.pathname);};"
+          "f.addEventListener('input',draw);"
+          "f.addEventListener('keydown',e=>{"
+          "if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();"
+          "if(!hits.length)return;sel=(sel+(e.key==='ArrowDown'?1:hits.length-1))%hits.length;"
+          "res.querySelectorAll('.sr').forEach((n,i)=>n.classList.toggle('on',i===sel));}"
+          "else if(e.key==='Enter'){e.preventDefault();pick(sel);}"
+          "else if(e.key==='Escape'){f.value='';draw();f.blur();}});"
+          "res.addEventListener('mousedown',e=>{const r=e.target.closest('.sr[data-i]');"
+          "if(r){e.preventDefault();pick(+r.dataset.i);}});"
+          "document.addEventListener('click',e=>{if(!e.target.closest('.sbox'))res.hidden=true;});"
+          # '/'로 검색창에 바로 간다. 목록이 길수록 손이 마우스로 가는 게 병목이다.
+          "document.addEventListener('keydown',e=>{"
+          "if(e.key==='/'&&document.activeElement!==f){e.preventDefault();f.focus();}});"
           # 요소 하나가 없다고 지도 클릭까지 죽으면 안 된다. 실제로 fback이
           # 없어서 여기서 예외가 나고, 그 아래 클릭 핸들러 등록이 통째로
           # 실행되지 않았다. 있으면 붙이고 없으면 넘어간다.
@@ -1458,6 +1519,7 @@ ul.mk .none { opacity:.55; font-style:italic; }
 
     trades_block = render_company_trades(edges, names)
 
+
     map_block = ""
     if chain_map:
         note = ""
@@ -1482,17 +1544,21 @@ ul.mk .none { opacity:.55; font-style:italic; }
     return (f"<!doctype html><html lang='ko'><head><meta charset='utf-8'>"
             f"<meta name='viewport' content='width=device-width,initial-scale=1'>"
             f"<title>{_esc(site_title)} — 밸류체인</title>"
-            f"<style>{CSS}{css_extra}</style></head><body>"
+            f"{FONT_LINK}<style>{CSS}{css_extra}</style></head><body>"
             f'<header><div class="inner"><h1>밸류체인</h1>'
             f'<p class="sub">사업보고서에서 추출한 산업 간 흐름 · '
             f'<a href="index.html">리포트로</a></p>'
-            f'<div class="kpis">{kpis}</div></div></header><main>'
+            f'<div class="kpis">{kpis}</div>'
+            f'<div class="sbox"><input id="f" autocomplete="off" role="combobox" '
+            f'aria-expanded="false" aria-controls="sres" '
+            f'placeholder="산업 · 기업 검색  (예: 금호타이어, 조선, 시멘트)">'
+            f'<div id="sres" role="listbox" hidden></div></div>'
+            f'</div></header><main>'
             # 산업을 고르면 전체 화면(지도 + 기업 간 거래)을 접는다. 거래 표를
             # 밖에 두었더니, 타이어를 눌렀는데 화면 맨 위에 153건짜리 거래 표가
             # 그대로 남아 정작 타이어 카드는 한참 아래에 있었다. 고른 산업만
             # 남기는 게 이 동작의 요점이다.
             f'<div id="mapc">{map_block}{trades_block}</div>'
-            f'<h2>산업별 상세</h2>'
             # 포커스 바. 스크립트가 fback·fbar·fname을 찾는데 이 마크업이 통째로
             # 빠져 있었다. getElementById('fback')이 null이라 addEventListener에서
             # 예외가 나고, 그 자리에서 IIFE가 죽어 **클릭 핸들러가 아예 안 붙었다.**
@@ -1500,7 +1566,7 @@ ul.mk .none { opacity:.55; font-style:italic; }
             f'<div id="fbar" hidden><button id="fback">← 전체 흐름도로</button>'
             f'<span id="fname"></span>'
             f'<span class="muted">Esc 또는 뒤로가기로도 돌아옵니다</span></div>'
-            f'<input id="f" placeholder="산업명·종목명으로 거르기 (예: 조선, 시멘트, 포스코)">'
+            f'<h2 id="detail">산업별 상세</h2>'
             f'{legend}{"".join(cards)}'
             f'<p class="muted">본 자료는 자동 생성된 참고 자료이며 투자 권유가 아닙니다.</p>'
             f"</main>{js}</body></html>")

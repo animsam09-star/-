@@ -215,11 +215,27 @@ class TestValuechainTabIsADiagram:
         assert "2,156,875" not in h
         assert "컨테이너선 9척" not in h
 
-    def test_no_external_resources(self):
-        """CDN을 부르면 그 호스트가 죽는 날 화면이 조용히 빈다."""
+    def test_no_external_scripts_or_images(self):
+        """CDN을 부르면 그 호스트가 죽는 날 화면이 조용히 빈다.
+
+        **폰트만 예외로 둔다.** 웹폰트는 못 받아도 폴백 글꼴로 그대로 읽힌다 —
+        degrade지 break가 아니다. 스크립트·이미지는 다르다. 못 받으면 기능이
+        사라지거나 빈 칸이 남는데, 그게 이 규칙을 세운 이유다.
+
+        예외를 두는 대신 범위를 좁혀 못 박는다: 폰트 스타일시트 외의 외부
+        참조가 들어오면 여기서 걸린다.
+        """
         h = self._html()
-        for bad in ("http://", "https://", "src=", "@import"):
-            assert bad not in h, f"외부 리소스 참조: {bad}"
+        assert "src=" not in h, "외부 스크립트·이미지 참조"
+        assert "@import" not in h, "@import는 렌더 차단이라 쓰지 않는다"
+        ext = re.findall(r'href="(https?://[^"]+)"', h)
+        assert all(u.startswith("https://cdn.jsdelivr.net") for u in ext), \
+            f"폰트 CDN 외 외부 리소스: {ext}"
+
+    def test_font_falls_back_without_the_cdn(self):
+        """CDN이 막혀도 읽히도록 시스템 글꼴 폴백이 뒤에 있어야 한다."""
+        h = self._html()
+        assert "Malgun Gothic" in h and "Apple SD Gothic Neo" in h
 
     def test_empty_graph_does_not_crash(self):
         assert "밸류체인" in report.render_valuechain([], {})
@@ -523,3 +539,52 @@ class TestFocusBarMarkupExists:
         """방어도 함께 넣는다 — 하나가 빠져도 지도는 살아 있어야 한다."""
         h = self._page()
         assert "if(fb)fb.addEventListener" in h, "fback 조회가 무방비다"
+
+
+class TestSearchFindsCompaniesAndTheirChain:
+    """지적: "검색도 되게 만들어봐. 하나씩 찾기 불편해" /
+       "기업을 검색하면 그 기업과 관련된 밸류체인(전후방사)가 나올 수 있게"
+
+    이전 입력창은 지도 **아래**에 있었고, 하는 일은 카드를 숨기는 필터뿐이었다.
+    게다가 검색 키에 종목이 티커로만 들어가 '금호타이어'로는 찾히지 않았다.
+    """
+
+    def _html(self):
+        return report.render_valuechain(
+            TestValuechainTabIsADiagram()._edges(),
+            TestValuechainTabIsADiagram.NAMES)
+
+    def _index(self, h):
+        import json
+        return json.loads(re.search(r"const IDX=(\[.*?\]);", h, re.S).group(1))
+
+    def test_index_has_both_industries_and_companies(self):
+        idx = self._index(self._html())
+        kinds = {o["t"] for o in idx}
+        assert kinds == {"i", "s"}, f"한 종류만 색인됐다: {kinds}"
+
+    def test_every_company_carries_its_industry(self):
+        """기업을 고르면 그 기업의 사슬로 가야 한다 — 소속 산업이 없으면 못 간다."""
+        idx = self._index(self._html())
+        stocks = [o for o in idx if o["t"] == "s"]
+        assert stocks, "종목이 하나도 색인되지 않았다"
+        assert all(o.get("i") for o in stocks)
+
+    def test_companies_are_indexed_by_name_not_ticker(self):
+        """'금호타이어'로 찾을 수 있어야 한다. 티커만 있으면 검색이 무용하다."""
+        idx = self._index(self._html())
+        names = {o["n"] for o in idx if o["t"] == "s"}
+        assert not all(n.isdigit() for n in names), f"티커만 색인됐다: {sorted(names)[:5]}"
+
+    def test_search_box_is_in_the_header(self):
+        """지도 아래에 있으면 '하나씩 찾기 불편'하다는 말 그대로가 된다."""
+        h = self._html()
+        assert h.index('id="f"') < h.index("</header>")
+
+    def test_selecting_a_company_marks_it_in_the_list(self):
+        h = self._html()
+        assert 'data-name=' in h, "종목 목록에 이름이 없어 강조할 자리가 없다"
+        assert ".mk li.hit" in h, "강조 스타일이 없다"
+
+    def test_slash_focuses_the_search(self):
+        assert "e.key==='/'" in self._html()
