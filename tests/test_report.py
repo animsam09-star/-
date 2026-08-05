@@ -442,3 +442,84 @@ class TestEmptyStageIsLabelledNotLeftBlank:
             TestValuechainTabIsADiagram()._edges(),
             TestValuechainTabIsADiagram.NAMES)
         assert "국내 상장 순수 플레이가 없다" in h
+
+
+class TestValuechainCardShowsTheWholeChain:
+    """한 홉만 그리면 사슬을 눈으로 따라갈 수 없다.
+
+    사용자 지적: "왜 산업별로 전후방 한 줄씩만 이어져 있어? 석유화학이면
+    정유사들이 어디서 원유를 얻는지도 붙일 수 있잖아."
+
+    그래프에는 이미 깊이가 있었다 — 원유 → 정유 → 석유화학 → 타이어 → 완성차.
+    화면이 한 단계씩만 그리고 있었을 뿐이다. 밸류체인의 값어치는 길이에 있다.
+    """
+
+    #   원유 → 정유 → 석유화학 → 타이어 → 완성차 (+ 곁가지 건설·EPC)
+    UPS = {"정유": {"원유": {"a"}},
+           "석유화학": {"정유": {"a"}},
+           "타이어": {"석유화학": {"a"}},
+           "완성차": {"타이어": {"a"}},
+           "건설·EPC": {"시멘트": {"a", "b", "c"}, "철근": {"a", "b", "c"}}}
+    DOWNS = {"원유": {"정유": {"a"}},
+             "정유": {"석유화학": {"a"}},
+             "석유화학": {"타이어": {"a"}, "건설·EPC": {"a", "b"}},
+             "타이어": {"완성차": {"a"}}}
+
+    def test_levels_walk_multiple_hops(self):
+        got = report._vc_levels("타이어", self.UPS)
+        assert got[0] == ["석유화학"]
+        assert "정유" in got[1]
+        assert "원유" in got[2], f"3단계에 원유가 없다: {got}"
+
+    def test_direct_line_beats_a_thicker_side_branch(self):
+        """곁가지가 본류를 가리면 사슬을 길게 그린 의미가 없다.
+
+        '건설·EPC'는 석유화학의 수요처인데 그 후방(시멘트·철근)이 교차 검증
+        수가 많다. 부모 순위를 먼저 보지 않으면 그것들이 '정유의 후방인 원유'를
+        밀어낸다 — 실제로 타이어 카드 3단계가 시멘트·철근으로 채워졌었다.
+        """
+        got = report._vc_levels("타이어", self.UPS, depth=3, per_level=(5, 5, 1))
+        assert got[2] == ["원유"], f"곁가지가 본류를 밀어냈다: {got}"
+
+    def test_a_node_is_not_repeated_across_levels(self):
+        """서로 주고받는 쌍에서 같은 이름이 반복되면 길어 보이지만 제자리다."""
+        flat = [n for lv in report._vc_levels("타이어", self.UPS) for n in lv]
+        assert len(flat) == len(set(flat))
+
+    def test_chain_svg_has_a_column_per_level(self):
+        members = {"타이어": {"073240"}, "석유화학": {"011170"}}
+        svg = report._vc_chain("타이어", members, self.UPS, self.DOWNS)
+        import xml.etree.ElementTree as ET
+        ET.fromstring(svg)
+        assert "원유" in svg and "완성차" in svg
+        xs = sorted({float(x) for x in re.findall(r'<rect x="([0-9.]+)"', svg)})
+        assert len(xs) >= 5, f"열이 {len(xs)}개뿐이다 — 여러 단계가 안 그려졌다"
+
+    def test_leaf_industry_still_renders(self):
+        """이웃이 없는 산업도 자기 상자는 나와야 한다."""
+        svg = report._vc_chain("완구·캐릭터", {"완구·캐릭터": {"039830"}}, {}, {})
+        assert "완구·캐릭터" in svg
+
+
+class TestFocusBarMarkupExists:
+    """스크립트가 찾는 요소가 없으면 지도 클릭이 통째로 죽는다.
+
+    fbar·fname·fback·mapc 마크업이 없어서 getElementById('fback')이 null이었고,
+    addEventListener에서 예외가 나 그 아래의 클릭 핸들러 등록이 실행되지 않았다.
+    산업을 눌러도 아무 반응이 없던 원인이 이것이다 — 조용한 실패의 전형이다.
+    """
+
+    def _page(self):
+        return report.render_valuechain(
+            TestValuechainTabIsADiagram()._edges(),
+            TestValuechainTabIsADiagram.NAMES)
+
+    @pytest.mark.parametrize("el", ["f", "fbar", "fname", "fback", "mapc"])
+    def test_every_element_the_script_looks_up_exists(self, el):
+        h = self._page()
+        assert re.search(r'id=[\'"]%s[\'"]' % el, h), f"id={el} 요소가 없다"
+
+    def test_missing_element_cannot_kill_the_click_handler(self):
+        """방어도 함께 넣는다 — 하나가 빠져도 지도는 살아 있어야 한다."""
+        h = self._page()
+        assert "if(fb)fb.addEventListener" in h, "fback 조회가 무방비다"

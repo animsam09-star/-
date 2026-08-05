@@ -948,6 +948,122 @@ def _flow_label(products: set, supplier: str, consumer: str) -> str:
     return min(best)[3] if best else ""
 
 
+# 각 방향 3단계. 사슬의 값어치는 길이에 있다 — 원유 → 정유 → 석유화학 →
+# 타이어 → 완성차가 한 화면에 들어와야 '무엇이 무엇을 끌고 오는지'가 보인다.
+# 2단계였을 때는 타이어 카드에서 정유까지만 보이고 원유는 화면 밖이었다.
+_VC_DEPTH = 3
+# 멀어질수록 적게 보인다. 3단계 앞은 관련성이 옅어지는데 개수는 폭발한다.
+_VC_PER_LEVEL = (5, 4, 3)
+
+
+def _vc_levels(industry: str, adj: dict, depth: int = _VC_DEPTH,
+               per_level: tuple[int, ...] = _VC_PER_LEVEL) -> list[list[str]]:
+    """산업에서 한 방향으로 `depth`단계까지 BFS. [1단계, 2단계, …]
+
+    이미 가까운 단계에 나온 산업은 다시 넣지 않는다. 안 그러면 철강처럼 서로
+    주고받는 쌍에서 같은 이름이 여러 열에 반복되고, 사슬이 길어 보이지만 실제로는
+    제자리걸음이다.
+
+    각 단계는 교차 검증 횟수(그 관계를 주장한 회사 수) 순으로 자른다 — 잘라야
+    한다면 근거가 두꺼운 쪽을 남긴다.
+    """
+    seen = {industry}
+    frontier = [industry]
+    out: list[list[str]] = []
+    for step in range(depth):
+        # (부모 순위, 간선 두께). **부모 순위를 먼저 본다** — 사슬을 따라가려면
+        # 직계 자손이 먼저다.
+        #
+        # 이걸 안 하면 타이어 카드에서 3단계가 시멘트·철근·건자재로 채워졌다.
+        # 2단계의 '건설·EPC'(석유화학의 수요처)가 데리고 온 후방인데, 교차 검증
+        # 수가 많아 '정유의 후방인 원유'를 밀어냈다. 넓이로는 맞지만 사용자가
+        # 따라가려는 선은 원유 → 정유 → 석유화학 → 타이어다. 곁가지가 본류를
+        # 가리면 사슬을 길게 그린 의미가 없다.
+        nxt: dict[str, tuple[int, int]] = {}
+        for rank, node in enumerate(frontier):
+            for target, origins in (adj.get(node) or {}).items():
+                if target in seen:
+                    continue
+                cand = (-rank, len(origins))
+                if cand > nxt.get(target, (-10**6, -1)):
+                    nxt[target] = cand
+        cap = per_level[min(step, len(per_level) - 1)]
+        level = sorted(nxt, key=lambda k: (-nxt[k][0], -nxt[k][1], k))[:cap]
+        if not level:
+            break
+        seen.update(level)
+        out.append(level)
+        frontier = level
+    return out
+
+
+def _vc_chain(industry: str, members: dict, ups: dict, downs: dict,
+              flows: dict | None = None) -> str:
+    """산업을 가운데 두고 **여러 단계**의 후방·전방을 그린다.
+
+    한 홉만 그리던 때는 '석유화학 ← 정유'까지만 보이고, 그 정유가 어디서 원유를
+    받는지는 화면에 없었다. 밸류체인의 값어치는 길이에 있다 — 조선이 오르면
+    기자재가 따라오고, 그 기자재의 후방인 철강·후판이 또 따라온다. 한 단계만
+    보이면 그 사슬을 눈으로 따라갈 수 없다.
+
+    그래서 각 방향 2단계씩, 총 5열로 그린다. 단계마다 상위 5개로 자르되 잘린
+    수를 적는다 — 조용히 자르면 '이게 전부'로 읽힌다.
+    """
+    flows = flows or {}
+    left = _vc_levels(industry, ups)      # 후방(공급) 쪽으로 멀어진다
+    right = _vc_levels(industry, downs)   # 전방(수요) 쪽으로 멀어진다
+
+    cols: list[tuple[float, list[str]]] = []
+    n_left, n_right = len(left), len(right)
+    col_w = _VC_BOX_W + 150
+    for i, lv in enumerate(reversed(left)):
+        cols.append((i * col_w, lv))
+    cols.append((n_left * col_w, [industry]))
+    for i, lv in enumerate(right):
+        cols.append(((n_left + 1 + i) * col_w, lv))
+
+    rows = max((len(lv) for _, lv in cols), default=1)
+    h = rows * _VC_ROW_H + 24
+    w = (n_left + n_right + 1) * col_w - (col_w - _VC_BOX_W)
+    out = [f'<svg viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img" '
+           f'aria-label="{_esc(industry)} 밸류체인 {n_left + n_right + 1}단계">']
+
+    def y_of(idx: int, count: int) -> float:
+        return 12 + idx * _VC_ROW_H + (rows - count) * _VC_ROW_H / 2
+
+    # 이웃한 열 사이에만 선을 긋는다. 실제 엣지가 있는 쌍만.
+    for c in range(len(cols) - 1):
+        x1, lv1 = cols[c]
+        x2, lv2 = cols[c + 1]
+        supply_left = c < n_left      # 왼쪽 절반은 왼쪽이 공급자다
+        for i, a in enumerate(lv1):
+            for j, b in enumerate(lv2):
+                supplier, consumer = (a, b) if supply_left else (b, a)
+                origins = (downs.get(supplier) or {}).get(consumer)
+                if not origins:
+                    continue
+                out.append(_vc_link(x1 + _VC_BOX_W, y_of(i, len(lv1)) + 23,
+                                    x2, y_of(j, len(lv2)) + 23, len(origins)))
+                # 라벨은 가운데 산업에 붙은 첫 단계에만 — 더 붙이면 글자가 겹친다.
+                if c == n_left - 1 or c == n_left:
+                    label = _flow_label(flows.get((supplier, consumer), set()),
+                                        supplier, consumer)
+                    if label:
+                        out.append(
+                            f'<text x="{(x1 + _VC_BOX_W + x2) / 2}" '
+                            f'y="{(y_of(i, len(lv1)) + y_of(j, len(lv2))) / 2 + 17}" '
+                            f'text-anchor="middle" font-size="9.5" '
+                            f'fill="var(--muted)">{_esc(label[:16])}</text>')
+
+    for x, lv in cols:
+        for i, name in enumerate(lv):
+            out.append(_vc_box(x, y_of(i, len(lv)), name,
+                               sorted(members.get(name, ())),
+                               accent=(name == industry)))
+    out.append("</svg>")
+    return "".join(out)
+
+
 def _vc_diagram(industry: str, members: dict, ups: list, downs: list,
                 flows: dict | None = None) -> str:
     """한 산업의 후방 → 산업 → 전방 흐름 그림.
@@ -1129,14 +1245,31 @@ def render_valuechain(edges: list[dict], names: dict[str, str],
         if not u and not d and len(members.get(ind, ())) < 2:
             continue          # 연결도 소속도 없는 노드는 그림이 될 게 없다
         key = " ".join([ind] + [x for x, _ in u + d] + sorted(members.get(ind, ())))
+        # 잘린 수를 적는다. 조용히 자르면 '이게 전부'로 읽힌다.
+        n_up, n_dn = len(ups.get(ind, {})), len(downs.get(ind, {}))
+        cut = []
+        first = _VC_PER_LEVEL[0]
+        if n_up > first:
+            cut.append(f"후방 {n_up}개 중 {first}개")
+        if n_dn > first:
+            cut.append(f"전방 {n_dn}개 중 {first}개")
+        note = (f'<p class="muted">단계마다 교차 검증이 두꺼운 순으로 '
+                f'{" · ".join(cut)}만 그렸습니다.</p>' if cut else "")
         cards.append(
             f'<div class="card vc" data-k="{_esc(key)}" data-ind="{_esc(ind)}">'
             f'<h3>{_esc(ind)} <span class="chip">{len(members.get(ind, ()))}종목</span></h3>'
-            f'<div class="scroll">{_vc_diagram(ind, members, u, d, link_products)}</div>'
-            f'{_vc_makes(ind, members, makes)}</div>')
+            f'<div class="scroll">'
+            f'{_vc_chain(ind, members, ups, downs, link_products)}</div>'
+            f'{note}{_vc_makes(ind, members, makes)}</div>')
 
     css_extra = """
 .vc h3 { margin-bottom:2px; }
+#fbar { display:flex; gap:12px; align-items:center; margin:14px 0 2px; }
+#fbar[hidden] { display:none; }
+#fbar #fname { font-weight:600; font-size:1.05rem; }
+#fback { padding:7px 13px; border-radius:8px; border:1px solid var(--line);
+         background:var(--card); color:var(--fg); cursor:pointer; font-size:.9rem; }
+#fback:hover { border-color:var(--accent); }
 .legend2 { display:flex; gap:18px; flex-wrap:wrap; align-items:center;
            font-size:.78rem; color:var(--muted); margin:10px 0 4px; }
 #f { width:100%; padding:10px 13px; border-radius:9px; border:1px solid var(--line);
@@ -1209,7 +1342,11 @@ ul.mk .none { opacity:.55; font-style:italic; }
           "cards.forEach(c=>c.classList.remove('zoom'));f.hidden=false;bar.hidden=true;"
           "filter();if(push)history.pushState({},'',location.pathname);};"
           "f.addEventListener('input',filter);"
-          "document.getElementById('fback').addEventListener('click',()=>back(true));"
+          # 요소 하나가 없다고 지도 클릭까지 죽으면 안 된다. 실제로 fback이
+          # 없어서 여기서 예외가 나고, 그 아래 클릭 핸들러 등록이 통째로
+          # 실행되지 않았다. 있으면 붙이고 없으면 넘어간다.
+          "const fb=document.getElementById('fback');"
+          "if(fb)fb.addEventListener('click',()=>back(true));"
           "document.addEventListener('keydown',e=>{if(e.key==='Escape'&&focused)back(true);});"
           "window.addEventListener('popstate',e=>{"
           "const i=(e.state&&e.state.ind)||decodeURIComponent(location.hash.slice(1));"
@@ -1261,8 +1398,16 @@ ul.mk .none { opacity:.55; font-style:italic; }
             f'<p class="sub">사업보고서에서 추출한 산업 간 흐름 · '
             f'<a href="index.html">리포트로</a></p>'
             f'<div class="kpis">{kpis}</div></div></header><main>'
-            f'{map_block}{trades_block}'
+            # 지도는 산업을 고르면 숨긴다 — 그래서 감싸는 컨테이너에 id가 필요하다.
+            f'<div id="mapc">{map_block}</div>{trades_block}'
             f'<h2>산업별 상세</h2>'
+            # 포커스 바. 스크립트가 fback·fbar·fname을 찾는데 이 마크업이 통째로
+            # 빠져 있었다. getElementById('fback')이 null이라 addEventListener에서
+            # 예외가 나고, 그 자리에서 IIFE가 죽어 **클릭 핸들러가 아예 안 붙었다.**
+            # 산업을 눌러도 아무 반응이 없던 원인이 이것이다.
+            f'<div id="fbar" hidden><button id="fback">← 전체 흐름도로</button>'
+            f'<span id="fname"></span>'
+            f'<span class="muted">Esc 또는 뒤로가기로도 돌아옵니다</span></div>'
             f'<input id="f" placeholder="산업명·종목명으로 거르기 (예: 조선, 시멘트, 포스코)">'
             f'{legend}{"".join(cards)}'
             f'<p class="muted">본 자료는 자동 생성된 참고 자료이며 투자 권유가 아닙니다.</p>'
