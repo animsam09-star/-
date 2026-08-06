@@ -179,12 +179,18 @@ jobs:
           python -m src.analyze "$F" --fix
 
       # claude-code-action이 자기 자격 증명으로 갈아끼우는 바람에 checkout이 심어둔
-      # 토큰이 사라진다. 그래서 fetch는 되는데(공개 저장소) push만 인증 거부됐고,
+      # 토큰이 못 쓰게 된다. 그래서 fetch는 되는데(공개 저장소) push만 인증 거부됐고,
       # 검증까지 통과한 분석 506줄이 러너와 함께 날아갔다. 여기서 원격을 다시 잡는다.
+      #
+      # URL만 고쳐선 부족하다. 에러가 '토큰 없음'이 아니라 'Invalid username or
+      # token'이었다 — 못 쓰는 자격 증명이 *남아 있다*는 뜻이다. checkout이 심는
+      # extraheader는 Authorization 헤더라 URL의 userinfo보다 우선하므로, 먼저
+      # 지우고 나서 URL로 인증하게 한다.
       - name: Commit analysis
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          git config --unset-all "http.https://github.com/.extraheader" || true
           git remote set-url origin \
             "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git config user.name "github-actions[bot]"
