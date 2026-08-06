@@ -147,14 +147,28 @@ jobs:
               log = [log]
           log = [m for m in log if isinstance(m, dict)]
           res = next((m for m in reversed(log) if m.get("type") == "result"), {})
-          print(f"턴 {res.get('num_turns')} · {(res.get('duration_ms') or 0)//1000}초 "
-                f"· 권한거부 {res.get('permission_denials_count')}")
           denied = collections.Counter(
               (d.get("tool_name") or "?") for m in log
               for d in (m.get("permission_denials") or []) if isinstance(d, dict))
+          # 요약에 permission_denials_count가 없는 형식도 있다. 그때는 직접 센다.
+          n_denied = res.get("permission_denials_count")
+          if n_denied is None:
+              n_denied = sum(denied.values())
+          print(f"턴 {res.get('num_turns')} · {(res.get('duration_ms') or 0)//1000}초 "
+                f"· 권한거부 {n_denied}")
           for name, n in denied.most_common():
               print(f"  거부 {name} × {n}")
           PY
+
+      # 커밋·푸시가 실패해도 결과물은 남긴다. 14분 돌려 만든 분석을 인증 오류 하나로
+      # 다시 잃을 이유가 없다. 아티팩트에서 받아 손으로 커밋할 수 있다.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: analyses-${{ needs.screen.outputs.base_date }}
+          path: data/analyses_${{ needs.screen.outputs.base_date }}.json
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Validate
         run: |
@@ -164,8 +178,15 @@ jobs:
           # 잃을 이유가 없다.
           python -m src.analyze "$F" --fix
 
+      # claude-code-action이 자기 자격 증명으로 갈아끼우는 바람에 checkout이 심어둔
+      # 토큰이 사라진다. 그래서 fetch는 되는데(공개 저장소) push만 인증 거부됐고,
+      # 검증까지 통과한 분석 506줄이 러너와 함께 날아갔다. 여기서 원격을 다시 잡는다.
       - name: Commit analysis
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          git remote set-url origin \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -f data/analyses_*.json
