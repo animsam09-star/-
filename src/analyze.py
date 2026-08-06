@@ -515,3 +515,123 @@ def analyze(candidates: list[dict], evidence_all: dict, base_date: str, cfg: dic
         json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"종목 분석 {len(analyses)}건 완료")
     return out
+
+
+# ---- 밖에서 받은 분석의 검증 ---------------------------------------------
+#
+# `--analyses`로 들어오는 파일은 LLM이 쓴 것이라 스키마가 어긋날 수 있다. 그대로
+# 리포트에 흘리면 잘못된 항목이 조용히 섞이거나 렌더링에서 KeyError로 파이프라인이
+# 통째로 죽는다. 매일 자동으로 도는 경로라 사람이 매번 눈으로 볼 수 없으므로,
+# **들어오는 자리에서 걸러 낸다.**
+#
+# 원칙: 틀린 항목만 버리고 나머지는 살린다. 한 종목이 어긋났다고 스무 종목을
+# 잃을 이유가 없다 — DART 수집에서 배운 것과 같은 규칙이다.
+
+_ENUMS = {
+    "cause_type": set(CAUSE_TYPES),
+    "cause_scope": {"회사고유", "산업공통"},
+    "confidence": {"높음", "중간", "낮음"},
+    "ripple_axis": {"수직", "수평", "양쪽", "해당없음"},
+}
+_DIRECTIONS = {"동종업계", "전방산업", "후방산업", "공통동인"}
+_PRICED_IN = {"미반영", "일부반영", "기반영", "확인불가"}
+
+
+def _check_stock(t: str, a: dict) -> list[str]:
+    bad = []
+    if not isinstance(a, dict):
+        return [f"{t}: 객체가 아님"]
+    for k in STOCK_SCHEMA["required"]:
+        if k not in a:
+            bad.append(f"{t}: 필수 항목 '{k}' 누락")
+    for k, allowed in _ENUMS.items():
+        if k in a and a[k] not in allowed:
+            bad.append(f"{t}: {k}='{a[k]}'는 허용값이 아님")
+    for p in a.get("ripple_paths") or []:
+        if not isinstance(p, dict):
+            bad.append(f"{t}: ripple_paths 항목이 객체가 아님"); continue
+        if p.get("direction") not in _DIRECTIONS:
+            bad.append(f"{t}: direction='{p.get('direction')}' 허용값 아님")
+        for b in p.get("beneficiaries") or []:
+            if not isinstance(b, dict) or not b.get("name"):
+                bad.append(f"{t}: 수혜 후보에 name이 없음")
+            elif b.get("impact") not in ("수혜", "피해"):
+                bad.append(f"{t}: impact='{b.get('impact')}' 허용값 아님")
+    # 회사고유인데 파급 경로가 붙어 있으면 둘 중 하나가 틀렸다. 경로를 지우는 게
+    # 안전하다 — 없는 파급을 그리는 것보다 안 그리는 쪽이 덜 해롭다.
+    if a.get("cause_scope") == "회사고유" and a.get("ripple_paths"):
+        bad.append(f"{t}: 회사고유인데 파급 경로가 있음")
+    return bad
+
+
+def validate_stored(stored: dict) -> tuple[dict, list[str]]:
+    """(살릴 것, 문제 목록). 어긋난 종목만 빼고 나머지는 그대로 쓴다."""
+    if not isinstance(stored, dict):
+        return {}, ["최상위가 {티커: 분석} 객체가 아님"]
+    clean, problems = {}, []
+    for t, a in stored.items():
+        if t == "_synthesis":
+            syn_bad = []
+            if not isinstance(a, dict):
+                syn_bad.append("_synthesis가 객체가 아님")
+            else:
+                for k in SYNTHESIS_SCHEMA["required"]:
+                    if k not in a:
+                        syn_bad.append(f"_synthesis: '{k}' 누락")
+                for idea in a.get("ideas") or []:
+                    if idea.get("axis") not in ("수직", "수평"):
+                        syn_bad.append(f"_synthesis: axis='{idea.get('axis')}' 허용값 아님")
+                    for b in idea.get("beneficiaries") or []:
+                        if b.get("priced_in") not in _PRICED_IN:
+                            syn_bad.append(
+                                f"_synthesis: priced_in='{b.get('priced_in')}' 허용값 아님")
+            problems += syn_bad
+            if not syn_bad:
+                clean[t] = a
+            continue
+        bad = _check_stock(t, a)
+        problems += bad
+        if not bad:
+            clean[t] = a
+    return clean, problems
+
+
+def main() -> None:
+    """저장된 분석 파일을 검증한다 (python -m src.analyze <파일>).
+
+    자동 실행 경로에서 리포트 앞에 세워 둔다. 통과한 종목 수를 찍고, 하나도
+    없으면 0이 아닌 값으로 끝내 워크플로가 알아채게 한다.
+    """
+    import argparse
+    p = argparse.ArgumentParser(description="저장된 원인 분석 JSON을 검증한다.")
+    p.add_argument("path")
+    p.add_argument("--fix", action="store_true",
+                   help="어긋난 항목을 뺀 결과를 같은 경로에 다시 쓴다")
+    args = p.parse_args()
+
+    path = Path(args.path)
+    if not path.exists():
+        raise SystemExit(f"파일이 없습니다: {path}")
+    try:
+        stored = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        raise SystemExit(f"JSON 파싱 실패: {e}")
+
+    clean, problems = validate_stored(stored)
+    n = len([k for k in clean if not k.startswith("_")])
+    total = len([k for k in stored if not k.startswith("_")]) if isinstance(stored, dict) else 0
+    print(f"검증: 종목 {n}/{total}건 통과"
+          f"{' · 종합 있음' if '_synthesis' in clean else ' · 종합 없음'}")
+    for msg in problems[:25]:
+        print(f"  ✗ {msg}")
+    if len(problems) > 25:
+        print(f"  … 외 {len(problems) - 25}건")
+    if args.fix and problems:
+        path.write_text(json.dumps(clean, ensure_ascii=False, indent=1), encoding="utf-8")
+        print(f"  어긋난 항목을 빼고 다시 저장했습니다: {path}")
+    if not n:
+        raise SystemExit("통과한 분석이 하나도 없습니다.")
+
+
+if __name__ == "__main__":
+    main()

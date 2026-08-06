@@ -1,33 +1,31 @@
 name: daily-screen
 
-# 자동 실행을 꺼 뒀다. 실행이 실패하면 GitHub가 저장소 주인에게 메일을 보내고,
-# 지금은 원인 분석이 429로 못 도는 상태라 매일 돌 만한 값이 나오지 않는다.
-# 값은 안 나오는데 메일만 오는 게 지금 상태였다.
+# 매일 3단계로 돈다.
 #
-# 원인 분석이 다시 돌기 시작하면 아래 두 줄의 주석을 풀면 된다.
-# 그때까지는 필요할 때 손으로 실행한다(Actions 탭 → Run workflow).
+#   1) screen   스크리닝·그래프·근거 수집 → 분석 프롬프트를 뽑아 커밋
+#   2) analyze  Claude Code가 그 프롬프트에 답해 분석 JSON을 쓰고 커밋
+#   3) report   그 분석으로 리포트를 만들고 Pages에 배포
 #
-# on:
-#   schedule:
-#     # 평일 17:10 KST (08:10 UTC) — 장 마감 후 실행
-#     - cron: "10 8 * * 1-5"
+# **왜 나눴나** — 원인 분석은 LLM이 필요한데, Messages API는 구독 토큰으로
+# 호출할 수 없다(429). claude-code-action은 같은 토큰으로 Claude Code 자체를
+# 돌리므로 MAX 구독만으로 매일 자동 분석이 가능하다. API 키를 따로 사지 않아도
+# 되는 유일한 경로다.
+#
+# **analyze가 실패해도 report는 돈다.** 분석은 있으면 좋은 것이고, 없다고 사이트가
+# 옛것으로 남을 이유는 없다. 종목 목록과 밸류체인은 분석과 무관하게 값을 한다.
 on:
+  schedule:
+    # 평일 17:20 KST (08:20 UTC) — 장 마감 후. 분석 단계가 있어 여유를 둔다.
+    - cron: "20 8 * * 1-5"
   workflow_dispatch:
     inputs:
       date:
         description: "기준일 YYYYMMDD (비우면 오늘)"
         required: false
       skip_analyze:
-        description: "LLM 분석 생략"
+        description: "원인 분석 생략 (스크리닝·리포트만)"
         type: boolean
         default: false
-      dump_analysis_input:
-        description: "분석 프롬프트만 뽑아 커밋 (LLM 미호출). 429로 막혔을 때 쓴다"
-        type: boolean
-        default: false
-      analyses:
-        description: "저장된 분석 JSON 경로 (예: data/analyses_20260731.json). LLM 대신 이 결과로 갭 주입·출처 표시·종합까지 그대로 돈다"
-        required: false
 
 permissions:
   contents: write
@@ -39,67 +37,55 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  run:
+  # ---------------------------------------------------------------- 1) 스크리닝
+  screen:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 40
     outputs:
-      # 배포해도 되는가. deploy 잡은 needs: run이라 run이 실패하면 건너뛰는데,
-      # 커밋 경쟁으로 죽었을 때도 리포트는 멀쩡하다. '리포트가 만들어졌는가'를
-      # 잡 성공 여부와 분리해 명시적으로 넘긴다.
-      deployable: ${{ steps.artifact.outputs.ready }}
+      base_date: ${{ steps.run.outputs.base_date }}
+      has_input: ${{ steps.run.outputs.has_input }}
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: pip
+      - run: pip install -r requirements.txt
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Run pipeline
-        id: pipeline
+      - name: Run pipeline (dump analysis input)
+        id: run
         env:
           KRX_OPENAPI_KEY: ${{ secrets.KRX_OPENAPI_KEY }}
           KRX_ID: ${{ secrets.KRX_ID }}
           KRX_PW: ${{ secrets.KRX_PW }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
           NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          PAGES_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
         run: |
-          ARGS=""
+          ARGS="--dump-analysis-input"
           if [ -n "${{ inputs.date }}" ]; then ARGS="$ARGS --date ${{ inputs.date }}"; fi
-          if [ "${{ inputs.skip_analyze }}" = "true" ]; then ARGS="$ARGS --skip-analyze"; fi
-          if [ "${{ inputs.dump_analysis_input }}" = "true" ]; then ARGS="$ARGS --dump-analysis-input"; fi
-          if [ -n "${{ inputs.analyses }}" ]; then ARGS="$ARGS --analyses ${{ inputs.analyses }}"; fi
           python -m src.pipeline $ARGS
+          # 기준일은 스크리너가 정한다(달력이 아니라 마지막 거래일). 파일 이름에서
+          # 되읽어 뒤 단계로 넘긴다 — 각 잡이 따로 날짜를 계산하면 하루가 어긋난다.
+          F=$(ls -1 data/analysis_input_*.json 2>/dev/null | sort | tail -1)
+          if [ -z "$F" ]; then
+            echo "has_input=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::분석 프롬프트가 만들어지지 않았습니다(후보 0종목)"
+            exit 0
+          fi
+          D=$(basename "$F" .json | sed 's/analysis_input_//')
+          echo "base_date=$D" >> "$GITHUB_OUTPUT"
+          echo "has_input=true" >> "$GITHUB_OUTPUT"
+          echo "기준일 $D"
 
-      - name: Commit results
-        id: commit
+      - name: Commit input
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          # graph/edges.jsonl은 수직축 누적 자산이라 커밋한다.
-          # data/edges_*.jsonl(수평축)은 매일 재계산되므로 .gitignore에서 제외돼 있다.
-          # screen_universe_*.json은 밸류체인 맵의 대상 선정에 쓰인다 —
-          # dart-extract가 다른 실행에서 읽으므로 커밋되어야 한다.
-          git add cases reports graph data/candidates_*.json data/analysis_*.json \
-                  data/screen_universe_*.json || true
+          git add cases graph data/candidates_*.json data/screen_universe_*.json || true
           git add -f data/analysis_input_*.json 2>/dev/null || true
-          if git diff --cached --quiet; then
-            echo "변경 없음"; exit 0
-          fi
-          git commit -m "chore: daily screen $(date +%Y-%m-%d)"
-          # 파이프라인이 7~8분 도는 사이 브랜치가 앞서 나갈 수 있다. 그때 푸시가
-          # 거부되면 잡이 죽고, 그 뒤의 Pages 업로드·배포까지 통째로 안 돌아간다 —
-          # 리포트는 정상으로 만들어졌는데 사이트만 옛것으로 남는다. 실제로 그랬다.
-          # dart-extract·lead-lag에는 이 재시도를 넣어 두고 여기만 빠뜨렸다.
+          git diff --cached --quiet && { echo "변경 없음"; exit 0; }
+          git commit -m "chore: 스크리닝 $(date +%Y-%m-%d)"
           for i in 1 2 3 4 5; do
             git push origin HEAD:${{ github.ref_name }} && exit 0
             echo "푸시 거부 — 리베이스 후 재시도 ($i/5)"
@@ -108,10 +94,120 @@ jobs:
           done
           echo "::error::5회 재시도 후에도 푸시하지 못했습니다"; exit 1
 
-      # 커밋이 실패해도 배포는 한다. 리포트는 이미 만들어졌고, 그게 사람이 보는
-      # 결과물이다. 커밋 실패는 누적 자산(graph/edges.jsonl)이 안 쌓인 문제라
-      # 잡을 빨갛게 남겨 알리되, 사이트를 옛것으로 두는 벌까지 줄 이유는 없다.
-      - name: Upload Pages artifact
+  # ------------------------------------------------------------------ 2) 분석
+  # 실패해도 다음 단계를 막지 않는다 — continue-on-error.
+  analyze:
+    needs: screen
+    if: ${{ needs.screen.outputs.has_input == 'true' && !inputs.skip_analyze }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Claude Code — 원인·파급 분석
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            기준일은 ${{ needs.screen.outputs.base_date }}이다.
+            .github/prompts/analysis.md의 지침을 그대로 따라
+            data/analyses_${{ needs.screen.outputs.base_date }}.json을 만들어라.
+          claude_args: |
+            --max-turns 60
+
+      - name: Validate
+        run: |
+          F=data/analyses_${{ needs.screen.outputs.base_date }}.json
+          test -f "$F" || { echo "::error::분석 파일이 만들어지지 않았습니다"; exit 1; }
+          # --fix: 어긋난 종목만 빼고 나머지는 살린다. 한 종목 때문에 스무 종목을
+          # 잃을 이유가 없다.
+          python -m src.analyze "$F" --fix
+
+      - name: Commit analysis
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f data/analyses_*.json
+          git diff --cached --quiet && { echo "변경 없음"; exit 0; }
+          git commit -m "chore: 원인·파급 분석 ${{ needs.screen.outputs.base_date }}"
+          for i in 1 2 3 4 5; do
+            git push origin HEAD:${{ github.ref_name }} && exit 0
+            git pull --rebase origin ${{ github.ref_name }} || exit 1
+            sleep $((i * 3))
+          done
+          echo "::error::푸시 실패"; exit 1
+
+  # ------------------------------------------------------------------ 3) 리포트
+  report:
+    needs: [screen, analyze]
+    # analyze가 실패하거나 건너뛰어도 돈다. 분석 없는 리포트가 옛 리포트보다 낫다.
+    if: ${{ always() && needs.screen.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    outputs:
+      deployable: ${{ steps.artifact.outputs.ready }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Run pipeline (with analysis if present)
+        id: pipeline
+        env:
+          KRX_OPENAPI_KEY: ${{ secrets.KRX_OPENAPI_KEY }}
+          KRX_ID: ${{ secrets.KRX_ID }}
+          KRX_PW: ${{ secrets.KRX_PW }}
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+          PAGES_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
+        run: |
+          git pull --rebase origin ${{ github.ref_name }} || true
+          D="${{ needs.screen.outputs.base_date }}"
+          ARGS=""
+          if [ -n "${{ inputs.date }}" ]; then ARGS="$ARGS --date ${{ inputs.date }}"; fi
+          if [ -n "$D" ] && [ -f "data/analyses_$D.json" ]; then
+            ARGS="$ARGS --analyses data/analyses_$D.json"
+            echo "원인 분석 사용: data/analyses_$D.json"
+          else
+            ARGS="$ARGS --skip-analyze"
+            echo "::warning::원인 분석이 없어 종목 목록·밸류체인만 만듭니다"
+          fi
+          python -m src.pipeline $ARGS
+
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add cases reports graph data/candidates_*.json data/analysis_*.json \
+                  data/screen_universe_*.json || true
+          git diff --cached --quiet && { echo "변경 없음"; exit 0; }
+          git commit -m "chore: daily screen $(date +%Y-%m-%d)"
+          for i in 1 2 3 4 5; do
+            git push origin HEAD:${{ github.ref_name }} && exit 0
+            echo "푸시 거부 — 리베이스 후 재시도 ($i/5)"
+            git pull --rebase origin ${{ github.ref_name }} || exit 1
+            sleep $((i * 3))
+          done
+          echo "::error::5회 재시도 후에도 푸시하지 못했습니다"; exit 1
+
+      # 커밋이 실패해도 배포는 한다. 리포트는 이미 만들어졌고 그게 사람이 보는
+      # 결과물이다. 커밋 실패는 누적 자산이 안 쌓인 문제라 잡을 빨갛게 남겨
+      # 알리되, 사이트를 옛것으로 두는 벌까지 줄 이유는 없다.
+      - name: Mark deployable
         id: artifact
         if: always() && steps.pipeline.conclusion == 'success'
         run: echo "ready=true" >> "$GITHUB_OUTPUT"
@@ -122,13 +218,12 @@ jobs:
           path: reports
 
   deploy:
-    needs: run
-    if: always() && needs.run.outputs.deployable == 'true'
+    needs: report
+    if: always() && needs.report.outputs.deployable == 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
+      - id: deployment
         uses: actions/deploy-pages@v4
