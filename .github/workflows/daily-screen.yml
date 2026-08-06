@@ -113,6 +113,7 @@ jobs:
       - run: pip install -r requirements.txt
 
       - name: Claude Code — 원인·파급 분석
+        id: claude
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -120,8 +121,40 @@ jobs:
             기준일은 ${{ needs.screen.outputs.base_date }}이다.
             .github/prompts/analysis.md의 지침을 그대로 따라
             data/analyses_${{ needs.screen.outputs.base_date }}.json을 만들어라.
+          # 액션 기본 권한으로는 파일을 못 쓴다. 지난 실행이 38턴을 정상으로 돌고도
+          # permission_denials_count=14로 아무것도 남기지 못한 이유가 이것이다.
+          # 필요한 것만 연다 — 읽기·쓰기·탐색과 검증 명령 하나. 임의 Bash는 열지 않는다.
           claude_args: |
-            --max-turns 60
+            --max-turns 80
+            --allowedTools "Read,Write,Edit,Glob,Grep,Bash(python -m src.analyze:*)"
+
+      # 실패했을 때 로그를 뒤지지 않아도 이유가 보이게 한다. 지난번엔 액션이
+      # '성공'으로 끝났는데 파일만 없어서, 권한 거부 14건을 실행 로그 깊은 곳에서야
+      # 찾았다. 결과 요약과 거부된 도구명을 잡 요약에 남긴다.
+      - name: 실행 요약
+        if: always()
+        run: |
+          F="${{ steps.claude.outputs.execution_file }}"
+          [ -n "$F" ] && [ -f "$F" ] || { echo "실행 로그 없음"; exit 0; }
+          python - "$F" <<'PY'
+          import json, sys, collections
+          raw = open(sys.argv[1], encoding="utf-8").read()
+          try:                       # 배열로 저장되기도, JSONL로 저장되기도 한다
+              log = json.loads(raw)
+          except json.JSONDecodeError:
+              log = [json.loads(l) for l in raw.splitlines() if l.strip()]
+          if isinstance(log, dict):
+              log = [log]
+          log = [m for m in log if isinstance(m, dict)]
+          res = next((m for m in reversed(log) if m.get("type") == "result"), {})
+          print(f"턴 {res.get('num_turns')} · {(res.get('duration_ms') or 0)//1000}초 "
+                f"· 권한거부 {res.get('permission_denials_count')}")
+          denied = collections.Counter(
+              (d.get("tool_name") or "?") for m in log
+              for d in (m.get("permission_denials") or []) if isinstance(d, dict))
+          for name, n in denied.most_common():
+              print(f"  거부 {name} × {n}")
+          PY
 
       - name: Validate
         run: |
