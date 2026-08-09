@@ -607,7 +607,7 @@ def render_telegram(base_date: str, candidates: list[dict], analysis: dict,
     이건 '오늘 뭔가 나왔다'는 알림 역할이다.
     """
     date_fmt = f"{base_date[:4]}-{base_date[4:6]}-{base_date[6:]}"
-    lines = [f"📈 <b>상승 종목 원인·파급 분석</b> ({date_fmt})", ""]
+    lines = [f"📈 <b>한국 밸류체인 정리</b> ({date_fmt})", ""]
 
     synthesis = (analysis or {}).get("synthesis")
     if synthesis and synthesis.get("ideas"):

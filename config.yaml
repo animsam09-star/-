@@ -83,7 +83,7 @@ analyze:
   max_tokens: 8000
 
 report:
-  site_title: 상승 종목 원인·파급 분석
+  site_title: 한국 밸류체인 정리
 
 # 한국은행 ECOS 산업연관표 (python -m src.ecos 로 탐색해 확정한 코드)
 #
