@@ -82,6 +82,12 @@ jobs:
           echo "has_input=true" >> "$GITHUB_OUTPUT"
           echo "기준일 $D"
 
+      # 커밋 메시지의 `[CF-Pages-Skip]` 접두사는 장식이 아니다. 이 저장소가
+      # Cloudflare Pages에 연결돼 있어 푸시 한 번마다 빌드가 하나 돈다. 이 워크플로는
+      # 한 번 돌 때 세 번 푸시하므로, 접두사가 없으면 하루에 빌드 세 개를 태운다.
+      # 사이트는 GitHub Pages로 나가니 Cloudflare 빌드는 값을 하지 않는다.
+      # 접두사를 지우면 사용량이 다시 샌다. Cloudflare 전용 토큰이라 GitHub Actions
+      # 테스트는 그대로 돈다 — `[skip ci]`를 쓰면 안 되는 이유가 이것이다.
       - name: Commit input
         run: |
           git config user.name "github-actions[bot]"
@@ -89,7 +95,7 @@ jobs:
           git add cases graph data/candidates_*.json data/screen_universe_*.json || true
           git add -f data/analysis_input_*.json 2>/dev/null || true
           git diff --cached --quiet && { echo "변경 없음"; exit 0; }
-          git commit -m "chore: 스크리닝 $(date +%Y-%m-%d)"
+          git commit -m "[CF-Pages-Skip] chore: 스크리닝 $(date +%Y-%m-%d)"
           for i in 1 2 3 4 5; do
             git push origin HEAD:${{ github.ref_name }} && exit 0
             echo "푸시 거부 — 리베이스 후 재시도 ($i/5)"
@@ -201,7 +207,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -f data/analyses_*.json
           git diff --cached --quiet && { echo "변경 없음"; exit 0; }
-          git commit -m "chore: 원인·파급 분석 ${{ needs.screen.outputs.base_date }}"
+          git commit -m "[CF-Pages-Skip] chore: 원인·파급 분석 ${{ needs.screen.outputs.base_date }}"
           for i in 1 2 3 4 5; do
             git push origin HEAD:${{ github.ref_name }} && exit 0
             git pull --rebase origin ${{ github.ref_name }} || exit 1
@@ -259,7 +265,7 @@ jobs:
           git add cases reports graph data/candidates_*.json data/analysis_*.json \
                   data/screen_universe_*.json || true
           git diff --cached --quiet && { echo "변경 없음"; exit 0; }
-          git commit -m "chore: daily screen $(date +%Y-%m-%d)"
+          git commit -m "[CF-Pages-Skip] chore: daily screen $(date +%Y-%m-%d)"
           for i in 1 2 3 4 5; do
             git push origin HEAD:${{ github.ref_name }} && exit 0
             echo "푸시 거부 — 리베이스 후 재시도 ($i/5)"

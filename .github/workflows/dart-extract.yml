@@ -118,7 +118,7 @@ jobs:
           if git diff --staged --quiet; then
             echo "변경 없음"; exit 0
           fi
-          git commit -m "chore: DART 사업의 내용 절 수집 $(date +%Y-%m-%d)"
+          git commit -m "[CF-Pages-Skip] chore: DART 사업의 내용 절 수집 $(date +%Y-%m-%d)"
           # 수집에 수십 분이 걸리는 사이 브랜치가 앞서 나갈 수 있다. 그때 푸시가
           # 거부되면 받아 온 공시가 통째로 버려진다(실제로 그렇게 날렸다).
           # 리베이스로 얹어 다시 민다.
@@ -229,7 +229,7 @@ jobs:
           if git diff --staged --quiet; then
             echo "변경 없음"; exit 0
           fi
-          git commit -m "chore: DART 수직축 엣지 추출 $(date +%Y-%m-%d)"
+          git commit -m "[CF-Pages-Skip] chore: DART 수직축 엣지 추출 $(date +%Y-%m-%d)"
           for i in 1 2 3 4 5; do
             git push origin HEAD:${{ github.ref_name }} && exit 0
             echo "푸시 거부 — 리베이스 후 재시도 ($i/5)"
