@@ -1,0 +1,15 @@
+industry: 조선
+description: 상선(LNG·컨테이너·탱커)·해양플랜트·함정 건조
+drivers: [신조선가 지수, 발주 사이클(LNG선·친환경 규제), 후판 가격(원가), 미국 함정 MRO·동맹조선]
+peers: [HD한국조선해양, HD현대중공업, 삼성중공업, 한화오션]
+upstream:
+  - segment: 후판·강재
+    companies: [POSCO홀딩스, 현대제철, 동국제강]
+  - segment: 조선 기자재(엔진·보냉재·의장)
+    companies: [HD현대마린엔진, 한화엔진, 동성화인텍, 세진중공업, 성광벤드, 태광]
+  - segment: 선박 도료·케이블
+    companies: [KCC, LS에코에너지]
+downstream:
+  - segment: 해운
+    companies: [HMM, 팬오션, 대한해운]
+notes: 신조선가 상승·수주잔고 확대 국면에서 기자재(엔진·보냉재)가 빅3 대비 후행. 함정·MRO 테마는 방산과 교차

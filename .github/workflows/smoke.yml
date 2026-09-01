@@ -1,0 +1,344 @@
+name: smoke
+
+# 2층 검증: 실제 KRX 데이터로 라이브 경로가 도는가.
+# 커밋도 Pages 배포도 하지 않고, 결과물은 아티팩트로만 남긴다.
+# 병합 전에 Actions 탭에서 수동 실행해 확인하는 용도.
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "기준일 YYYYMMDD (비우면 오늘)"
+        required: false
+      with_llm:
+        description: "LLM 원인 분석까지 실행 (ANTHROPIC_API_KEY 필요, 비용 발생)"
+        type: boolean
+        default: false
+      check_dart:
+        description: "DART 문서 API 계약 검증 (DART_API_KEY 필요, LLM 비용 없음)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # 어떤 Secret이 없어서 무엇이 안 되는지 한눈에 보여준다.
+      # 값은 절대 출력하지 않고 등록 여부만 확인한다.
+      - name: Report secret availability
+        env:
+          KRX_ID: ${{ secrets.KRX_ID }}
+          KRX_PW: ${{ secrets.KRX_PW }}
+          KRX_OPENAPI_KEY: ${{ secrets.KRX_OPENAPI_KEY }}
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          python - <<'PY'
+          import os
+          checks = [
+              ("KRX_OPENAPI_KEY", bool(os.getenv("KRX_OPENAPI_KEY")),
+               "가격 수집 (인증키 방식) — 권장"),
+              ("KRX_ID + KRX_PW", bool(os.getenv("KRX_ID") and os.getenv("KRX_PW")),
+               "가격 수집 (로그인 방식, pykrx) — 인증키가 있으면 불필요"),
+              ("DART_API_KEY", bool(os.getenv("DART_API_KEY")),
+               "공시 수집 + 수직축 자동 구축"),
+              ("NAVER_CLIENT_ID", bool(os.getenv("NAVER_CLIENT_ID")), "뉴스 수집"),
+              ("Claude 인증(API키 또는 OAuth 토큰)",
+               bool(os.getenv("ANTHROPIC_API_KEY") or os.getenv("CLAUDE_CODE_OAUTH_TOKEN")),
+               "원인 분석"),
+          ]
+          width = max(len(n) for n, _, _ in checks)
+          for name, ok, purpose in checks:
+              print(f"  {'있음' if ok else '없음'}  {name:<{width}}  {purpose}")
+          if not (checks[0][1] or checks[1][1]):
+              print("::warning::KRX 접근 수단이 하나도 없어 스모크 테스트가 실패합니다. "
+                    "Settings → Secrets and variables → Actions에서 등록하세요.")
+          PY
+
+      # KRX OpenAPI 응답 필드명은 영문 코드라 문서 없이 단정할 수 없다.
+      # 추측한 필드는 KeyError가 아니라 '빈 컬럼'이 되어 조용히 틀리므로,
+      # 실제 스키마를 여기서 찍어 FIELD_CANDIDATES를 확정한다.
+      - name: Discover KRX OpenAPI schema
+        if: ${{ always() }}
+        env:
+          KRX_OPENAPI_KEY: ${{ secrets.KRX_OPENAPI_KEY }}
+        run: |
+          python - <<'PY'
+          import os, sys
+          if not os.getenv("KRX_OPENAPI_KEY"):
+              print("::warning::KRX_OPENAPI_KEY 미설정 — 스키마 탐색을 건너뜁니다")
+              sys.exit(0)
+
+          from datetime import datetime, timedelta, timezone
+          from src import krx_api
+
+          # 최근 영업일을 모르므로 며칠 거슬러 올라가며 데이터가 있는 날을 찾는다
+          kst = timezone(timedelta(hours=9))
+          today = datetime.now(kst)
+          schema, used = {}, None
+          for back in range(1, 10):
+              day = (today - timedelta(days=back)).strftime("%Y%m%d")
+              try:
+                  records = krx_api.fetch_raw("sto", "stk_bydd_trd", day)
+              except krx_api.KrxApiError as e:
+                  print(f"  {day}: {e}")
+                  continue
+              if records:
+                  used = day
+                  break
+          if not used:
+              sys.exit("최근 10일 내에 데이터가 있는 날을 찾지 못했습니다. "
+                       "인증키와 API별 이용신청 상태를 확인하세요.")
+
+          print(f"기준일 {used} — 응답 {len(records)}건\n")
+          schema = krx_api.describe_schema(used)
+          for label, fields in schema.items():
+              print(f"[{label}]")
+              print(f"  {fields}\n")
+
+          # 지금 가정한 후보가 실제와 맞는지 대조한다
+          print("=== FIELD_CANDIDATES 해석 결과 (KOSPI 시세) ===")
+          unresolved = []
+          for canonical in ("ticker", "name", "close", "volume", "value", "market_cap"):
+              try:
+                  actual = krx_api.resolve_field(records, canonical)
+                  print(f"  OK   {canonical:12} → {actual}")
+              except krx_api.KrxApiError:
+                  unresolved.append(canonical)
+                  print(f"  FAIL {canonical:12} → 후보 중 일치 없음")
+          if unresolved:
+              print(f"::warning::미해석 필드 {unresolved} — "
+                    "위 실제 필드 목록을 보고 src/krx_api.py의 FIELD_CANDIDATES를 고치세요")
+          PY
+
+      # 단위 테스트는 픽스처를 우리가 직접 만들기 때문에 KRX 응답의 실제 컬럼명·
+      # 타입이 바뀌어도 잡지 못한다. 구조적 사각지대라, 여기서 계약을 명시적으로
+      # 검증한다. 응답이 바뀌면 조용히 틀리는 대신 여기서 터져야 한다.
+      - name: Verify KRX contract
+        if: ${{ always() }}
+        env:
+          KRX_OPENAPI_KEY: ${{ secrets.KRX_OPENAPI_KEY }}
+        run: |
+          python - <<'PY'
+          import sys
+          from datetime import datetime, timedelta, timezone
+
+          from src import krx_api, prices
+
+          if prices.source() != "openapi":
+              sys.exit(prices.MISSING_HINT)
+
+          kst = timezone(timedelta(hours=9))
+          end = datetime.now(kst).strftime("%Y%m%d")
+          fail = []
+
+          def check(label, cond, detail=""):
+              (print(f"  OK   {label}") if cond
+               else (fail.append(f"{label} — {detail}"), print(f"  FAIL {label}: {detail}")))
+
+          # 5거래일만 받는다. 계약 검증이 목적이라 130일을 다 받을 이유가 없다.
+          dates, close, volume, value, snap = prices.fetch_panel(end, 5)
+          print(f"거래일 {dates}")
+
+          check("거래일 5일 확보", len(dates) == 5, f"{len(dates)}일")
+          check("패널 오름차순", list(close.index) == sorted(close.index),
+                "역순이면 수익률 부호가 통째로 뒤집힌다")
+          check("종목 수", len(close.columns) > 2000, f"{len(close.columns)}종목")
+          check("종가가 수치형", str(close.dtypes.iloc[0]).startswith(("float", "int")),
+                f"dtype={close.dtypes.iloc[0]} — 문자열이면 비교가 사전순이 된다")
+
+          # 티커 형태 — 이게 어긋나면 DART·밸류체인과의 조인이 전부 빗나간다
+          odd = [t for t in close.columns if not (len(t) == 6)]
+          check("티커가 6자리", not odd, f"샘플={odd[:5]}")
+          check("앞자리 0 보존", any(t.startswith("0") for t in close.columns),
+                "0으로 시작하는 종목이 하나도 없다면 숫자로 변환된 것이다")
+
+          # 종목 마스터에 필요한 것이 시세 응답에 함께 오는가
+          for col in ("name", "market_cap", "market"):
+              check(f"스냅샷 {col} 컬럼", col in snap.columns, f"실제={list(snap.columns)}")
+          if "name" in snap.columns:
+              named = snap["name"].notna().sum()
+              check("종목명 확보율 95% 이상", named > len(snap) * 0.95,
+                    f"{named}/{len(snap)}")
+
+          # 알려진 종목이 실제로 조회되는가 — 필드 매핑이 맞는지의 최종 확인
+          check("삼성전자(005930) 존재", "005930" in close.columns)
+          if "005930" in close.columns:
+              px = close["005930"].iloc[-1]
+              check("삼성전자 종가가 상식 범위", 10_000 < px < 1_000_000, f"{px}")
+
+          if fail:
+              raise SystemExit("KRX 계약 위반:\n  - " + "\n  - ".join(fail))
+          print("KRX 계약 전부 만족")
+          PY
+
+      # DART 문서 API는 확장자가 .xml이지만 실제로는 ZIP을 준다. 인코딩도 EUC-KR과
+      # UTF-8이 섞인다. 단위 테스트는 우리가 만든 합성 ZIP만 보므로 이 가정들이
+      # 실제로 맞는지 확인하지 못한다 — 여기서 진짜 공시 한 건으로 검증한다.
+      # KRX와 독립적이므로 KRX 검증이 실패해도 실행한다 —
+      # 한 번의 실행으로 두 소스의 상태를 모두 알 수 있어야 한다.
+      - name: Verify DART contract
+        if: ${{ always() && inputs.check_dart }}
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+        run: |
+          python - <<'PY'
+          import os, sys
+          if not os.getenv("DART_API_KEY"):
+              print("::warning::DART_API_KEY 미설정 — DART 계약 검증을 건너뜁니다")
+              sys.exit(0)
+          from src import dart
+
+          codes = dart.load_corp_codes()
+          print(f"corp_code 매핑 {len(codes)}건")
+          assert len(codes) > 2000, "상장사 매핑이 비정상적으로 적습니다"
+
+          ticker = "000720"        # 현대건설 — 사업의 내용이 충실한 대형 건설사
+          corp = codes.get(ticker)
+          assert corp, f"{ticker}의 corp_code가 없습니다"
+
+          report = dart.find_business_report(corp)
+          assert report, "최근 2년 정기보고서를 찾지 못했습니다"
+          print(f"보고서: {report['report_nm']} ({report['rcept_dt']})")
+
+          text = dart.fetch_document(report["rcept_no"])
+          assert len(text) > 20000, f"문서가 너무 짧습니다({len(text)}자) — ZIP/인코딩 처리 확인"
+          assert "&#" not in text, "수치 문자 참조가 디코딩되지 않았습니다"
+          # 치환 문자는 코드 포인트로 쓴다. 리터럴로 적으면 편집·전송 과정에서
+          # 사라져 `"" not in text`가 되는데, 빈 문자열은 모든 문자열에 포함되므로
+          # 그 assertion은 문서와 무관하게 언제나 실패한다(실제로 그렇게 거짓 경보가 났다).
+          bad = text.count(chr(0xFFFD))
+          assert bad == 0, f"인코딩 오류(치환 문자) {bad}개 — 디코딩 후보 순서를 확인하세요"
+
+          section = dart.extract_business_section(text)
+          assert section, "'사업의 내용' 절 경계를 찾지 못했습니다 — 제목 정규식 확인"
+          ratio = len(section) / len(text)
+          print(f"전체 {len(text):,}자 → 사업의 내용 {len(section):,}자 ({ratio:.0%})")
+          assert 0.02 < ratio < 0.9, f"절 비중이 비정상입니다({ratio:.0%}) — 목차나 통짜 문서를 잡았을 수 있습니다"
+          assert "재무제표" not in section[-2000:], "재무 파트까지 넘어갔습니다"
+
+          # 절 구성은 산업마다 다르다. 건설사에는 '원재료 및 생산설비'가 없고
+          # 제조업에는 '수주상황'이 없다. 특정 항목을 필수로 두면 업종에 따라
+          # 멀쩡한 추출이 실패로 잡힌다(실제로 현대건설에서 그렇게 걸렸다).
+          # 올바른 구간인지만 확인하도록 여러 표지 중 다수 일치로 판정한다.
+          markers = ["사업의 개요", "주요 제품", "매출", "원재료", "생산",
+                     "수주", "시장", "영업", "경쟁"]
+          found = [m for m in markers if m in section]
+          assert len(found) >= 4, (
+              f"'사업의 내용'다운 표지가 부족합니다({found}) — 잘못된 구간일 수 있습니다")
+          print(f"절 표지 확인: {found}")
+          print("DART 계약 전부 만족")
+          PY
+
+      - name: Run pipeline (smoke)
+        env:
+          KRX_OPENAPI_KEY: ${{ secrets.KRX_OPENAPI_KEY }}
+          KRX_ID: ${{ secrets.KRX_ID }}
+          KRX_PW: ${{ secrets.KRX_PW }}
+          ANTHROPIC_API_KEY: ${{ inputs.with_llm && secrets.ANTHROPIC_API_KEY || '' }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ inputs.with_llm && secrets.CLAUDE_CODE_OAUTH_TOKEN || '' }}
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+        run: |
+          ARGS="--smoke"
+          if [ -n "${{ inputs.date }}" ]; then ARGS="$ARGS --date ${{ inputs.date }}"; fi
+          if [ "${{ inputs.with_llm }}" != "true" ]; then ARGS="$ARGS --skip-analyze"; fi
+          python -m src.pipeline $ARGS
+
+      - name: Verify outputs
+        run: |
+          python - <<'PY'
+          import json, pathlib, sys
+
+          reports = sorted(pathlib.Path("reports").glob("2*.html"))
+          assert reports, "리포트가 생성되지 않았습니다"
+          html = reports[-1].read_text(encoding="utf-8")
+          assert len(html) > 500, "리포트가 비어 있습니다"
+          print(f"리포트 생성 확인: {reports[-1].name} ({len(html):,}자)")
+
+          data = pathlib.Path("data")
+          cands = sorted(data.glob("candidates_*.json"))
+          assert cands, "후보 파일이 없습니다"
+          payload = json.loads(cands[-1].read_text(encoding="utf-8"))
+          n = len(payload["candidates"])
+          print(f"후보 {n}종목 / 유니버스 {payload['universe_size']}종목")
+          assert payload["universe_size"] > 100, "유니버스가 비정상적으로 작습니다"
+
+          # 종목 마스터(Layer 0) — 스크리닝 필터와 독립적으로 전 종목을 담아야 한다.
+          # 유니버스보다 작으면 소형 후방주가 이름 해석에서 빠진다.
+          unis = sorted(data.glob("universe_*.json"))
+          assert unis, "종목 마스터가 생성되지 않았습니다"
+          uni = json.loads(unis[-1].read_text(encoding="utf-8"))["entries"]
+          named = sum(1 for e in uni.values() if e.get("name"))
+          print(f"종목 마스터 {len(uni)}종목 (이름 확보 {named}종목)")
+          assert len(uni) >= payload["universe_size"], (
+              f"종목 마스터({len(uni)})가 스크리닝 유니버스({payload['universe_size']})보다 "
+              "작습니다 — 전 종목을 담지 못했습니다")
+          assert named / max(1, len(uni)) > 0.9, f"종목명 확보율이 낮습니다: {named}/{len(uni)}"
+
+          # 관계 그래프(Layer 1)
+          import collections
+          edges = [json.loads(l) for l in
+                   pathlib.Path("graph/edges.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
+          by_rel = collections.Counter(e["rel"] for e in edges)
+          print(f"수직축 엣지 {len(edges)}개 — {dict(by_rel)}")
+          assert by_rel["소속"] > 0, "밸류체인 회사명이 하나도 티커로 해석되지 않았습니다"
+          assert by_rel["후방"] > 0 and by_rel["전방"] > 0, "산업 간 관계가 비었습니다"
+
+          daily_edges = sorted(data.glob("edges_*.jsonl"))
+          if daily_edges:
+              de = [json.loads(l) for l in
+                    daily_edges[-1].read_text(encoding="utf-8").splitlines() if l.strip()]
+              signs = collections.Counter(e["sign"] for e in de)
+              print(f"수평축 엣지 {len(de)}개 — 부호 분포 {dict(signs)}")
+              if signs.get(-1, 0) == 0:
+                  print("::warning::음(-)의 노출이 하나도 없습니다. "
+                        "부호 판정이 작동하는지 확인하세요(구리↑ = 전선 원가 부담).")
+          else:
+              print("::warning::수평축 엣지가 없습니다.")
+
+          # 수평 그래프는 실패해도 파이프라인이 죽지 않으므로 명시적으로 확인한다
+          groups = sorted(data.glob("groups_*.json"))
+          factors = sorted(data.glob("factors_*.json"))
+          if groups and factors:
+              g = json.loads(groups[-1].read_text(encoding="utf-8"))
+              f = json.loads(factors[-1].read_text(encoding="utf-8"))
+              print(f"그룹 {len(g['groups'])}개 / 팩터 {len(f['factor_moves'])}개 / "
+                    f"갭 산출 그룹 {len(f['group_gaps'])}개")
+              proxies = f.get("factor_proxies", {})
+              for name, info in proxies.items():
+                  print(f"  팩터 대용: {name} → {info['proxy_name']} ({info['ticker']})")
+              if not f["factor_moves"]:
+                  print("::warning::팩터가 하나도 해석되지 않았습니다. "
+                        "config.yaml의 키워드를 점검하세요.")
+              if not g["groups"]:
+                  print("::warning::그룹이 하나도 구성되지 않았습니다.")
+          else:
+              print("::warning::수평 그래프 산출물이 없습니다 — 로그에서 실패 원인을 확인하세요.")
+          PY
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-output
+          path: |
+            reports/
+            data/
+          retention-days: 7

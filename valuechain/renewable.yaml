@@ -1,0 +1,17 @@
+industry: 신재생
+description: 태양광·풍력·수소 발전 설비와 시공
+drivers: [RE100·RPS 의무비율, 해상풍력 입찰, IRA 세액공제, 폴리실리콘·철강 가격]
+peers: [한화솔루션, 씨에스윈드, HD현대에너지솔루션, SK오션플랜트]
+upstream:
+  - segment: 실리콘 웨이퍼
+    companies: []          # SK실트론 등 주요 공급사가 비상장이다
+  - segment: 후판·강재
+    companies: [POSCO홀딩스, 현대제철, 동국제강]
+downstream:
+  - segment: 태양광
+    companies: [한화솔루션, HD현대에너지솔루션, 신성이엔지]
+  - segment: 풍력
+    companies: [씨에스윈드, 동국S&C, SK오션플랜트, 유니슨]
+  - segment: ESS·전력
+    companies: [LG에너지솔루션, 삼성SDI, 서진시스템]
+notes: 풍력 하부구조물(SK오션플랜트·동국S&C)은 조선 기자재와 설비·인력이 겹쳐 조선 사이클과도 연동된다

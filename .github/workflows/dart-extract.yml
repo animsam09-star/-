@@ -1,0 +1,250 @@
+name: dart-extract
+
+# DART 사업보고서 → 수직축 엣지 추출.
+# KRX와 완전히 독립이므로 시세 파이프라인과 동시에 돌릴 수 있다.
+#
+# 첫 실행은 소량으로 하라. 확인해야 할 것은 산출된 엣지 수가 아니라
+# **인용 폐기율(환각률의 하한)과 신규 산업 목록**이다. 프롬프트가 잘못돼 있으면
+# 대량 실행은 비용만 나간다.
+on:
+  workflow_dispatch:
+    inputs:
+      tickers:
+        description: "종목코드 쉼표 구분 (비우면 아래 기본 세트)"
+        required: false
+      top_n:
+        description: "tickers 대신 상위 N종목 (기본 100)"
+        required: false
+      from_screening:
+        description: "스크리닝 유니버스 중 아직 맵에 없는 종목을 대상으로 (맵이 쓰이는 표본과 맞춘다). 끄면 시총 상위"
+        type: boolean
+        default: true
+      mode:
+        description: "fetch=공시만 받아 커밋(LLM 미호출) / extract=LLM으로 추출"
+        type: choice
+        options: [fetch, extract]
+        default: fetch
+      use_batch:
+        description: "Batch API 사용 (요금 50%, 최대 24시간). 소량이면 끄는 게 낫다"
+        type: boolean
+        default: false
+      commit:
+        description: "결과 엣지를 커밋"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Check credentials
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          python - <<'PY'
+          import os, sys
+          from src import llm
+          if not os.getenv("DART_API_KEY"):
+              sys.exit("DART_API_KEY 누락 — opendart.fss.or.kr에서 무료 발급")
+          # fetch 모드는 LLM을 부르지 않는다. 여기서 Claude 인증을 요구하면
+          # 이 모드가 존재하는 이유(API 키 없이 진행)와 정면으로 모순된다.
+          if "${{ inputs.mode }}" != "extract":
+              print("DART_API_KEY 확인 (fetch 모드 — Claude 인증 불필요)")
+              raise SystemExit(0)
+          kind = llm.credential_kind()
+          if not kind:
+              sys.exit(llm.MISSING_HINT)
+          print(f"DART_API_KEY 확인 / Claude 인증: {kind}")
+          PY
+
+      # 429가 났을 때 원인이 둘로 갈리고 조치가 정반대다. 최소 요청 1건이면
+      # 판별된다 — 사업보고서 5건을 12분간 태워 가며 알아낼 일이 아니다.
+      # 실패해도 계속 진행한다. 판별 결과와 본 실행 결과를 한 번에 봐야 한다.
+      - name: Preflight (LLM 호출 가능 여부)
+        if: ${{ inputs.mode == 'extract' }}
+        continue-on-error: true
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: python -m src.dart_extract --preflight
+
+      # 공시만 받아 커밋한다. 추출은 세션 안의 Claude가 저장된 절을 읽고 수행하며,
+      # 인용 검증은 --extractions 경로에서 그대로 돈다. MAX 구독만으로 API 키 없이
+      # 밸류체인을 쌓는 경로다(Messages API는 구독 토큰으로 막혀 있다 — 라이브 확인).
+      - name: Fetch sections only
+        if: ${{ inputs.mode == 'fetch' }}
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+        run: |
+          if [ -n "${{ inputs.tickers }}" ]; then
+            ARGS="--tickers ${{ inputs.tickers }}"
+          elif [ "${{ inputs.from_screening }}" = "true" ]; then
+            # 맵의 대상 선정을 맵이 **쓰이는 표본**에 맞춘다. 시총 상위로 채운
+            # 결과 20260731 후보 20종목 중 19종목이 맵에 없었다.
+            ARGS="--from-screening --top-n ${{ inputs.top_n || 100 }}"
+          else
+            ARGS="--top-n ${{ inputs.top_n || 100 }}"
+          fi
+          echo "실행: python -m src.dart_extract --fetch-only $ARGS"
+          python -m src.dart_extract --fetch-only $ARGS
+
+      # 수집이 도중에 죽어도 그때까지 받아 둔 공시는 커밋한다. 실제로 87종목을
+      # 받아 둔 상태에서 한 종목의 예외로 잡이 죽어 25분치가 통째로 날아갔다.
+      # 잡은 빨갛게 남겨 알리되, 받아 놓은 것까지 버릴 이유는 없다.
+      - name: Commit sections
+        if: ${{ always() && inputs.mode == 'fetch' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f data/dart_sections
+          if git diff --staged --quiet; then
+            echo "변경 없음"; exit 0
+          fi
+          git commit -m "[CF-Pages-Skip] chore: DART 사업의 내용 절 수집 $(date +%Y-%m-%d)"
+          # 수집에 수십 분이 걸리는 사이 브랜치가 앞서 나갈 수 있다. 그때 푸시가
+          # 거부되면 받아 온 공시가 통째로 버려진다(실제로 그렇게 날렸다).
+          # 리베이스로 얹어 다시 민다.
+          for i in 1 2 3 4 5; do
+            git push origin HEAD:${{ github.ref_name }} && exit 0
+            echo "푸시 거부 — 리베이스 후 재시도 ($i/5)"
+            git pull --rebase origin ${{ github.ref_name }} || exit 1
+            sleep $((i * 3))
+          done
+          echo "::error::5회 재시도 후에도 푸시하지 못했습니다"; exit 1
+
+      - name: Extract
+        if: ${{ inputs.mode == 'extract' }}
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          # 기본 세트: 한 밸류체인의 양쪽을 모두 담아 교차 검증이 되게 한다.
+          # 건설(수요) ↔ 시멘트·철강(공급), 조선(수요) ↔ 기자재(공급).
+          # 건설사 사업보고서에는 '원재료' 절이 없다는 걸 라이브에서 확인했으므로,
+          # 후방 관계가 공급자 쪽 '매출처' 기술에서 나오는지가 이 실행의 핵심 검증이다.
+          DEFAULT="000720,300720,004020,009540,010140,006260,267260,000660"
+          ARGS="--tickers ${{ inputs.tickers || '' }}"
+          if [ -z "${{ inputs.tickers }}" ]; then
+            if [ "${{ inputs.from_screening }}" = "true" ]; then
+              ARGS="--from-screening --top-n ${{ inputs.top_n || 100 }}"
+            elif [ -n "${{ inputs.top_n }}" ]; then
+              ARGS="--top-n ${{ inputs.top_n }}"
+            else
+              ARGS="--tickers $DEFAULT"
+            fi
+          fi
+          if [ "${{ inputs.use_batch }}" != "true" ]; then ARGS="$ARGS --no-batch"; fi
+          echo "실행: python -m src.dart_extract $ARGS"
+          python -m src.dart_extract $ARGS
+
+      - name: Summarize
+        if: ${{ always() && inputs.mode == 'extract' }}
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          files = sorted(pathlib.Path("data").glob("dart_extract_*.json"))
+          if not files:
+              print("::warning::추출 리포트가 없습니다")
+              raise SystemExit(0)
+          r = json.loads(files[-1].read_text(encoding="utf-8"))
+
+          print("=" * 60)
+          print(f"공시 확보      {r['documents']}건 / 미확보 {len(r['missing'])}건")
+          print(f"추출 성공      {r['extracted']}건")
+          print(f"인용 검증      통과 {r['quote_kept']} / 폐기 {r['quote_dropped']} "
+                f"(폐기율 {r['drop_rate']:.1%})")
+          print(f"수직축 엣지    +{r['edges']} → 총 {r['total_edges']}")
+          print("=" * 60)
+
+          # 폐기율은 환각률의 하한이다. 이게 이 실행에서 가장 중요한 숫자다.
+          if r["drop_rate"] > 0.3:
+              print("::warning::폐기율이 높습니다(>30%). 절 추출이나 프롬프트를 점검하세요.")
+          if r["missing"]:
+              print(f"공시 미확보 종목: {r['missing']}")
+          if r["new_industries"]:
+              top = sorted(r["new_industries"].items(), key=lambda kv: -kv[1])[:25]
+              print(f"\n신규 산업 {len(r['new_industries'])}개:")
+              print("  " + ", ".join(f"{k}({v})" for k, v in top))
+          if r.get("alias_suggestions"):
+              print("\n별칭 후보 (valuechain/_industry_aliases.yaml에 추가 검토):")
+              for fresh, hits in r["alias_suggestions"].items():
+                  print(f"  {fresh}: {hits}")
+          PY
+
+      - name: Show resulting graph
+        if: ${{ always() && inputs.mode == 'extract' }}
+        run: |
+          python - <<'PY'
+          import collections
+          from src import graph as G
+          edges = [e for e in G.load() if e.get("source") == "dart"]
+          if not edges:
+              print("DART 엣지가 없습니다")
+              raise SystemExit(0)
+          by_rel = collections.Counter(e["rel"] for e in edges)
+          print(f"DART 엣지 {len(edges)}개 — {dict(by_rel)}\n")
+
+          # 밸류체인 YAML과 같은 관계를 주장하는 엣지가 있는지 = 교차 검증
+          vc = {(e["src"], e["dst"], e["rel"]) for e in G.load()
+                if e.get("source") == "valuechain"}
+          dart = {(e["src"], e["dst"], e["rel"]) for e in edges}
+          both = vc & dart
+          print(f"밸류체인 YAML과 일치하는 관계: {len(both)}개")
+          for s, d, r in sorted(both)[:15]:
+              print(f"  {s} -{r}-> {d}")
+
+          print("\nDART가 새로 찾은 산업 간 관계:")
+          for e in sorted(edges, key=lambda e: -e["confidence"]):
+              if e["rel"] in (G.REL_UPSTREAM, G.REL_DOWNSTREAM) \
+                 and (e["src"], e["dst"], e["rel"]) not in vc:
+                  print(f"  {e['src']} -{e['rel']}-> {e['dst']}  "
+                        f"[{e['confidence']}] {e['evidence'][:80]}")
+          PY
+
+      - name: Commit edges
+        if: ${{ inputs.commit && success() && inputs.mode == 'extract' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add graph
+          if git diff --staged --quiet; then
+            echo "변경 없음"; exit 0
+          fi
+          git commit -m "[CF-Pages-Skip] chore: DART 수직축 엣지 추출 $(date +%Y-%m-%d)"
+          for i in 1 2 3 4 5; do
+            git push origin HEAD:${{ github.ref_name }} && exit 0
+            echo "푸시 거부 — 리베이스 후 재시도 ($i/5)"
+            git pull --rebase origin ${{ github.ref_name }} || exit 1
+            sleep $((i * 3))
+          done
+          echo "::error::5회 재시도 후에도 푸시하지 못했습니다"; exit 1
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dart-extract-output
+          path: |
+            graph/
+            data/dart_extract_*.json
+            data/dart_sections/
+          retention-days: 14

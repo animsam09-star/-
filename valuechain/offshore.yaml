@@ -1,0 +1,13 @@
+industry: 해양플랜트
+description: FPSO·고정식 플랫폼·해상 구조물 제작과 설치
+drivers: [유가, 해양 E&P 투자, 해상풍력 하부구조물 발주, 후판 가격]
+peers: [HD한국조선해양, 삼성중공업, 한화오션, SK오션플랜트]
+upstream:
+  - segment: 후판·강재
+    companies: [POSCO홀딩스, 현대제철, 동국제강]
+  - segment: 조선 기자재(엔진·보냉재·의장)
+    companies: [한화엔진, 한국카본, 세진중공업, 오리엔탈정공]
+downstream:
+  - segment: 유틸리티·발전
+    companies: [한국전력]
+notes: 유가 상승이 해양플랜트 발주로 이어지기까지 시차가 길다. 해상풍력 하부구조물이 같은 설비·인력을 쓴다

@@ -1,0 +1,49 @@
+{
+  "base_date": "20260803",
+  "analyses": [
+    {
+      "cause_summary": "HBM 증설.",
+      "cause_type": "업황개선(P/Q/C)",
+      "cause_scope": "산업공통",
+      "industry": "반도체",
+      "evidence": "8/1 공시",
+      "confidence": "높음",
+      "ripple_axis": "수직",
+      "ripple_paths": [
+        {
+          "direction": "후방",
+          "target_industry": "전공정 장비",
+          "logic": "증설이면 장비 발주가 뒤따른다",
+          "beneficiaries": [
+            {
+              "name": "SK하이닉스",
+              "impact": "수혜",
+              "reason": "같은 HBM 사이클",
+              "ticker": "000660",
+              "graph_backed": false
+            }
+          ]
+        }
+      ],
+      "ticker": "005930",
+      "name": "삼성전자",
+      "trigger": "강세지속",
+      "ret20": 0.21,
+      "groups": [],
+      "industries": []
+    }
+  ],
+  "synthesis": {
+    "market_summary": "x",
+    "ideas": []
+  },
+  "name_match": {
+    "matched": 0,
+    "total": 0,
+    "unmatched": []
+  },
+  "provenance": {
+    "graph_backed": 0,
+    "total": 0
+  }
+}

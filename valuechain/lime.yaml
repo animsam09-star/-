@@ -1,0 +1,13 @@
+industry: 석회·화성품
+description: 생석회·소석회와 제철 부산 화성품 가공
+drivers: [제철 조업률, 석회석 채굴 허가, 유연탄·전력 단가]
+peers: [포스코퓨처엠]
+upstream:
+  - segment: 석회석
+    companies: [한일시멘트, 아세아시멘트, 성신양회]   # 자체 석회석 광산 보유
+downstream:
+  - segment: 철강
+    companies: [POSCO홀딩스, 현대제철]
+  - segment: 시멘트·레미콘
+    companies: [한일시멘트, 아세아시멘트]
+notes: 생석회는 제강 부원료라 조강 생산량에 연동된다. 석회석 광산은 시멘트사가 함께 보유해 두 산업이 원료에서 겹친다

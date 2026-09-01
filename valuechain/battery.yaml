@@ -1,0 +1,19 @@
+industry: 이차전지
+description: 배터리 셀·소재(양극재·음극재·분리막·전해액)·장비
+drivers: [전기차 판매량, 메탈 가격(리튬·니켈), 미국 IRA·관세 정책, ESS 수요, 46파이·전고체 신기술]
+peers: [LG에너지솔루션, 삼성SDI, SK이노베이션]
+upstream:
+  - segment: 양극재
+    companies: [에코프로비엠, 포스코퓨처엠, 엘앤에프, 코스모신소재]
+  - segment: 음극재·동박
+    companies: [포스코퓨처엠, SKC, 롯데에너지머티리얼즈]
+  - segment: 분리막·전해액
+    companies: [SK아이이테크놀로지, 엔켐, 솔브레인홀딩스]
+  - segment: 장비
+    companies: [피엔티, 원익피앤이, 하나기술]
+downstream:
+  - segment: 완성차
+    companies: [현대차, 기아]
+  - segment: ESS·전력
+    companies: [LS ELECTRIC, 서진시스템]
+notes: 셀 메이커 수주·증설 발표 → 소재(장기공급계약)·장비(발주) 순차 파급. ESS 수요는 전력기기 밸류체인과 교차

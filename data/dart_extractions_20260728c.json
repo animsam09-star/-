@@ -1,0 +1,1492 @@
+{
+ "012450": {
+  "products": [
+   {
+    "industry": "방위산업",
+    "product": "자주포·장갑차·정밀유도무기(K9·천무)",
+    "revenue_share": 0.3888,
+    "tier": "A",
+    "quote": "자주포, 장갑차, 발사대, 지상무기체계, 해양무기체계, 항공우주체계, 정밀유도무기, 재래식 화약, 레이저, 종합군수지원 등"
+   },
+   {
+    "industry": "조선",
+    "product": "LNGC·LPGC·VLCC(한화오션)",
+    "revenue_share": 0.5452,
+    "tier": "A",
+    "quote": "LNGC, LPGC, VLCC, 해상철구조물, FPSOㆍFLNG, 화공 및 발전시설, 기타 에너지, 서비스 제공 등"
+   },
+   {
+    "industry": "항공기 엔진·부품",
+    "product": "가스터빈엔진·엔진부품·정비",
+    "revenue_share": 0.0944,
+    "tier": "A",
+    "quote": "가스터빈엔진 및 엔진부품ㆍ정비, 항공기계 등"
+   },
+   {
+    "industry": "우주·발사체",
+    "product": "우주발사체 체계종합·위성시스템",
+    "revenue_share": 0.0125,
+    "tier": "A",
+    "quote": "우주발사체 체계종합, 위성 추진 시스템, 위성시스템, 전자광학카메라, 위성지상국, 위성영상판매, 위성영상 데이터 분석 등"
+   },
+   {
+    "industry": "해양플랜트",
+    "product": "FPSO·FLNG·해상철구조물",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "LNGC, LPGC, VLCC, 해상철구조물, FPSOㆍFLNG, 화공 및 발전시설, 기타 에너지, 서비스 제공 등"
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": "한화오션 연결 편입으로 해양 부문이 매출의 54.5%다. 조선 사이클과 방산 사이클이 한 종목에 섞여 있어 단일 산업 신호로 보면 흐려진다."
+ },
+ "004020": {
+  "products": [
+   {
+    "industry": "철근·형강",
+    "product": "봉형강(건축·자동차·조선용)",
+    "revenue_share": 0.227,
+    "tier": "A",
+    "quote": "철 강제조업 철강 봉 형 강 건축용, 자동차용,조선용, 모빌리티 부품 5,964,924 22.7%"
+   },
+   {
+    "industry": "후판·강재",
+    "product": "판재",
+    "revenue_share": 0.701,
+    "tier": "A",
+    "quote": "판 재 18,378,114 70.1%"
+   },
+   {
+    "industry": "철강",
+    "product": "고로·전기로 조강",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "전기로 제강의 주원료는 철 스크랩으로 국내외에서 조달하고 있습니다."
+   }
+  ],
+  "upstream": [
+   {
+    "industry": "광산·비철 원광",
+    "material": "철광석·석탄(수입)",
+    "cost_share": null,
+    "tier": "A",
+    "quote": "고로 제선의 주원료는 철광석과 석탄으로, 수요량의 대부분을 수입에 의존하고 있습니다."
+   },
+   {
+    "industry": "비철 스크랩",
+    "material": "철 스크랩",
+    "cost_share": 0.327,
+    "tier": "A",
+    "quote": "전기로 제강의 주원료는 철 스크랩으로 국내외에서 조달하고 있습니다."
+   }
+  ],
+  "downstream": [
+   {
+    "industry": "완성차",
+    "customer": "자동차용 봉형강",
+    "tier": "A",
+    "quote": "철 강제조업 철강 봉 형 강 건축용, 자동차용,조선용, 모빌리티 부품 5,964,924 22.7%"
+   },
+   {
+    "industry": "조선",
+    "customer": "조선용 봉형강·중기",
+    "tier": "A",
+    "quote": "중 기 外 산업용, 조선용 278,383 1.1%"
+   },
+   {
+    "industry": "건설·EPC",
+    "customer": "건축용 봉형강",
+    "tier": "A",
+    "quote": "철 강제조업 철강 봉 형 강 건축용, 자동차용,조선용, 모빌리티 부품 5,964,924 22.7%"
+   }
+  ],
+  "unmapped": ""
+ },
+ "082740": {
+  "products": [
+   {
+    "industry": "조선 기자재(엔진·보냉재·의장)",
+    "product": "선박용 엔진 및 SCR",
+    "revenue_share": 0.8844,
+    "tier": "A",
+    "quote": "선박엔진 제조판매 선박용 엔진 및 SCR 선박 주추진기관 - 1,212,542 88.44"
+   }
+  ],
+  "upstream": [
+   {
+    "industry": "조선 기자재(엔진·보냉재·의장)",
+    "material": "Crankshaft·Turbocharger",
+    "cost_share": null,
+    "tier": "A",
+    "quote": "선박엔진,SCR,디젤발전 및 부품 원재료, 상품 등 Crankshaft, Turbocharger 등 디젤엔진 제작용 922,063"
+   },
+   {
+    "industry": "후판·강재",
+    "material": "Steel Plate(SS400 20T)",
+    "cost_share": null,
+    "tier": "A",
+    "quote": "선박엔진 Steel Plate(TON) 914,000 959,000 1,095,000"
+   }
+  ],
+  "downstream": [
+   {
+    "industry": "조선",
+    "customer": "조선소(친환경 이중연료엔진 수주)",
+    "tier": "A",
+    "quote": "IMO(국제해사기구)의 환경규제 강화로 인해 친환경 고효율 선박으로 전환이 가속화되고 있으며, 최근 수주가 증가하고 있는친환경 이중연료엔진(DF엔진)은 일반적으로 디젤엔진보다는 높은 가격대가 형성되고 있습니다."
+   }
+  ],
+  "unmapped": ""
+ },
+ "017960": {
+  "products": [
+   {
+    "industry": "조선 기자재(엔진·보냉재·의장)",
+    "product": "LNG운반선 단열 보냉재",
+    "revenue_share": 0.9425,
+    "tier": "A",
+    "quote": "산업재 절연적층물LNG 보냉재GPD/F외 절연물LNG운반선단열보냉재건축자재회로기판외 HANKUKCARBONCO.LTD 856,567 94.25"
+   },
+   {
+    "industry": "기판·패키징",
+    "product": "절연적층물(회로기판용)",
+    "revenue_share": null,
+    "tier": "B",
+    "quote": "산업재 절연적층물LNG 보냉재GPD/F외 절연물LNG운반선단열보냉재건축자재회로기판외 HANKUKCARBONCO.LTD 856,567 94.25"
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "조선",
+    "customer": "LNG운반선 건조",
+    "tier": "A",
+    "quote": "산업재 절연적층물LNG 보냉재GPD/F외 절연물LNG운반선단열보냉재건축자재회로기판외 HANKUKCARBONCO.LTD 856,567 94.25"
+   }
+  ],
+  "unmapped": "일반재(카본시트, 5.75%)는 레저용이라 밸류체인 노드로 특정하지 않았음."
+ },
+ "000500": {
+  "products": [
+   {
+    "industry": "전선·구리 가공",
+    "product": "절연선·전력선·Cu-Rod",
+    "revenue_share": 0.5073,
+    "tier": "A",
+    "quote": "전력사업부 제 품 절연선, 전력선, 소재(Cu-Rod) 등 전력 송.배전 및기계제어용 - 1,415,814"
+   },
+   {
+    "industry": "자동차 부품·모듈",
+    "product": "자동차전선·배전/센서케이블",
+    "revenue_share": 0.1695,
+    "tier": "A",
+    "quote": "특수케이블사업부 제 품 특수케이블 자동차전선 및배전/센서케이블 473,099"
+   },
+   {
+    "industry": "통신장비·케이블",
+    "product": "LAN케이블·광케이블",
+    "revenue_share": 0.0447,
+    "tier": "A",
+    "quote": "통신사업부 제 품 LAN케이블 및부품, 광케이블 등 유무선 전화 송.수신인터넷 통신용 124,751"
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "유틸리티·발전",
+    "customer": "전력 송·배전",
+    "tier": "A",
+    "quote": "전력사업부 제 품 절연선, 전력선, 소재(Cu-Rod) 등 전력 송.배전 및기계제어용 - 1,415,814"
+   },
+   {
+    "industry": "완성차",
+    "customer": "자동차 전장",
+    "tier": "A",
+    "quote": "특수케이블사업부 제 품 특수케이블 자동차전선 및배전/센서케이블 473,099"
+   }
+  ],
+  "unmapped": ""
+ },
+ "001440": {
+  "products": [
+   {
+    "industry": "전선·구리 가공",
+    "product": "송전선·배전선(전력 및 절연선)",
+    "revenue_share": 0.274,
+    "tier": "A",
+    "quote": "전선부문 전력 및 절연선 발전소에서 발전된 전력을 소비지의 변전소에 보내는 송전선과 전기 인입구까지 인입된 전력을 사용장소까지 인도해주는 배전선,그리고 최종 사용장소의 실내외에 전력을 보급하는 배선 등에 사용"
+   },
+   {
+    "industry": "변압기 부품·권선",
+    "product": "나선 및 권선",
+    "revenue_share": 0.507,
+    "tier": "A",
+    "quote": "나선 및 권선 통신선, 전력선, 권선 등의 도체용 및 전기기기의 내부에 코일상태로 감겨져서 기계적 에너지를 전기적 에너지로 변환시키거나전기적 에너지를 기계적 에너지로 변환시키는데 사용"
+   },
+   {
+    "industry": "통신장비·케이블",
+    "product": "통신케이블",
+    "revenue_share": 0.009,
+    "tier": "A",
+    "quote": "통신케이블 건물 내외, 철도, 지하철 등에 DATA, VOICE, 영상 등을 전송하는 통신망과 이동통신 기지국이나 실내 중계기 등 무선통신망 구축에 사용"
+   }
+  ],
+  "upstream": [
+   {
+    "industry": "동제련",
+    "material": "전기동(국내 동제련 업체)",
+    "cost_share": null,
+    "tier": "A",
+    "quote": "연결회사의 제품의 경우 전기동 및 알루미늄이 주된 원재료이며, 주요 전기동 산지에서 직수입 하거나 국내 동제련 업체에서 구입하고 있습니다."
+   }
+  ],
+  "downstream": [
+   {
+    "industry": "유틸리티·발전",
+    "customer": "발전소·변전소 송전망",
+    "tier": "A",
+    "quote": "전선부문 전력 및 절연선 발전소에서 발전된 전력을 소비지의 변전소에 보내는 송전선과 전기 인입구까지 인입된 전력을 사용장소까지 인도해주는 배전선,그리고 최종 사용장소의 실내외에 전력을 보급하는 배선 등에 사용"
+   }
+  ],
+  "unmapped": ""
+ },
+ "229640": {
+  "products": [
+   {
+    "industry": "전선·구리 가공",
+    "product": "전력케이블(HV/MV/LV)·Cu-Rod",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "LS-VINA Cable & System Joint Stock Co. 전력케이블(HV, MV, LV) 소재(Cu-Rod, Al-Rod 등) 등 988,957"
+   },
+   {
+    "industry": "통신장비·케이블",
+    "product": "UTP·광케이블",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "LS Cable & System Vietnam Co., Ltd. 통신케이블(UTP, 광케이블) 전력케이블(MV,LV), 버스덕트 등 268,939"
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": "베트남 법인 중심이라 국내 매출처·매입처가 절에 기술되지 않았음."
+ },
+ "033100": {
+  "products": [
+   {
+    "industry": "전력기기·전선",
+    "product": "변압기",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "당사는 전압을 조정하기 위해 사용하는 변압기 등을 생산, 판매하고 있으며, 각 부문별 매출액 및 총매출액에서 차지하는 비율은 다음과 같습니다."
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": "제품 표 본문이 선별 구간 밖이라 부문별 비중을 특정하지 못했음."
+ },
+ "017040": {
+  "products": [
+   {
+    "industry": "전력기기·전선",
+    "product": "수배전반·GIS",
+    "revenue_share": 0.979,
+    "tier": "A",
+    "quote": "구 분 주요재화, 용역 수배전반 등 수배전반, GIS, 시스템관련사업등"
+   },
+   {
+    "industry": "태양광",
+    "product": "태양광발전시스템 시공",
+    "revenue_share": 0.008,
+    "tier": "A",
+    "quote": "태양광발전시스템 태양광발전시스템 시공 등"
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "222800": {
+  "products": [
+   {
+    "industry": "기판·패키징",
+    "product": "Module PCB·Package Substrate",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "당사의 주요 제품군으로는 DRAM등의 메모리칩을 확장 시켜주는 Module PCB와 각종 반도체칩을 조립할때 사용되는 Package Substrate 기판 등이 있습니다."
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "반도체",
+    "customer": "메모리 반도체(DRAM 모듈)",
+    "tier": "A",
+    "quote": "모듈PCB는 개인용 컴퓨터나 Server등의 기억 용량을 확장 시키기 위해 Memory 반도체 칩을 하나의 PCB위에 여러 개를 고밀도 실장하여 Memory 용량을 확장시킨 제품입니다."
+   },
+   {
+    "industry": "서버·전자기기",
+    "customer": "PC·서버",
+    "tier": "A",
+    "quote": "모듈PCB는 개인용 컴퓨터나 Server등의 기억 용량을 확장 시키기 위해 Memory 반도체 칩을 하나의 PCB위에 여러 개를 고밀도 실장하여 Memory 용량을 확장시킨 제품입니다."
+   }
+  ],
+  "unmapped": ""
+ },
+ "353200": {
+  "products": [
+   {
+    "industry": "기판·패키징",
+    "product": "반도체 Package substrate·MLB 기판",
+    "revenue_share": 1.0,
+    "tier": "A",
+    "quote": "당사는 PCB(Printed Circuit Board) 전문업체로 우리말로는 인쇄회로기판을 생산 및 판매하고 있습니다. 구체적으로는 반도체 Package용 substrate 기판과 MLB 기판을 주력사업으로 영위하고 있습니다."
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "반도체",
+    "customer": "반도체·전자기기·정보통신 제조업체",
+    "tier": "A",
+    "quote": "따라서 PCB는 모든 전자제품에서 없어서는 안 될 핵심 부품으로, 전자기기의 초기 개발단계부터 대량생산에 이르기까지 반도체, 전자기기 및 정보통신 제조업체의 주문에 따라 생산이 이루어지는 구조입니다."
+   }
+  ],
+  "unmapped": ""
+ },
+ "195870": {
+  "products": [
+   {
+    "industry": "기판·패키징",
+    "product": "리드프레임·Package Substrate",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "당사는 반도체 재료사업을 영위하고 있으며, 보다 구체적으로는 반도체를 생산하는데 필요한 패키징 재료이자 구조재료인 반도체 Substrate를 생산하는 반도체 후공정사업 업체입니다."
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "반도체",
+    "customer": "종합반도체업체(IDM)",
+    "tier": "A",
+    "quote": "반도체 재료산업 역시 최종 납품처인 종합반도체업체(IDM: Integrated Device Manufacturer)의 영업현황에 민감하게 영향을 받기에, 개별 반도체 재료업체의 영업변동성은 전방산업의 변동성에 크게 영향을 받고 있습니다."
+   },
+   {
+    "industry": "완성차",
+    "customer": "자동차용 반도체 리드프레임",
+    "tier": "A",
+    "quote": "특히사람의 생명과 직결되어 엄격한 품질을 요구하는 자동차용 반도체 리드프레임 부문에서 지속적인 성장을 이어가는 등 차별화된 사업경쟁력을 보유하고 있습니다."
+   }
+  ],
+  "unmapped": ""
+ },
+ "361610": {
+  "products": [
+   {
+    "industry": "분리막·전해액",
+    "product": "리튬이온전지 분리막(LiBS)·CCS",
+    "revenue_share": 1.0,
+    "tier": "A",
+    "quote": "당사는 2004년 국내 최초이자 세계에서는 세 번째로 LiBS(Lithium-ion Battery Separator) 생산기술을 독자 개발하였으며, 2007년 세계 최초로 축차 연신 공정을 완성한 이후, 세계 최초의 5㎛ 박막 제품 개발 및 양면 동시 코팅 상업화 등 경쟁사 대비 우위의 기술력을 바탕으로 Global Top-tier LiBS Player로 성장하였습니다."
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "이차전지",
+    "customer": "배터리 제조사",
+    "tier": "A",
+    "quote": "분리막 시장은 전방산업인 배터리 시장의 견조한 성장에 힘입어 지속적으로 성장하고 있습니다."
+   },
+   {
+    "industry": "ESS·전력",
+    "customer": "에너지 저장",
+    "tier": "B",
+    "quote": "다만 단기적으로는 에너지 저장, 중장기적으로는 로봇/휴머노이드 및 전기차 시장의 구조적 성장이 지속될 것으로 전망되며, 이러한 기반 위에서 분리막 시장 역시 높은 성장 가능성을 보일 것으로 기대됩니다."
+   }
+  ],
+  "unmapped": ""
+ },
+ "348370": {
+  "products": [
+   {
+    "industry": "분리막·전해액",
+    "product": "2차전지·EDLC용 전해액과 첨가제",
+    "revenue_share": 1.0,
+    "tier": "A",
+    "quote": "당사는 전기자동차용 전해액을 포함한 2차전지 및 EDLC용 전해액과 전해액에 사용되는 주요 첨가제를 제조 및 판매하는 사업을 영위하고 있습니다."
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "이차전지",
+    "customer": "배터리 회사",
+    "tier": "A",
+    "quote": "이에 현재 전해액 회사의 고객인 배터리 회사와 배터리 회사의 고객인 자동차 OEM 회사들은 시장에서 검증된 전해액 회사의 제품만 사용하려고 하고 있으며"
+   },
+   {
+    "industry": "완성차",
+    "customer": "자동차 OEM(간접)",
+    "tier": "B",
+    "quote": "이에 현재 전해액 회사의 고객인 배터리 회사와 배터리 회사의 고객인 자동차 OEM 회사들은 시장에서 검증된 전해액 회사의 제품만 사용하려고 하고 있으며"
+   }
+  ],
+  "unmapped": ""
+ },
+ "450080": {
+  "products": [
+   {
+    "industry": "전구체",
+    "product": "삼원계 양극재용 전구체(P-NCM·P-NC)",
+    "revenue_share": 0.8611,
+    "tier": "A",
+    "quote": "전구체 등 양극활물질의 핵심 소재 P-NCM, P-NC 등 337,983 86.11%"
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "양극재",
+    "customer": "양극소재 제조",
+    "tier": "A",
+    "quote": "당사는 삼원계 전구체 합성기술 특화기업으로 리튬이온 이차전지의 핵심소재인 양극소재용 전구체를 생산하고 있습니다. 전구체는 양극소재 원가 구성에서 높은 비중을 차지하고 양극소재의 핵심 성능을 결정합니다."
+   },
+   {
+    "industry": "ESS·전력",
+    "customer": "ESS 배터리",
+    "tier": "B",
+    "quote": "당사는 EV, 전동공구, ESS 배터리 등에 사용 되는 PCSG, PCDS, PNC 전구체 등을 생산하고 있으며, 사업부문별 매출액 및 매출비중은 다음과 같습니다."
+   }
+  ],
+  "unmapped": "니켈 제련(RMP 공정) 사업부문이 있으나 상장 산업 노드로 특정하기 어려워 제외했음."
+ },
+ "010950": {
+  "products": [
+   {
+    "industry": "정유",
+    "product": "원유 정제(일산 66.9만배럴)",
+    "revenue_share": 0.7,
+    "tier": "A",
+    "quote": "전체 매출액에서 70% 이상으로 가장 높은 비중을 차지하는 정유부문에서는 대규모 정제시설, 높은 고도화설비 수준, 안정적인 내수 유통망 등을 바탕으로 견고한 시장지위와 사업경쟁력을 보유하고 있습니다."
+   },
+   {
+    "industry": "석유화학",
+    "product": "파라자일렌·벤젠·폴리프로필렌",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "석유화학부문은 지속적인 투자와 공정 효율화를 통하여 연간 약 330만톤의 대규모 방향족 제품(파라자일렌, 벤젠 등) 생산능력 뿐 아니라 연간 약 77만톤의 올레핀계 제품(폴리프로필렌, 산화프로필렌 등) 생산능력도 보유하고 있습니다."
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": "매출액 10% 이상 매출처가 Aramco Trading Singapore로 해외 비상장이라 전방을 산업으로 특정할 수 없었음."
+ },
+ "096770": {
+  "products": [
+   {
+    "industry": "정유",
+    "product": "휘발유·경유·항공유·납사",
+    "revenue_share": 0.59,
+    "tier": "A",
+    "quote": "당사의 매출액은 석유사업 59%, E&S CIC 사업부문 15%, 화학사업 11%, 배터리 사업 9%, 윤활유 사업 5%, 소재사업 그리고 석유개발 사업 및 기타 사업 1%로 구성되어 있습니다."
+   },
+   {
+    "industry": "LNG·가스",
+    "product": "LNG·전력(SK E&S 합병)",
+    "revenue_share": 0.15,
+    "tier": "A",
+    "quote": "SK이노베이션은 2024년 11월 1일 부 SK E&S와의 합병을 통해 아시아·태평양 지역 민간 최대 종합 에너지 회사로 거듭났으며, 석유·화학, LNG, 전력, 배터리 등 현재와 미래 에너지를 아우르는 균형 잡힌 Energy Portfolio를 구축하였습니다."
+   },
+   {
+    "industry": "이차전지",
+    "product": "배터리(SK온)",
+    "revenue_share": 0.09,
+    "tier": "A",
+    "quote": "당사의 매출액은 석유사업 59%, E&S CIC 사업부문 15%, 화학사업 11%, 배터리 사업 9%, 윤활유 사업 5%, 소재사업 그리고 석유개발 사업 및 기타 사업 1%로 구성되어 있습니다."
+   },
+   {
+    "industry": "석유화학",
+    "product": "화학사업",
+    "revenue_share": 0.11,
+    "tier": "A",
+    "quote": "당사의 매출액은 석유사업 59%, E&S CIC 사업부문 15%, 화학사업 11%, 배터리 사업 9%, 윤활유 사업 5%, 소재사업 그리고 석유개발 사업 및 기타 사업 1%로 구성되어 있습니다."
+   }
+  ],
+  "upstream": [
+   {
+    "industry": "광산·비철 원광",
+    "material": "원유(중동 등)",
+    "cost_share": null,
+    "tier": "A",
+    "quote": "석유사업은 석유제품 생산을 위해 원유를 중동 등 전 세계 다양한 공급망을 통해 안정적으로 조달하며, 울산 및 인천 Complex에서 이를 정제하여 휘발유, 경유, 등유, 항공유, 납사 등 연료와 화학제품 원료를 생산합니다."
+   }
+  ],
+  "downstream": [
+   {
+    "industry": "석유화학",
+    "customer": "SK지오센트릭 등 화학사",
+    "tier": "A",
+    "quote": "생산된 제품은 SK온 트레이딩인터내셔널, SK지오센트릭㈜, SK온㈜"
+   }
+  ],
+  "unmapped": ""
+ },
+ "010130": {
+  "products": [
+   {
+    "industry": "아연·연 제련",
+    "product": "아연·연과 부산 금·은·동·황산",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "지배회사인 고려아연㈜는 비철금속제련회사로서 아연과 연의 생산 및 판매를 주업종으로 영위하고 있으며, 기타 금, 은, 동, 황산 등은 아연과 연의 제련과정에서 회수하는 유가금속을 부산물의 일종으로 생산하고 있습니다."
+   },
+   {
+    "industry": "광산·비철 원광",
+    "product": "광산개발(KZ Minerals·ICM Pachapaqui)",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "광산개발업(KZ Minerals Holdings Pte Ltd, ICM Pachapaqui S.A.C.) 등이 있으며"
+   },
+   {
+    "industry": "전구체",
+    "product": "2차전지 소재(켐코·케이잼)",
+    "revenue_share": null,
+    "tier": "B",
+    "quote": "2차전지 소재 사업(켐코㈜, 케이잼㈜) 등의 사업을 추진하고 있습니다."
+   },
+   {
+    "industry": "비철 스크랩",
+    "product": "자원순환(스틸싸이클)",
+    "revenue_share": null,
+    "tier": "B",
+    "quote": "핵심사업인 제련업을 기반으로 한 자원순환 사업(스틸싸이클㈜, Zinc Oxide Corporation Vietnam LLC, Pedalpoint Holdings, LLC)"
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "000670": {
+  "products": [
+   {
+    "industry": "아연·연 제련",
+    "product": "아연괴·유가금속",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "지배회사인 당사는 아연괴 및 기타 유가금속등을 제조, 판매하는 종합비철금속제련회사로 비철금속을 제련하는 사업을 영위하고 있습니다."
+   },
+   {
+    "industry": "기판·패키징",
+    "product": "인쇄회로기판·반도체 패키지(코리아써키트·인터플렉스·시그네틱스)",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "또한 당사의 종속회사인 영풍전자, 코리아써키트, 인터플렉스, 테라닉스가 인쇄회로기판 제조업을 시그네틱스는 반도체 패키지업을"
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "철강",
+    "customer": "철강재 도금원료(아연)",
+    "tier": "A",
+    "quote": "특히 당사의 대표적인 제품인 아연은 자동차 및 가전제품의 외장재와 건설용 철판재에 쓰이는 철강재의 부식 방지용 도금원료로 쓰이고 있습니다."
+   },
+   {
+    "industry": "완성차",
+    "customer": "자동차 외장재",
+    "tier": "A",
+    "quote": "특히 당사의 대표적인 제품인 아연은 자동차 및 가전제품의 외장재와 건설용 철판재에 쓰이는 철강재의 부식 방지용 도금원료로 쓰이고 있습니다."
+   },
+   {
+    "industry": "건설·EPC",
+    "customer": "건설용 철판재",
+    "tier": "A",
+    "quote": "특히 당사의 대표적인 제품인 아연은 자동차 및 가전제품의 외장재와 건설용 철판재에 쓰이는 철강재의 부식 방지용 도금원료로 쓰이고 있습니다."
+   }
+  ],
+  "unmapped": ""
+ },
+ "005930": {
+  "products": [
+   {
+    "industry": "반도체",
+    "product": "DRAM·NAND Flash·모바일AP",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "부품 사업은 DS(Device Solutions) 부문에서 DRAM, NAND Flash, 모바일AP 등의 제품을 생산ㆍ판매하고, SDC가 스마트폰용 OLED 패널 등을 생산ㆍ판매하고 있습니다."
+   },
+   {
+    "industry": "서버·전자기기",
+    "product": "TV·가전·스마트폰·PC",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "Set 사업은 DX(Device eXperience) 부문이 TV를 비롯하여 모니터, 냉장고, 세탁기, 에어컨, 스마트폰, 네트워크시스템, PC 등을 생산ㆍ판매하며"
+   },
+   {
+    "industry": "자동차 부품·모듈",
+    "product": "디지털 콕핏·카오디오(Harman)",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "또한, Harman에서는 디지털 콕핏(Digital Cockpit), 카오디오 등 전장제품과 포터블/사운드바 스피커 등 컨슈머오디오 제품 등을 개발, 생산, 판매하고 있습니다."
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "000270": {
+  "products": [
+   {
+    "industry": "완성차",
+    "product": "승용·RV·상용(모닝·쏘렌토·EV6·봉고)",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "주요 제품은 완성차로 승용, RV, 상용 등으로 구분하고 있습니다."
+   }
+  ],
+  "upstream": [
+   {
+    "industry": "자동차 부품·모듈",
+    "material": "엔진·미션·모듈",
+    "cost_share": null,
+    "tier": "A",
+    "quote": "주요 원재료는 엔진, 미션, 모듈 등의 부품과 철판, 페인트 등의 원자재 및 기타로 구성되어 있고 협력회사 또는 계열회사 등을 통해 공급받고 있습니다."
+   },
+   {
+    "industry": "후판·강재",
+    "material": "철판",
+    "cost_share": null,
+    "tier": "A",
+    "quote": "주요 원재료는 엔진, 미션, 모듈 등의 부품과 철판, 페인트 등의 원자재 및 기타로 구성되어 있고 협력회사 또는 계열회사 등을 통해 공급받고 있습니다."
+   }
+  ],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "028670": {
+  "products": [
+   {
+    "industry": "해운",
+    "product": "벌크·컨테이너·탱커·LNG 운송",
+    "revenue_share": 0.785,
+    "tier": "A",
+    "quote": "당사는 당사와 연결대상 종속회사에 포함된 회사들을 통해 주력사업인 벌크화물 운송 서비스를 필두로 비벌크화물 운송 서비스(컨테이너화물 운송 서비스, 탱커선 서비스, LNG운송 서비스)까지 다양한 형태의 해상운송사업을 통해 매출 및 수익을 창출하고 있으며, 곡물사업 및 기타사업(선박 관리업 등)을 함께 영위하고 있습니다."
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": "곡물사업(1.2조)이 매출의 23%인데 밸류체인 노드로 특정하지 않았음."
+ },
+ "005880": {
+  "products": [
+   {
+    "industry": "해운",
+    "product": "벌크선·LNG선·탱커선",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "당사는 벌크선, LNG선, 탱커선 등을 통하여 철광석, 천연가스, 원유 등의 원재료를 선박으로 운송하는 해상화물운송을 주된 사업으로 영위하고 있으며, 해운업을 포함한 그 외 기타 사업부문별 영업실적은 아래와 같습니다."
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "철강",
+    "customer": "포스코(철광석 장기운송계약)",
+    "tier": "A",
+    "quote": "당사는 주요 거래처인 ㈜포스코, 한국가스공사, 한국전력공사 등 우량화주들과 장기운송계약을 체결하여 안정적인 영업과 이익의 극대화를 실현하고자 최선의 노력을 다하고 있습니다."
+   },
+   {
+    "industry": "LNG·가스",
+    "customer": "한국가스공사(천연가스 운송)",
+    "tier": "A",
+    "quote": "당사는 주요 거래처인 ㈜포스코, 한국가스공사, 한국전력공사 등 우량화주들과 장기운송계약을 체결하여 안정적인 영업과 이익의 극대화를 실현하고자 최선의 노력을 다하고 있습니다."
+   },
+   {
+    "industry": "유틸리티·발전",
+    "customer": "한국전력공사",
+    "tier": "A",
+    "quote": "당사는 주요 거래처인 ㈜포스코, 한국가스공사, 한국전력공사 등 우량화주들과 장기운송계약을 체결하여 안정적인 영업과 이익의 극대화를 실현하고자 최선의 노력을 다하고 있습니다."
+   }
+  ],
+  "unmapped": ""
+ },
+ "042670": {
+  "products": [
+   {
+    "industry": "건설기계",
+    "product": "굴착기·휠로더",
+    "revenue_share": 0.722,
+    "tier": "A",
+    "quote": "당사는 기말 누계 기준으로 건설기계 사업부문에서 굴착기, 휠로더 등의 상품, 제품 등을 판매하여 매출액 2,972,268백만원, 엔진 사업부문에서 엔진, 발전기, A/S 부품 등의 상품, 제품 등을 판매하여 매출액 1,141,922백만원을 기록했습니다."
+   },
+   {
+    "industry": "산업용 엔진·발전기",
+    "product": "엔진·발전기·A/S 부품",
+    "revenue_share": 0.278,
+    "tier": "A",
+    "quote": "당사는 기말 누계 기준으로 건설기계 사업부문에서 굴착기, 휠로더 등의 상품, 제품 등을 판매하여 매출액 2,972,268백만원, 엔진 사업부문에서 엔진, 발전기, A/S 부품 등의 상품, 제품 등을 판매하여 매출액 1,141,922백만원을 기록했습니다."
+   }
+  ],
+  "upstream": [
+   {
+    "industry": "건설기계 부품",
+    "material": "Boom·Machine·Injection Pump 등 조립부품",
+    "cost_share": null,
+    "tier": "A",
+    "quote": "당사 제품의 주요 원재료는 Boom, Machine, Injection Pump 등 조립부품 등으로 단기적인 가격 변동은 크지 않으나, 환율 등에 따라 가격이 변동되는 특징이 있으며, 주요 매입처를 통해 안정적으로 공급받고 있습니다."
+   }
+  ],
+  "downstream": [],
+  "unmapped": "확보된 보고서가 2024.12 기준(기재정정)이라 다른 종목보다 한 해 이르다."
+ },
+ "241560": {
+  "products": [
+   {
+    "industry": "건설기계",
+    "product": "Compact Equipment·Portable Power·Material Handling",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "Construction Equipment의 주요 제품군은 건설/농업/조경용 소형장비 제품군 'Compact Equipment', 이동식 전기 및 공압 생산장비 제품군 'Portable Power', 지게차 제품군 'Material Handling'입니다."
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "036890": {
+  "products": [
+   {
+    "industry": "건설기계 부품",
+    "product": "하부주행체(Roller·Idler·Sprocket·Track Link)",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "당사의 주요 제품은 건설중장비 등의 무한궤도를 받쳐주는 하부주행체로써 상부 Roller, 하부 Roller, Idler 및 Sprocket, Steel Track 등의 제품을 생산/판매하고 있습니다."
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "건설기계",
+    "customer": "Caterpillar·Hitachi·HD건설기계·밥캣",
+    "tier": "A",
+    "quote": "주요 매출처로는 Caterpillar, Hitachi, HD건설기계, 밥캣이 있습니다."
+   }
+  ],
+  "unmapped": ""
+ },
+ "112610": {
+  "products": [
+   {
+    "industry": "풍력",
+    "product": "풍력타워·해상풍력 하부구조물(Monopile·TP)",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "당사와 연결종속회사는 풍력타워 생산 및 타워내부 부품, 베어링 등 풍력타워 부품 생산과 해상풍력 하부구조물 생산사업을 운영 중에 있습니다."
+   }
+  ],
+  "upstream": [
+   {
+    "industry": "후판·강재",
+    "material": "후판(원재료 중 큰 비중)",
+    "cost_share": null,
+    "tier": "A",
+    "quote": "다만, 원재료 중 큰 비중을 차지하는 후판 가격은 지역마다 상이하긴 하나 2025년에는 중국, 유럽 등 대부분의 국가에선 후판 가격이 하락한 반면, 미국산 후판 가격은 작년 말에 비해 상승하였습니다."
+   }
+  ],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "100130": {
+  "products": [
+   {
+    "industry": "풍력",
+    "product": "Wind-Tower",
+    "revenue_share": 0.648,
+    "tier": "A",
+    "quote": "회사 및 그 종속회사는 신재생에너지부문(Wind-Tower외), 건설부문(풍력발전단지 건설 외)으로 구성되어 있습니다."
+   },
+   {
+    "industry": "건설·EPC",
+    "product": "풍력발전단지 건설",
+    "revenue_share": 0.352,
+    "tier": "A",
+    "quote": "회사 및 그 종속회사는 신재생에너지부문(Wind-Tower외), 건설부문(풍력발전단지 건설 외)으로 구성되어 있습니다."
+   }
+  ],
+  "upstream": [
+   {
+    "industry": "철강",
+    "material": "포스코 등 국내 철강",
+    "cost_share": null,
+    "tier": "B",
+    "quote": "당사가 제품생산을 위해 사용하는 원재료는 국내업체로는 포스코 등 국"
+   }
+  ],
+  "downstream": [],
+  "unmapped": "절 분량이 946자로 매우 짧아 원재료·매출처 표가 대부분 잘렸음."
+ },
+ "009830": {
+  "products": [
+   {
+    "industry": "석유화학",
+    "product": "PE·PVC·CA·TDI 등 기초 석유화학",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "PE, PVC, CA, TDI 제품 등을 생산ㆍ판매하는 기초소재 부문과 셀과 모듈 등의 태양광 제품을 담당하는 신재생에너지 부문, 자동차 부품과 산업용 소재, 태양광 소재 등을 담당하는 가공부문, 기타 제조판매업 및 부동산업 등을 담당하는 기타 부문이 있습니다."
+   },
+   {
+    "industry": "태양광",
+    "product": "태양광 셀·모듈",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "PE, PVC, CA, TDI 제품 등을 생산ㆍ판매하는 기초소재 부문과 셀과 모듈 등의 태양광 제품을 담당하는 신재생에너지 부문, 자동차 부품과 산업용 소재, 태양광 소재 등을 담당하는 가공부문, 기타 제조판매업 및 부동산업 등을 담당하는 기타 부문이 있습니다."
+   },
+   {
+    "industry": "자동차 부품·모듈",
+    "product": "자동차 부품·산업용 소재(가공부문)",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "PE, PVC, CA, TDI 제품 등을 생산ㆍ판매하는 기초소재 부문과 셀과 모듈 등의 태양광 제품을 담당하는 신재생에너지 부문, 자동차 부품과 산업용 소재, 태양광 소재 등을 담당하는 가공부문, 기타 제조판매업 및 부동산업 등을 담당하는 기타 부문이 있습니다."
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "064350": {
+  "products": [
+   {
+    "industry": "방위산업",
+    "product": "K2전차·차륜형장갑차 등 지상무기체계",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "디펜스솔루션사업본부는 지상무기체계의 연구개발 및 생산을 담당하고 있습니다. 세계적인 수준의 성능을 갖춘 K2전차를 성공적으로 개발 완료하여 K1A1전차 이후 지상군 핵심 전투력 증강을 위한 양산/전력화 사업을 진행하고 있으며, 해외 수출 및 관련 기술지원 사업 또한 진행/추진 중에 있습니다."
+   },
+   {
+    "industry": "철도차량",
+    "product": "고속철 등 종합철도차량·철도시스템",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "국가 기간산업인 고속철 등 종합철도차량 제조, 철도시스템 솔루션, 철도 운영 및 유지보수 등을 영위하고 있는 레일솔루션 사업"
+   },
+   {
+    "industry": "산업자동화",
+    "product": "산업용 로보틱스·프레스·에코 제철설비",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "그리고 수소인프라솔루션, 산업용 로보틱스 및 프레스, 에코 제철설비 등을 제조ㆍ판매하는 에코플랜트 사업으로 구성되어 있습니다."
+   },
+   {
+    "industry": "우주·발사체",
+    "product": "우주발사체·미래무인체계",
+    "revenue_share": null,
+    "tier": "B",
+    "quote": "육ㆍ해ㆍ공을 아우르는 종합무기체계와 우주발사체, 미래무인체계 등을 수행하는 디펜스솔루션 사업"
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "철강",
+    "customer": "제철설비(에코플랜트)",
+    "tier": "B",
+    "quote": "그리고 수소인프라솔루션, 산업용 로보틱스 및 프레스, 에코 제철설비 등을 제조ㆍ판매하는 에코플랜트 사업으로 구성되어 있습니다."
+   }
+  ],
+  "unmapped": ""
+ },
+ "000480": {
+  "products": [
+   {
+    "industry": "내화물",
+    "product": "종합내화물(조선내화)",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "조선내화㈜는 1947년 설립 이래 내화물 생산 및 기술 개발에 꾸준히 매진하여, 우리나라 중화학공업의 발달과 함께 성장한 국내 선도적인 종합내화물 제조업체입니다."
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "철강",
+    "customer": "제철·제강(매출의 70% 이상)",
+    "tier": "A",
+    "quote": "내화물산업은 중화학공업에 대한 매출 비중이 절대적이며, 특히 제철·제강 부문이 70% 이상을 차지하여 국내외 철강경기의 영향을 받습니다."
+   }
+  ],
+  "unmapped": "2023년 인적분할로 지주회사(시알홀딩스)가 됐고 사업회사는 조선내화(비상장 여부 확인 필요). 소속은 지주 기준으로 붙였다."
+ },
+ "011210": {
+  "products": [
+   {
+    "industry": "자동차 부품·모듈",
+    "product": "엔진·모듈·등속조인트·4WD 부품",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "당사는 자동차 부품의 기초 소재 가공부터 엔진, 모듈, 등속조인트, 4WD 부품 등 핵심 부품을 모두 자체 생산할 수 있는 경쟁력을 바탕으로, 최고 수준의 품질을 갖춘 자동차 부품 전문 생산업체로 자리매김하였습니다."
+   },
+   {
+    "industry": "방위산업",
+    "product": "화포(국내 유일 전문업체)",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "한편, 당사는 방위산업 분야에서 국내 유일의 화포 제작 전문업체로서, 우수한 품질과 신뢰성을 인정받고 있습니다."
+   },
+   {
+    "industry": "산업자동화",
+    "product": "스마트팩토리 통합 솔루션",
+    "revenue_share": null,
+    "tier": "B",
+    "quote": "당사는 공정 자동화와 무인화, 데이터를 기반으로 한 공정 간 및 공장 간의 수평적 통합, 그리고 자율 운영을 핵심으로 하는 미래형 스마트팩토리 통합 솔루션을 제공하고 있습니다."
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "완성차",
+    "customer": "완성차 신뢰성 기여",
+    "tier": "A",
+    "quote": "그동안 축적된 기술력과 노하우를 바탕으로 완성차의 신뢰성을 높이는 데 기여하고 있습니다."
+   }
+  ],
+  "unmapped": ""
+ },
+ "204320": {
+  "products": [
+   {
+    "industry": "자동차 부품·모듈",
+    "product": "제동·조향·현가 장치, ADAS",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "당사는 차량의 제동, 조향, 현가 장치 등 운전자의 안전과 편의에 관련된 제품을 개발 및 생산하는 자동차 부품업체로서 평택, 원주, 익산에 생산 시설, 판교에 R&D 센터를 두고 있습니다."
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "완성차",
+    "customer": "현대차·기아·GM·Ford·중국 로컬 OEM",
+    "tier": "A",
+    "quote": "당사는 사업구조 안정화를 위하여 현대차/기아 뿐 아니라 GM, Ford, 중국 로컬 OEM, 유럽 및 인도 완성차까지 고객 다변화를 진행 중이며, 해외 고객의 현지 대응을 위해 미국, 유럽, 중국, 인도 등 지역에 19개의 생산 사이트를 설립하였습니다."
+   }
+  ],
+  "unmapped": ""
+ },
+ "018880": {
+  "products": [
+   {
+    "industry": "자동차 부품·모듈",
+    "product": "자동차 열 관리 시스템(HVAC·PTC·압축기)",
+    "revenue_share": 1.0,
+    "tier": "A",
+    "quote": "당사는 OEM(주문자생산방식) 납품을 주로 하는 자동차 열 관리 시스템 단일품목 제조회사로서 한국내에는 대전공장, 평택공장, 울산공장, 아산공장, 경주공장을 보유하고 있으며 본사 및 해외법인 모두 자동차의 열 관리 시스템을 생산하는 단일 사업부문을 영위하고 있습니다."
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "완성차",
+    "customer": "현대자동차 21.4%·현대모비스 19.3%·Ford 12.5%",
+    "tier": "A",
+    "quote": "자동차용 공조제품 전문업체인 당사의 2025년 매출액은 10조 8,837억으로 전년도 매출액 대비 약 8.9% 증가 하였으며, 주요 매출처로는 현대자동차, 현대모비스, Ford 등이 있으며 각각의 매출액에 대한 비중은 21.4%, 19.3%, 12.5% 입니다."
+   },
+   {
+    "industry": "자동차 부품·모듈",
+    "customer": "현대모비스(19.3%)",
+    "tier": "A",
+    "quote": "주요 매출처로는 현대자동차, 현대모비스, Ford 등이 있으며 각각의 매출액에 대한 비중은 21.4%, 19.3%, 12.5% 입니다."
+   }
+  ],
+  "unmapped": ""
+ },
+ "004980": {
+  "products": [
+   {
+    "industry": "시멘트·레미콘",
+    "product": "시멘트(건축·토목)",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "지배회사의 주요 제품은 건축 및 토목업의 원자재로 사용되는 시멘트이며, 연결대상종속회사의 주요 제품은 레미콘으로 제품별 매출비중은 아래와 같습니다."
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "건설·EPC",
+    "customer": "건축·토목",
+    "tier": "A",
+    "quote": "지배회사의 주요 제품은 건축 및 토목업의 원자재로 사용되는 시멘트이며, 연결대상종속회사의 주요 제품은 레미콘으로 제품별 매출비중은 아래와 같습니다."
+   }
+  ],
+  "unmapped": ""
+ },
+ "023410": {
+  "products": [
+   {
+    "industry": "시멘트·레미콘",
+    "product": "레미콘",
+    "revenue_share": 0.6757,
+    "tier": "A",
+    "quote": "레미콘 제품 등 구축물 504,254 67.57%"
+   },
+   {
+    "industry": "건자재·마감재",
+    "product": "건자재 유통",
+    "revenue_share": 0.2682,
+    "tier": "A",
+    "quote": "건자재 상품 등 건자재 200,148 26.82%"
+   },
+   {
+    "industry": "골재",
+    "product": "골재",
+    "revenue_share": 0.0255,
+    "tier": "A",
+    "quote": "골재 건자재 19,031 2.55%"
+   }
+  ],
+  "upstream": [
+   {
+    "industry": "시멘트·레미콘",
+    "material": "시멘트",
+    "cost_share": null,
+    "tier": "A",
+    "quote": "당사는 구축물 등에 사용되는 레미콘을 생산, 판매하고 있으며 시멘트 및 골재 등을 이용하여 건자재를 생산, 판매하고 있습니다."
+   },
+   {
+    "industry": "골재",
+    "material": "모래 등(수급·채취 정책에 단가 연동)",
+    "cost_share": null,
+    "tier": "A",
+    "quote": "레미콘 : 레미콘 수급상황에 따라 판매단가 변동 모래 등 : 수급 및 채취 정책등에 따라 판매단가 변동"
+   }
+  ],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "052690": {
+  "products": [
+   {
+    "industry": "건설·EPC",
+    "product": "원자력/화력 발전소 설계·플랜트 건설",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "회사는 발전소 및 플랜트 관련 엔지니어링 업체로서 1975년 설립된 이래 원자력/화력 발전소의 설계, 발전설비 O&M(Operation and Maintenance), 플랜트 건설사업 및 신재생에너지 관련 사업 등을 수행하고 있습니다."
+   },
+   {
+    "industry": "원전 기자재",
+    "product": "원자로계통설계·SMR(BANDI)",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "회사는 원자력발전소 종합설계와 원자로계통설계 기술을 함께 보유한 기업으로, 1,2차 계통을 동시에 설계할 수 있는 세계 최고수준의 발전소 설계전문회사입니다."
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "유틸리티·발전",
+    "customer": "발전소 전 생애주기 기술서비스",
+    "tier": "A",
+    "quote": "또한 회사는 설계 외에도 기기제작부터 시공과 운영에 이르기까지 각 단계별 역무를 점검·보완하고 발전소 전 생애주기에 걸쳐 종합 기술서비스를 제공하는 등 성공적인 프로젝트를 위한 중추적 역할을 담당하고 있습니다."
+   }
+  ],
+  "unmapped": ""
+ },
+ "051600": {
+  "products": [
+   {
+    "industry": "원전 기자재",
+    "product": "원자력/양수설비 계획예방정비·개보수",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "원자력/양수 ○ 국내 원자력/양수설비의 경상정비공사, 계획예방정비 공사, 개보수공사, 시운전정비공사○ 선진 원전정비 실용기술의 도입ㆍ자체 기술 개발 및 사업화 등"
+   },
+   {
+    "industry": "전력기기·전선",
+    "product": "송전선로 활선정비·HVDC 설비점검",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "송변전 ○ 송전선로 유지 및 활선정비, HVDC 설비점검 및 정비, 전기공사 종합 책임감리 등"
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "유틸리티·발전",
+    "customer": "한국전력공사·한국수력원자력·국내발전사",
+    "tier": "A",
+    "quote": "한국전력공사,한국수력원자력(주),국내발전사 등"
+   }
+  ],
+  "unmapped": ""
+ },
+ "011790": {
+  "products": [
+   {
+    "industry": "음극재·동박",
+    "product": "전지박(Copper Foil)",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "SKC는 리튬이온 이차전지 소재인 전지박(Copper Foil) 등 제품을 생산, 판매하는 이차전지 소재사업, PO 등을 생산, 판매하는 화학사업, 반도체테스트용 실리콘러버소켓,테스트 장비 등을 판매하는 반도체 소재/부품 사업 등을 영위하고 있습니다."
+   },
+   {
+    "industry": "석유화학",
+    "product": "프로필렌옥사이드(PO)·프로필렌글리콜(PG)",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "화학사업부문은 프로필렌옥사이드(PO), 프로필렌글리콜(PG) 등을 생산하여 국내외 관련산업에 안정적으로 공급하고 있습니다."
+   },
+   {
+    "industry": "소재(전구체·특수가스·CMP)",
+    "product": "반도체 테스트용 실리콘러버소켓·테스트 장비",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "반도체테스트용 실리콘러버소켓,테스트 장비 등을 판매하는 반도체 소재/부품 사업 등을 영위하고 있습니다."
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "이차전지",
+    "customer": "이차전지 음극집전체",
+    "tier": "A",
+    "quote": "이차전지 소재사업의 전지박은 이차전지에서 음극집전체로 작용하는 핵심 소재로서 이차전지 산업과 밀접한 관련이 있으며, 전기차, ESS 및 기타 중소형 IT기기 산업에 적용되는 제품 입니다."
+   },
+   {
+    "industry": "ESS·전력",
+    "customer": "EV·ESS 중대형 전지",
+    "tier": "A",
+    "quote": "전지박 시장은 크게 사용 용도에 따라 IT기기 및 전동 공구 등에 적용되는 소형 전지 시장과 EV 및 ESS등에 적용되는 중대형 전지 시장으로 분류됩니다."
+   }
+  ],
+  "unmapped": ""
+ },
+ "214430": {
+  "products": [
+   {
+    "industry": "부품·구동·광학",
+    "product": "적외선·엑스레이 영상센서",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "주력 제품으로는 1) 적외선 영상센서, 2) 엑스레이 영상센서, 3) 적외선 영상 시뮬레이터, 4) 가시광 영상센서 모듈 등으로 다양한 영상센서 제품 및 영상 관련 시스템 등을 국방용, 의료용, 우주용, 일반 산업용 등으로 개발, 제조, 판매하고 있습니다."
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "방위산업",
+    "customer": "감시장비·탐색추적장비(유도무기)",
+    "tier": "A",
+    "quote": "주로 먼저 군사용으로 활용되어 감시장비, 탐색추적장비(유도무기) 등에 적용되어 야간 전투 및 정밀 타격 등 군사력 증강을 위한 목적으로 사용되어 왔고, 그 특성으로 인해 현대전투에 필수적인 주요 군사핵심 부품 중 하나로 사용되고 있으며, 당사는 국내 유일의 군수용 적외선 영상센서 개발 및 양산공급 가능업체로서 군의 전력화 수요에 대응하고 있습니다."
+   },
+   {
+    "industry": "우주·발사체",
+    "customer": "우주용 영상센서",
+    "tier": "B",
+    "quote": "다양한 영상센서 제품 및 영상 관련 시스템 등을 국방용, 의료용, 우주용, 일반 산업용 등으로 개발, 제조, 판매하고 있습니다."
+   }
+  ],
+  "unmapped": ""
+ },
+ "010820": {
+  "products": [
+   {
+    "industry": "부품·구동·광학",
+    "product": "발사통제장비·구동장치·냉각장치",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "다양한 분야에서 발사통제장비, 구동장치, 냉각장치, 자동소화장치 등을 개발, 생산하며 퍼스텍의 기술 및 품질을 인정 받고 있습니다."
+   },
+   {
+    "industry": "방위산업",
+    "product": "무인항공기 지상통제시스템",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "회사는 당기말 현재 국내에 단일 사업 부문(방위산업)을 운영하고 있습니다."
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "003570": {
+  "products": [
+   {
+    "industry": "방위산업",
+    "product": "방산용 변속기·총화포",
+    "revenue_share": 0.996,
+    "tier": "A",
+    "quote": "운수장비사업은 방위산업제품(방산용 변속기 및 총화포 등), 차량부품(변속기, 차축 등)으로 구분되고, 기계사업은 공작기계 등으로 구분되어 있으며, 다년간 축적된 기술과 경험으로 우수한 제품을 생산 공급하고 있습니다."
+   },
+   {
+    "industry": "자동차 부품·모듈",
+    "product": "차축·변속기·브레이크 캘리퍼",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "차량용 차축, 변속기, 오일펌프커버,브레이크 캘리퍼 바디, 모터 등 차량부품"
+   },
+   {
+    "industry": "산업자동화",
+    "product": "기어가공기·수직선반 등 공작기계",
+    "revenue_share": 0.004,
+    "tier": "A",
+    "quote": "기어가공기, 중. 대형 수직선반 등금속가공용 공작기계"
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "방위산업",
+    "customer": "방위사업청·한화에어로스페이스·KAI·현대로템",
+    "tier": "A",
+    "quote": "방위사업청한화에어로스페이스KAI, 현대로템, BMC 등"
+   },
+   {
+    "industry": "완성차",
+    "customer": "현대자동차·현대모비스·타타대우·KG모빌리티",
+    "tier": "A",
+    "quote": "다임러트럭MFTBC현대자동차현대모비스타타대우모빌리티KG모빌리티 등"
+   }
+  ],
+  "unmapped": ""
+ },
+ "000880": {
+  "products": [
+   {
+    "industry": "탄약·화약",
+    "product": "산업용 화약(폭약·화공품·발파해체)",
+    "revenue_share": 0.0093,
+    "tier": "A",
+    "quote": "화약 제조업 산업용 화약 ㈜한화 글로벌부문 화약원료(암모니아, 질산, 초안), 화약(폭약, 화공품), 화약응용(발파해체, D&B, 불꽃프로모션) 화약제조, 연화 등 697,967 0.93%"
+   },
+   {
+    "industry": "방위산업",
+    "product": "화력체계(자주포·장갑차)·무인화체계",
+    "revenue_share": 0.1008,
+    "tier": "A",
+    "quote": "한화에어로스페이스㈜ 방산부문 화력체계(자주포, 장갑차), 무인화체계(국방로봇, 원격사격통제체계), 기동체계(자주도하장비, 한국형 상륙돌격장갑차), 전투용 차량, 대공ㆍ유도무기 등 군수 7,537,339 10.08%"
+   },
+   {
+    "industry": "항공기 엔진·부품",
+    "product": "항공기용 엔진(부품·모듈·RSP)",
+    "revenue_share": 0.0266,
+    "tier": "A",
+    "quote": "항공엔진 한화에어로스페이스㈜ 항공엔진부문 항공기용 엔진(부품, 모듈, RSP, 장비ㆍ조립) 등 항공엔진 1,987,799 2.66%"
+   },
+   {
+    "industry": "부품·구동·광학",
+    "product": "레이더·전자광학장비·사격통제장비",
+    "revenue_share": 0.0326,
+    "tier": "A",
+    "quote": "한화시스템㈜ 방산부문 레이더, 전자광학장비, 전술통신시스템, 전투지휘체계, 사격통제장비 등 군수 2,438,850 3.26%"
+   },
+   {
+    "industry": "후공정·HBM 장비",
+    "product": "칩마운터·스크린프린터·플립칩마운터",
+    "revenue_share": 0.0058,
+    "tier": "A",
+    "quote": "산업용 기계 한화세미텍㈜(舊(구)한화정밀기계㈜) 칩마운터, 스크린프린터, 프립칩마운터 등 산업용 기계 431,216 0.58"
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "306200": {
+  "products": [
+   {
+    "industry": "후판·강재",
+    "product": "배관용·유정용·구조용 강관",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "당사의 강관 사업부문은 배관용, 유정용, 구조용 등에 사용되는 강관 제품을 생산 및 판매하고 있습니다. 주요 원재료는 HR Coil ,HR Plate, STS 등 입니다."
+   }
+  ],
+  "upstream": [
+   {
+    "industry": "철강",
+    "material": "HR Coil·HR Plate·STS",
+    "cost_share": null,
+    "tier": "A",
+    "quote": "당사의 강관 사업부문은 배관용, 유정용, 구조용 등에 사용되는 강관 제품을 생산 및 판매하고 있습니다. 주요 원재료는 HR Coil ,HR Plate, STS 등 입니다."
+   }
+  ],
+  "downstream": [
+   {
+    "industry": "건설·EPC",
+    "customer": "건설(강관 수요)",
+    "tier": "A",
+    "quote": "당사가 영위하고 있는 강관 사업부문은 건설, 조선, 자동차, 기계, 에너지 등 산업 전반에 걸쳐 사용되고 있습니다."
+   },
+   {
+    "industry": "조선",
+    "customer": "조선(강관 수요)",
+    "tier": "A",
+    "quote": "당사가 영위하고 있는 강관 사업부문은 건설, 조선, 자동차, 기계, 에너지 등 산업 전반에 걸쳐 사용되고 있습니다."
+   },
+   {
+    "industry": "완성차",
+    "customer": "자동차(강관 수요)",
+    "tier": "A",
+    "quote": "당사가 영위하고 있는 강관 사업부문은 건설, 조선, 자동차, 기계, 에너지 등 산업 전반에 걸쳐 사용되고 있습니다."
+   }
+  ],
+  "unmapped": ""
+ },
+ "084010": {
+  "products": [
+   {
+    "industry": "철근·형강",
+    "product": "일반철근·가공철근·Bar-in-Coil",
+    "revenue_share": 0.95,
+    "tier": "A",
+    "quote": "제강/압연 일반철근, 가공철근, Bar-in-Coil 등"
+   }
+  ],
+  "upstream": [
+   {
+    "industry": "비철 스크랩",
+    "material": "철스크랩(빌릿 원료)",
+    "cost_share": null,
+    "tier": "A",
+    "quote": "지배회사(대한제강(주))는 철스크랩을 원재료로 하여 빌릿을 생산하는 제강사업과 반제품인 빌릿을 원재료로 하여 철근을 생산하는 압연사업을 영위하고 있습니다."
+   }
+  ],
+  "downstream": [
+   {
+    "industry": "건설·EPC",
+    "customer": "건설사(철근 판매)",
+    "tier": "A",
+    "quote": "제강사업에 가장 중요한 철스크랩 구매력과 건설사 철근 판매 협상력 등 시장지배력이 강화되었으며 국내 철근 생산 능력 3위의 위치를 굳건히 다지고 있습니다."
+   }
+  ],
+  "unmapped": ""
+ },
+ "104700": {
+  "products": [
+   {
+    "industry": "철근·형강",
+    "product": "철근(건축구조용)",
+    "revenue_share": 0.9396,
+    "tier": "A",
+    "quote": "철강 제 품 철 근 건축구조용 457,230 93.96"
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "건설·EPC",
+    "customer": "건설사·유통상·조달청",
+    "tier": "A",
+    "quote": "당사는 120톤 전기로 및 압연설비를 통하여 철근을 생산하여 건설사, 유통상, 조달청등에 판매하는 단일의 영업부문으로 이루어져 있습니다."
+   }
+  ],
+  "unmapped": ""
+ },
+ "016380": {
+  "products": [
+   {
+    "industry": "후판·강재",
+    "product": "냉연·칼라·석도강판",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "KG스틸㈜(지배회사)는 냉연강판, 각종표면처리강판을 주요제품으로 생산 및 판매하는 철강 전문회사이며, 연결대상 종속회사(이하 '연결회사')는 항만, 임대용역, 금속산화물 제조 및 판매업을 영위하고 있습니다."
+   },
+   {
+    "industry": "철근·형강",
+    "product": "강관·형강·PEB",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "철강부문 냉연, X-TONE(칼라), 석도, 강관, 형강 및 PEB에 대한 생산 및 판매, 철강제품 포장"
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "012630": {
+  "products": [
+   {
+    "industry": "건설·EPC",
+    "product": "주택·건축·토목(HDC현대산업개발)",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "건설부문은 개발부문(자체사업), 주택부문(민간수주, 재개발ㆍ재건축), 건축부문(업무시설, 상업시설), 토목부문(도로, 항만 등 사회간접자본시설)으로 나뉘어집니다."
+   },
+   {
+    "industry": "부동산 개발·시행",
+    "product": "부동산 개발·운영, 자체공사",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "자체공사는 당사가 직접 토지를 매입하여 시행과 시공을 병행하는 개발형 주택사업이고, 도급공사는 발주처로부터 수주하여 시공하는 공사형태로 일반아파트 및 오피스텔, 오피스 등으로 구분됩니다."
+   }
+  ],
+  "upstream": [],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "062040": {
+  "products": [
+   {
+    "industry": "전력기기·전선",
+    "product": "전력용·배전용 변압기, 리액터",
+    "revenue_share": 0.974,
+    "tier": "A",
+    "quote": "전기사업 변압기, 리액터 등 수용가(전기 사용자)의 요구에 맞게 전기의전압을 변환하여, 송배전 효율 증대 및 분배 488,782 97.4%"
+   },
+   {
+    "industry": "산업자동화",
+    "product": "소프트스타터(전기모터 제어)",
+    "revenue_share": 0.008,
+    "tier": "A",
+    "quote": "소프트스타터 등 발열, 샤프트 및 전원케이블 응력을 감소시켜 전기모터 및 시스템의 수명 연장 4,229 0.8%"
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "신재생",
+    "customer": "인버터·신재생에너지 장치·ESS용 특수 변압기",
+    "tier": "A",
+    "quote": "배전 변압기처럼 전력망에 사용되는 일반목적용 변압기와 달리 인버터, 신재생에너지 장치, ESS 등 매우 다양한 고객의 요구 사양을 반영하여 특수한 조건과 환경에서 사용되도록 만들기 위해 높은 기술력이 필요한 변압기인 경우 특수 변압기라고 분류합니다."
+   },
+   {
+    "industry": "유틸리티·발전",
+    "customer": "미국 전력망 교체·신규 투자(매출의 75% 이상)",
+    "tier": "A",
+    "quote": "2023년부터는 미국 전력망 교체 및 신규 투자 수요에 힘입어 전력망 관련 매출 비중 또한 동반 상승하면서 당사의 매출 성장에 기여하고 있습니다."
+   }
+  ],
+  "unmapped": "수출 비중 97%, 미국 75% 이상이라 국내 전방 산업과의 연동이 약할 수 있다."
+ },
+ "075580": {
+  "products": [
+   {
+    "industry": "조선 기자재(엔진·보냉재·의장)",
+    "product": "Deck House(선실)·LPG Tank·블록",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "조선부문은 선원들의 주거공간으로 쓰이는 Deck House를 제작하는 선실, LPG 운반선에 탑재되는 LPG Tank 및 기타 블록을 제작하는 선체부분에서 매출이 발생하고 있으며 당기에 선실 2,374억원, 선체 1,618억원의 매출이 발생 하였습니다."
+   },
+   {
+    "industry": "해양플랜트",
+    "product": "해양 구조물 제작(플랜트부문)",
+    "revenue_share": null,
+    "tier": "A",
+    "quote": "연결회사는 조선부문과 플랜트부문으로 이루어진 조선기자재회사입니다."
+   }
+  ],
+  "upstream": [],
+  "downstream": [
+   {
+    "industry": "조선",
+    "customer": "조선사(블록·기자재 분업 구조)",
+    "tier": "A",
+    "quote": "조선산업은 종합 조립산업으로 조선사를 중심으로 블록업체, 기자재업체, 수리업체로 분업화되어 있습니다."
+   }
+  ],
+  "unmapped": ""
+ }
+}

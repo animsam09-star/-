@@ -1,0 +1,17 @@
+industry: 반도체
+description: 메모리·파운드리와 소재·부품·장비(소부장)
+drivers: [메모리 가격(DRAM·NAND), HBM·AI 서버 수요, 팹 증설 CAPEX, 대중 수출규제]
+peers: [삼성전자, SK하이닉스]
+upstream:
+  - segment: 전공정 장비
+    companies: [주성엔지니어링, 원익IPS, 유진테크, 피에스케이]
+  - segment: 후공정·HBM 장비
+    companies: [한미반도체, 이오테크닉스, 테크윙, 제우스]
+  - segment: 소재(전구체·특수가스·CMP)
+    companies: [솔브레인, 동진쎄미켐, 원익머트리얼즈, 티씨케이, 하나머티리얼즈]
+  - segment: 기판·패키징
+    companies: [심텍, 대덕전자, 해성디에스]
+downstream:
+  - segment: 서버·전자기기
+    companies: [삼성전자, LG전자]
+notes: 메모리 업황 개선 시 소재(가동률 연동)가 장비(CAPEX 연동)보다 선행. HBM 증설은 한미반도체 등 후공정 장비에 직결

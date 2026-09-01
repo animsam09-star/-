@@ -1,0 +1,117 @@
+<!doctype html><html lang='ko'><head><meta charset='utf-8'><meta http-equiv="refresh" content="0; url=20260806.html"><meta name='viewport' content='width=device-width,initial-scale=1'><title>상승 종목 원인·파급 분석</title><link rel="preconnect" href="https://cdn.jsdelivr.net"><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css"><style>
+/* 색은 데이터가 갖는다. 구조(카드·테두리·제목)는 무채색으로 두고, 빨강·파랑은
+   등락에만 쓴다. 보라 그라디언트로 UI를 칠하면 정작 수익률 색이 묻힌다. */
+:root {
+  --bg:#fafaf9; --bg-2:#f5f5f4; --card:#fff; --card-2:#fcfcfb;
+  --fg:#0c0a09; --fg-2:#44403c; --muted:#78716c; --line:#e7e5e4; --line-2:#f0efee;
+  /* 한국 시장 관행: 상승 빨강 / 하락 파랑 */
+  --up:#dc2626; --down:#2563eb;
+  /* 상호작용용 단일 강조. 데이터 색과 겹치지 않게 짙은 청록으로 둔다. */
+  --accent:#0f766e; --accent-2:#115e59; --chip:#f0fdfa;
+  --good:#15803d; --warn:#b45309; --grid:#fafaf9;
+  --shadow-sm:0 1px 2px rgba(12,10,9,.04);
+  --shadow:0 1px 2px rgba(12,10,9,.04), 0 4px 12px -4px rgba(12,10,9,.06);
+  --shadow-lg:0 2px 4px rgba(12,10,9,.05), 0 16px 32px -12px rgba(12,10,9,.14);
+  --r:12px; --r-sm:8px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:#0c0a09; --bg-2:#131110; --card:#1c1917; --card-2:#211e1c;
+    --fg:#fafaf9; --fg-2:#d6d3d1; --muted:#a8a29e; --line:#2c2825; --line-2:#242120;
+    --up:#f87171; --down:#60a5fa;
+    --accent:#5eead4; --accent-2:#99f6e4; --chip:#134e4a;
+    --good:#4ade80; --warn:#fbbf24; --grid:#151312;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.5);
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 6px 16px -6px rgba(0,0,0,.6);
+    --shadow-lg:0 2px 6px rgba(0,0,0,.5), 0 20px 44px -14px rgba(0,0,0,.8);
+  }
+}
+* { box-sizing:border-box; margin:0; }
+html { -webkit-text-size-adjust:100%; }
+body {
+  background:var(--bg); color:var(--fg);
+  font-family:Pretendard,'Pretendard Variable',-apple-system,BlinkMacSystemFont,
+              'Apple SD Gothic Neo','Segoe UI','Malgun Gothic',system-ui,sans-serif;
+  /* 표에서 숫자를 세로로 맞춘다. 수익률·갭을 눈으로 비교하는 화면이라
+     자릿수가 흔들리면 읽는 속도가 그대로 떨어진다. */
+  font-variant-numeric:tabular-nums;
+  font-size:15px; line-height:1.65; letter-spacing:-.011em; padding:0 0 72px;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+main { max-width:1140px; margin:0 auto; padding:0 22px; }
+
+header { background:var(--card); border-bottom:1px solid var(--line);
+         padding:30px 22px 22px; margin-bottom:28px; }
+header .inner { max-width:1140px; margin:0 auto; }
+h1 { font-size:1.75rem; font-weight:800; letter-spacing:-.033em; line-height:1.25; }
+h2 { font-size:.82rem; font-weight:700; margin:44px 0 14px; color:var(--muted);
+     text-transform:uppercase; letter-spacing:.09em;
+     display:flex; align-items:center; gap:12px; }
+h2::after { content:''; flex:1; height:1px; background:var(--line); }
+h3 { font-size:1.02rem; font-weight:700; margin-bottom:6px; letter-spacing:-.018em; }
+.sub { color:var(--muted); font-size:.88rem; margin-top:3px; }
+a { color:var(--accent); text-decoration:none;
+    border-bottom:1px solid color-mix(in srgb,var(--accent) 30%,transparent); }
+a:hover { border-bottom-color:currentColor; }
+
+/* KPI — 장식을 걷어내고 숫자만 크게. 그라디언트 막대는 값을 가릴 뿐이다. */
+.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(136px,1fr));
+        gap:1px; margin-top:22px; background:var(--line);
+        border:1px solid var(--line); border-radius:var(--r); overflow:hidden; }
+.kpi { background:var(--card); padding:14px 16px 13px; }
+.kpi .v { font-size:1.7rem; font-weight:800; line-height:1.1; letter-spacing:-.035em; }
+.kpi .l { font-size:.7rem; color:var(--muted); text-transform:uppercase;
+          letter-spacing:.07em; margin-top:3px; }
+
+nav.jump { display:flex; flex-wrap:wrap; gap:6px; margin-top:18px; }
+nav.jump a { font-size:.78rem; color:var(--fg-2); font-weight:600; border:1px solid var(--line);
+             border-radius:7px; padding:4px 11px; background:var(--card);
+             transition:border-color .15s, color .15s; }
+nav.jump a:hover { border-color:var(--accent); color:var(--accent); }
+
+.card { background:var(--card); border:1px solid var(--line); border-radius:var(--r);
+        padding:20px 22px; margin-bottom:14px; box-shadow:var(--shadow-sm);
+        transition:box-shadow .2s, border-color .2s; }
+.card:hover { box-shadow:var(--shadow); }
+.grid2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(330px,1fr)); gap:14px; }
+.chip { display:inline-block; background:var(--chip); color:var(--accent-2);
+        border:1px solid color-mix(in srgb,var(--accent) 22%,transparent);
+        border-radius:6px; padding:1px 8px; font-size:.72rem; font-weight:700;
+        margin-left:8px; vertical-align:middle; letter-spacing:0; }
+.up { color:var(--up); font-weight:700; } .down { color:var(--down); font-weight:700; }
+.muted { color:var(--muted); font-size:.85rem; }
+
+table { width:100%; border-collapse:separate; border-spacing:0; font-size:.86rem; }
+th,td { text-align:left; padding:9px 10px; border-bottom:1px solid var(--line-2);
+        white-space:nowrap; }
+thead th { position:sticky; top:0; z-index:1; background:var(--card); color:var(--muted);
+           font-weight:700; font-size:.7rem; text-transform:uppercase;
+           letter-spacing:.07em; border-bottom:1px solid var(--line); }
+tbody tr { transition:background .12s; }
+tbody tr:hover { background:var(--bg-2); }
+tr:last-child td { border-bottom:none; }
+td.wide { white-space:normal; }
+.scroll { overflow-x:auto; }
+/* 스크롤 상자 안의 그림은 줄이지 않는다. 공통 규칙(svg{max-width:100%})에 걸리면
+   1,758px짜리 사슬이 눌려 12.5px 글자가 8px가 되고 아무것도 안 읽힌다. */
+.scroll > svg { max-width:none; width:auto; }
+
+.path { border-left:2px solid var(--accent); padding:8px 14px; margin:10px 0; }
+ul.dates { list-style:none; }
+ul.dates li { padding:11px 2px; border-bottom:1px solid var(--line-2); }
+ul.dates li:last-child { border-bottom:none; }
+.badge-mi { color:var(--good); font-weight:700; } .badge-gi { color:var(--muted); }
+
+svg { display:block; max-width:100%; height:auto; }
+.legend { display:flex; gap:16px; flex-wrap:wrap; font-size:.75rem; color:var(--muted);
+          margin:8px 0 2px; }
+.legend i { display:inline-block; width:9px; height:9px; border-radius:3px; margin-right:5px; }
+
+@media (max-width:640px) {
+  main { padding:0 15px; }
+  h1 { font-size:1.4rem; }
+  .card { padding:16px; }
+  .kpis { grid-template-columns:repeat(2,1fr); }
+}
+@media (prefers-reduced-motion:reduce) { * { transition:none !important; } }
+</style></head><body><main><h1>상승 종목 원인·파급 분석</h1><p class='sub'>일자별 리포트 · <a href='valuechain.html'>밸류체인</a></p><ul class='dates'><li><a href="20260806.html">2026-08-06</a></li><li><a href="20260805.html">2026-08-05</a></li><li><a href="20260731.html">2026-07-31</a></li><li><a href="20260728.html">2026-07-28</a></li><li><a href="20260727.html">2026-07-27</a></li></ul></main></body></html>

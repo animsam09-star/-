@@ -1,0 +1,125 @@
+{
+ "096770": {
+  "products": [
+   {
+    "industry": "정유",
+    "product": "휘발유·경유·항공유·납사",
+    "quote": "울산 및 인천 Complex에서 이를 정제하여 휘발유, 경유, 등유, 항공유, 납사 등 연료와 화학제품 원료를 생산",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [
+   {
+    "industry": "원유·천연가스",
+    "quote": "석유사업은 석유제품 생산을 위해 원유를 중동 등 전 세계 다양한 공급망을 통해 안정적으로 조달하며",
+    "tier": "B",
+    "material": "원유(중동 등 해외 조달)",
+    "segment": "정유",
+    "cost_share": null
+   }
+  ],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "010950": {
+  "products": [
+   {
+    "industry": "정유",
+    "product": "정유·석유화학·윤활기유",
+    "quote": "하루 66만 9천배럴의 원유정제능력을 보유한 정유사로, 정유뿐 아니라 석유화학ㆍ윤활기유 등으로 다각화된 사업 포트폴리오를 보유",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [
+   {
+    "industry": "원유·천연가스",
+    "quote": "하루 66만 9천배럴의 원유정제능력을 보유한 정유사",
+    "tier": "B",
+    "material": "원유(정제 투입)",
+    "segment": "정유",
+    "cost_share": null
+   }
+  ],
+  "downstream": [
+   {
+    "industry": "석유화학",
+    "quote": "정유뿐 아니라 석유화학ㆍ윤활기유 등으로 다각화된 사업 포트폴리오를 보유",
+    "tier": "B",
+    "customer": "석유화학·윤활기유 사업 연계",
+    "segment": "정유"
+   }
+  ],
+  "unmapped": ""
+ },
+ "073240": {
+  "products": [
+   {
+    "industry": "타이어",
+    "product": "승용·트럭·버스용 타이어",
+    "quote": "타이어 제조, 판매 기업입니다",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [
+   {
+    "industry": "천연고무·원자재",
+    "quote": "타이어 원재료 천연고무 타이어제조용원재료 461,697",
+    "tier": "A",
+    "material": "천연고무",
+    "segment": "타이어",
+    "cost_share": null
+   }
+  ],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "192820": {
+  "products": [
+   {
+    "industry": "화장품 ODM",
+    "product": "화장품 ODM/OEM(기초·색조)",
+    "quote": "자체 개발 화장품과 주문 화장품을 생산 ㆍ 납품",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [
+   {
+    "industry": "석유화학",
+    "quote": "화장품 원재료 1,2-Hexanediol 방부제",
+    "tier": "A",
+    "material": "1,2-Hexanediol 등 화장품 원료",
+    "segment": "화장품 ODM",
+    "cost_share": null
+   }
+  ],
+  "downstream": [],
+  "unmapped": ""
+ },
+ "009150": {
+  "products": [
+   {
+    "industry": "기판·패키징",
+    "product": "반도체 패키지기판",
+    "quote": "반도체패키지기판을 생산하는 패키지솔루션 사업부문",
+    "tier": "B",
+    "revenue_share": null
+   }
+  ],
+  "upstream": [
+   {
+    "industry": "소재(전구체·특수가스·CMP)",
+    "quote": "주요 원재료는 PASTE/POWDER로 SHOEI, GUANGBO 등에서 매입하고 있으며",
+    "tier": "B",
+    "material": "PASTE/POWDER, CCL/PPG, 센서 IC",
+    "segment": "기판·패키징",
+    "cost_share": null
+   }
+  ],
+  "downstream": [],
+  "unmapped": ""
+ }
+}

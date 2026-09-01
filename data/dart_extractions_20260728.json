@@ -1,0 +1,258 @@
+{
+ "000720": {
+  "products": [
+   {
+    "industry": "건설·EPC",
+    "product": "건축/주택(공동주택·데이터센터·복합개발)",
+    "revenue_share": 0.446,
+    "tier": "A",
+    "quote": "건축/주택 공동주택, 데이터센터 및 복합개발 등 국내 13,971,762 44.6"
+   },
+   {
+    "industry": "건설·EPC",
+    "product": "플랜트/뉴에너지(석유화학·정유·원전·송변전)",
+    "revenue_share": 0.227,
+    "tier": "A",
+    "quote": "플랜트/뉴에너지 석유화학, 가스처리, 정유, 대형원전, SMR,태양광, 수전해 수소플랜트, ESS, 송·변전 인프라 등 국내 2,827,550 9.0"
+   }
+  ],
+  "upstream": [
+   {
+    "industry": "시멘트·레미콘",
+    "material": "레미콘·일반재(삼표산업·동원레미콘)",
+    "cost_share": null,
+    "tier": "B",
+    "quote": "토목 및 일반재 1,535,606 26.6 현대제철 주식회사, (주)삼표산업, (주)동원레미콘 등"
+   },
+   {
+    "industry": "철근·형강",
+    "material": "철강 토목자재(현대제철)",
+    "cost_share": null,
+    "tier": "B",
+    "quote": "토목 및 일반재 1,535,606 26.6 현대제철 주식회사, (주)삼표산업, (주)동원레미콘 등"
+   },
+   {
+    "industry": "건자재·마감재",
+    "material": "건축자재(현대리바트·KCC·엘리베이터)",
+    "cost_share": 0.433,
+    "tier": "A",
+    "quote": "건축자재 2,498,318 43.3 (주)현대리바트, (주)케이씨씨, 한국미쓰비시엘리베이터(주), 현대엘리베이터㈜ 등"
+   },
+   {
+    "industry": "전력기기·전선",
+    "material": "전기/계장/배관 자재",
+    "cost_share": 0.222,
+    "tier": "A",
+    "quote": "전기/계장/배관 1,279,313 22.2 AL BABTAIN POWER & TELECOM, 주식회사 탑선, RIYADH CABLES 등"
+   }
+  ],
+  "downstream": [],
+  "unmapped": "수주 및 판매전략에 공공부문·민간사업 언급은 있으나 매출처를 산업으로 특정할 만한 기술은 없음. 수주상황 표는 절 안에서 비어 있었음."
+ },
+ "300720": {
+  "products": [
+   {
+    "industry": "시멘트·레미콘",
+    "product": "시멘트",
+    "revenue_share": 0.5247,
+    "tier": "A",
+    "quote": "시멘트 제품,상품 시멘트 건축,토목자재 한일시멘트 747,041 52.47"
+   },
+   {
+    "industry": "시멘트·레미콘",
+    "product": "레미콘",
+    "revenue_share": 0.1392,
+    "tier": "A",
+    "quote": "레미콘 제품,상품 레미콘 건축,토목자재 한일레미콘 198,177 13.92"
+   },
+   {
+    "industry": "건자재·마감재",
+    "product": "레미탈(드라이 모르타르)",
+    "revenue_share": 0.2242,
+    "tier": "A",
+    "quote": "레미탈 제품,상품 레미탈 건축,토목자재 레미탈 319,160 22.42"
+   }
+  ],
+  "upstream": [
+   {
+    "industry": "철근·형강",
+    "material": "철근",
+    "cost_share": null,
+    "tier": "C",
+    "quote": "연결회사에서 사용하는 주요 원재료에는 슬래그, 플라이애쉬, 모래, 자갈, 레미콘, 철근 등이 있습니다."
+   },
+   {
+    "industry": "철강",
+    "material": "고로 슬래그",
+    "cost_share": null,
+    "tier": "C",
+    "quote": "연결회사에서 사용하는 주요 원재료에는 슬래그, 플라이애쉬, 모래, 자갈, 레미콘, 철근 등이 있습니다."
+   },
+   {
+    "industry": "유틸리티·발전",
+    "material": "플라이애쉬(석탄화력 부산물)",
+    "cost_share": null,
+    "tier": "C",
+    "quote": "연결회사에서 사용하는 주요 원재료에는 슬래그, 플라이애쉬, 모래, 자갈, 레미콘, 철근 등이 있습니다."
+   },
+   {
+    "industry": "골재",
+    "material": "모래·자갈",
+    "cost_share": null,
+    "tier": "B",
+    "quote": "모래 및 자갈의 주요 거래처는 도현개발과 수성자원개발 등이며, 특수관계에 해당하지 않습니다."
+   }
+  ],
+  "downstream": [
+   {
+    "industry": "건설·EPC",
+    "customer": "국내 건설 산업",
+    "tier": "B",
+    "quote": "국내 건설 산업이 시멘트 산업의 전방 산업 이라고 볼 수 있습니다."
+   },
+   {
+    "industry": "건설·EPC",
+    "customer": "건설사·레미콘사",
+    "tier": "B",
+    "quote": "국내 판매의 경우, 레미콘사 및 건설사에 직접 판매하거나 당사와 거래관계를 맺고 있는 특약점을 통해 판매하고 있으며"
+   }
+  ],
+  "unmapped": ""
+ },
+ "010140": {
+  "products": [
+   {
+    "industry": "조선",
+    "product": "초대형컨테이너선·LNG선·원유운반선·해양플랫폼",
+    "revenue_share": 0.9603,
+    "tier": "A",
+    "quote": "조선해양 제품 초대형컨테이너선LNG선, 원유운반선 LNG-FPSO, FPU 등 해상화물,LNG원유운반 등 해외선주 102,268(96.03)"
+   },
+   {
+    "industry": "건설·EPC",
+    "product": "토목·건축·하이테크 공사",
+    "revenue_share": 0.0397,
+    "tier": "A",
+    "quote": "토건 제품 토목, 건축,하이테크 공사 등 토목건축사업 건축업주 4,232(3.97)"
+   }
+  ],
+  "upstream": [
+   {
+    "industry": "후판·강재",
+    "material": "강재·형강(POSCO)",
+    "cost_share": null,
+    "tier": "B",
+    "quote": "원재료 강재,파일,메인엔진형강,프로펠러,내외장 등 선박건조,해양플랫폼 제작 등 48,560(99.5) POSCO, 한화엔진,한국카본 등"
+   },
+   {
+    "industry": "조선 기자재(엔진·보냉재·의장)",
+    "material": "메인엔진·프로펠러·내외장(한화엔진·한국카본)",
+    "cost_share": null,
+    "tier": "B",
+    "quote": "원재료 강재,파일,메인엔진형강,프로펠러,내외장 등 선박건조,해양플랫폼 제작 등 48,560(99.5) POSCO, 한화엔진,한국카본 등"
+   }
+  ],
+  "downstream": [
+   {
+    "industry": "해운",
+    "customer": "해외 선주",
+    "tier": "B",
+    "quote": "조선해양부문은 주로 해외 선주를 대상으로 제품 판매가 이루어지고 있고, 토건부문은 국내 건축업주로부터 매출이 발생하고 있습니다."
+   }
+  ],
+  "unmapped": ""
+ },
+ "267260": {
+  "products": [
+   {
+    "industry": "전력기기·전선",
+    "product": "전력기기(변압기·고압차단기)",
+    "revenue_share": 0.695,
+    "tier": "A",
+    "quote": "전력기기 변압기, 고압차단기 外 2,835,195(69.5%)"
+   },
+   {
+    "industry": "전력기기·전선",
+    "product": "배전기기·전력제어·중저압차단기",
+    "revenue_share": 0.161,
+    "tier": "A",
+    "quote": "배전기기 外 배전반, 전력제어, 중저압차단기 外 655,639(16.1%)"
+   }
+  ],
+  "upstream": [
+   {
+    "industry": "변압기 부품·권선",
+    "material": "전장품(탭체인저·권선 부품)",
+    "cost_share": 0.326,
+    "tier": "A",
+    "quote": "원재료 전 장 변압기 제작 등 846,480(32.6%) HD Hyundai Electric China Co., Ltd, MASCHINENFABRIK REINHAUSEN GMBH, 럭스코, (주)한빛케이에스이, 신현기전(주), (주)창성정공 外"
+   },
+   {
+    "industry": "후판·강재",
+    "material": "강판(포스코·동국제강)",
+    "cost_share": 0.091,
+    "tier": "A",
+    "quote": "강 판 〃 236,737(9.1%) (주)포스코모빌리티솔루션 포항2공장, 주식회사 포스코, (주)고아정공경주공장, (주)조인코아, LEGNANO TEKNOELECTRIC COMPANY MIDD, 동국제강(주)당진공장 外"
+   },
+   {
+    "industry": "전선·구리 가공",
+    "material": "케이블(삼동·가온전선·대한전선)",
+    "cost_share": 0.019,
+    "tier": "A",
+    "quote": "케 이 블 〃 49,974(1.9%) (주)삼동, 가온전선(주), 디에스이(주), 대한전선(주), 티씨머티리얼즈(주), TrafaE AE 外"
+   }
+  ],
+  "downstream": [],
+  "unmapped": "수주상황 표가 절 안에서 비어 있어 매출처를 특정할 수 없었음. 매출은 수출 3,147,338 / 국내 932,160으로 지역 구분만 확인됨."
+ },
+ "006260": {
+  "products": [
+   {
+    "industry": "동제련",
+    "product": "전기동·금·은",
+    "revenue_share": 0.441,
+    "tier": "A",
+    "quote": "동제련부문 전기동, 금, 은 등 14,942,426 44.1"
+   },
+   {
+    "industry": "전력기기·전선",
+    "product": "전력기기(저압·고압기기·배전반·철도시스템)",
+    "revenue_share": 0.115,
+    "tier": "A",
+    "quote": "전력기기부문 저압기기, 고압기기, 계량기, 계전기, 초고압, 배전반, 철도시스템 등 3,908,074 11.5"
+   },
+   {
+    "industry": "전선·구리 가공",
+    "product": "전력선·해저케이블",
+    "revenue_share": 0.102,
+    "tier": "A",
+    "quote": "전력선부문 전력선, 알루미늄, 해저케이블 등 3,457,066 10.2"
+   },
+   {
+    "industry": "전선·구리 가공",
+    "product": "산업용 특수케이블",
+    "revenue_share": 0.092,
+    "tier": "A",
+    "quote": "산업용전선부문 산업용특수케이블, 특수선 등 3,136,935 9.2"
+   }
+  ],
+  "upstream": [
+   {
+    "industry": "동제련",
+    "material": "전기동·알루미늄(엘에스엠앤엠)",
+    "cost_share": null,
+    "tier": "B",
+    "quote": "전선 원재료, 상품 등 전기동 및 알루미늄 전선 선재 등 3,989,570 엘에스엠앤엠(주) 외 다수"
+   },
+   {
+    "industry": "광산·비철 원광",
+    "material": "동정광·슬라임(PT. AMMAN Mineral·BHP Billiton)",
+    "cost_share": null,
+    "tier": "B",
+    "quote": "엠앤엠 원재료 등 동정광, 슬라임 등 전기동, 금, 은 생산 14,384,061 PT. AMMAN Mineral, BHP Billiton 등"
+   }
+  ],
+  "downstream": [],
+  "unmapped": "매출처를 산업으로 특정할 만한 기술이 절 안에 없었음."
+ }
+}

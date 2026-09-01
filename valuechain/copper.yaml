@@ -1,0 +1,20 @@
+industry: 동제련
+description: 동정광을 제련해 전기동과 부산물 금·은을 회수
+drivers: [LME 구리 가격, TC/RC 제련수수료, 금·은 가격, 전력망 교체 투자, 전기차·데이터센터 전력 수요]
+peers: [LS]
+upstream:
+  # 동정광 공급처(PT. AMMAN Mineral, BHP Billiton)는 전부 해외 비상장이다.
+  - segment: 광산·비철 원광
+    companies: []
+downstream:
+  - segment: 전선·구리 가공
+    companies: [LS, LS에코에너지, 대한전선, 가온전선]
+  - segment: 전력기기·전선
+    companies: [HD현대일렉트릭, 효성중공업, LS ELECTRIC]
+  - segment: 음극재·동박
+    companies: [솔루스첨단소재]
+notes: |
+  구리 가격 상승의 부호가 노드마다 다르다 — 제련은 보유 재고 평가익으로 수혜,
+  전선·가공은 원가 상승으로 피해다. 한 방향으로 퍼뜨리면 안 된다.
+  고려아연·영풍은 아연·연 제련이라 여기 넣지 않았다. 구리 가격 노출이 부분적이고,
+  아연 사이클은 따로 돈다 — 별도 노드가 필요하다.

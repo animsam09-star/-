@@ -1,0 +1,66 @@
+{
+  "base_date": "20260408",
+  "candidates": [
+    {
+      "ticker": "000001",
+      "name": "종목0",
+      "trigger": "강세지속",
+      "close": 12760,
+      "ret5": 0.0159,
+      "ret20": 0.0669,
+      "ret60": 0.2317,
+      "vol_surge": 1.0,
+      "high_proximity": 1.0,
+      "market_cap": 500000000000
+    },
+    {
+      "ticker": "000002",
+      "name": "종목1",
+      "trigger": "강세지속",
+      "close": 12770,
+      "ret5": 0.0159,
+      "ret20": 0.0668,
+      "ret60": 0.2314,
+      "vol_surge": 1.0,
+      "high_proximity": 1.0,
+      "market_cap": 500000000001
+    },
+    {
+      "ticker": "000003",
+      "name": "종목2",
+      "trigger": "강세지속",
+      "close": 12780,
+      "ret5": 0.0159,
+      "ret20": 0.0668,
+      "ret60": 0.2312,
+      "vol_surge": 1.0,
+      "high_proximity": 1.0,
+      "market_cap": 500000000002
+    },
+    {
+      "ticker": "000004",
+      "name": "종목3",
+      "trigger": "강세지속",
+      "close": 12790,
+      "ret5": 0.0159,
+      "ret20": 0.0667,
+      "ret60": 0.231,
+      "vol_surge": 1.0,
+      "high_proximity": 1.0,
+      "market_cap": 500000000003
+    },
+    {
+      "ticker": "000005",
+      "name": "종목4",
+      "trigger": "강세지속",
+      "close": 12800,
+      "ret5": 0.0159,
+      "ret20": 0.0667,
+      "ret60": 0.2308,
+      "vol_surge": 1.0,
+      "high_proximity": 1.0,
+      "market_cap": 500000000004
+    }
+  ],
+  "universe_size": 60
+}

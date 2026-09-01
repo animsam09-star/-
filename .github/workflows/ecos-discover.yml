@@ -1,0 +1,71 @@
+# 한국은행 ECOS 산업연관표 탐색
+#
+# 통계표코드도 필드명도 소스에 박지 않는다. 박아 두면 틀렸을 때 예외가 아니라
+# 빈 결과가 나오고, 그건 '산업 간 연관이 없다'와 리포트에서 구분되지 않는다.
+# 이 워크플로가 실제 응답을 찍고, 그걸 보고 다음 코드를 확정한다.
+name: ecos-discover
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 조회할 통계표 수
+        required: false
+        default: "1000"
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Report secret availability
+        env:
+          ECOS_API: ${{ secrets.ECOS_API }}
+          ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
+          ECOS_KEY: ${{ secrets.ECOS_KEY }}
+          BOK_API_KEY: ${{ secrets.BOK_API_KEY }}
+        run: |
+          python - <<'PY'
+          import sys
+          from src import ecos
+          kind = ecos.credential_kind()
+          if not kind:
+              sys.exit(ecos.MISSING_HINT)
+          print(f"ECOS 인증키 확인: 환경 변수 {kind}")   # 이름만, 값은 찍지 않는다
+          PY
+
+      - name: Discover 산업연관표 tables
+        env:
+          ECOS_API: ${{ secrets.ECOS_API }}
+          ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
+          ECOS_KEY: ${{ secrets.ECOS_KEY }}
+          BOK_API_KEY: ${{ secrets.BOK_API_KEY }}
+        run: |
+          python - <<'PY'
+          import json, sys
+          from src import ecos
+
+          try:
+              out = ecos.discover(limit=int("${{ inputs.limit }}" or 1000))
+          except ecos.EcosError as e:
+              # 가정한 URL 구조가 틀렸을 수 있다. 그 사실이 로그에 남아야 한다.
+              sys.exit(f"::error::{e}")
+
+          print(f"통계표 {out['total']}건 / 산업연관 관련 {out['match_count']}건")
+          print(f"\n[실제 응답 필드]\n  {out['fields']}")
+          print(f"\n[레코드 한 건 원형]\n  {json.dumps(out['sample'], ensure_ascii=False)}")
+          print("\n[산업연관 관련 통계표]")
+          for m in out["matches"]:
+              print(f"  {json.dumps(m, ensure_ascii=False)}")
+
+          if not out["match_count"]:
+              print("::warning::산업연관 관련 통계표를 찾지 못했습니다. "
+                    "IO_TABLE_HINTS가 실제 표 이름과 다를 수 있습니다 — "
+                    "위 '레코드 한 건 원형'을 보고 힌트를 고치세요.")
+          PY

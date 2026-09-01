@@ -1,0 +1,17 @@
+{
+  "base_date": "20260728",
+  "analyses": [],
+  "synthesis": {
+    "market_summary": "산업공통 요인으로 분류된 상승 종목이 없어 파급 아이디어를 도출하지 않았다.",
+    "ideas": []
+  },
+  "name_match": {
+    "matched": 0,
+    "total": 0,
+    "unmatched": []
+  },
+  "provenance": {
+    "graph_backed": 0,
+    "total": 0
+  }
+}

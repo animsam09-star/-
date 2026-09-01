@@ -1,0 +1,15 @@
+industry: 산업자동화
+description: PLC·인버터·로봇 등 생산설비 자동화 기기와 시스템
+drivers: [제조업 설비투자, 반도체·이차전지 팹 증설, 최저임금·인력난, 스마트팩토리 정책]
+peers: [LS ELECTRIC, 에스피지, 삼익THK, 알에스오토메이션, 티로보틱스]
+upstream:
+  - segment: 전력기기·전선
+    companies: [LS ELECTRIC, 일진전기]
+downstream:
+  - segment: 반도체
+    companies: [삼성전자, SK하이닉스]
+  - segment: 이차전지
+    companies: [LG에너지솔루션, 삼성SDI]
+  - segment: 완성차
+    companies: [현대차, 기아]
+notes: 자동화는 전방 산업의 CAPEX에 연동돼 가동률(소재)보다 늦고 변동이 크다

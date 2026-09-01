@@ -1,0 +1,34 @@
+name: test
+
+# 1층 검증: 로직이 의도대로 도는가. 네트워크 없이 합성 데이터로 매 푸시마다 확인한다.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest
+
+      # 설정·밸류체인 맵·별칭 검증은 tests/test_config.py에 있다.
+      # 예전에는 이 워크플로우에 인라인 스크립트로 있었는데, 그러면 로컬에서
+      # 돌려볼 방법이 없어 같은 규칙이 코드와 갈라져도 푸시 후에야 깨진다.
+      # 실제로 그렇게 깨졌다 — 규칙은 한 곳에만 둔다.
+      - name: Run tests
+        run: python -m pytest tests/ -v

@@ -1,0 +1,17 @@
+industry: 유틸리티·발전
+description: 발전·송배전·전력 판매와 그 연료
+drivers: [전기요금 인상, 원전 정책, LNG 도입단가, AI 데이터센터 전력 수요, 유가]
+peers: [한국전력, 한전기술, 한전KPS, 한국가스공사]
+upstream:
+  - segment: LNG·가스
+    companies: [한국가스공사, 포스코인터내셔널, SK가스]
+  - segment: 정유
+    companies: [S-Oil, SK이노베이션, GS]
+  - segment: 전력기기·전선
+    companies: [HD현대일렉트릭, 효성중공업, LS ELECTRIC, 일진전기]
+  - segment: 원전 기자재
+    companies: [두산에너빌리티, 비에이치아이, 우진]
+downstream:
+  - segment: 데이터센터·건설
+    companies: [삼성물산, 현대건설, GS건설]
+notes: 한전 CAPEX(HVDC 변환설비 등)가 전력기기 수주로 이어진다. 요금 인상은 한전엔 수혜, 전력 다소비 산업엔 원가다 — 부호가 갈린다

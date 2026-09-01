@@ -1,0 +1,7 @@
+pykrx>=1.0.45
+pandas>=2.0
+pyyaml>=6.0
+requests>=2.31
+anthropic>=0.60
+# KRX OpenAPI(인증키) 경로에서 참고용 — 직접 호출은 src/krx_api.py가 한다
+pykrx-openapi

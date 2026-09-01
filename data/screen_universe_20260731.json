@@ -1,0 +1,4561 @@
+{
+ "base_date": "20260731",
+ "min_market_cap": 100000000000,
+ "min_avg_turnover": 1000000000,
+ "tickers": [
+  {
+   "ticker": "005930",
+   "name": "삼성전자",
+   "market_cap": 1534648134600000,
+   "avg_turnover": 8281557201219
+  },
+  {
+   "ticker": "000660",
+   "name": "SK하이닉스",
+   "market_cap": 1254985883070000,
+   "avg_turnover": 12647746115856
+  },
+  {
+   "ticker": "005935",
+   "name": "삼성전자우",
+   "market_cap": 153252899773000,
+   "avg_turnover": 827108836612
+  },
+  {
+   "ticker": "402340",
+   "name": "SK스퀘어",
+   "market_cap": 136972804668000,
+   "avg_turnover": 1213303981152
+  },
+  {
+   "ticker": "009150",
+   "name": "삼성전기",
+   "market_cap": 85300200832000,
+   "avg_turnover": 1335894924986
+  },
+  {
+   "ticker": "005380",
+   "name": "현대차",
+   "market_cap": 79446013208000,
+   "avg_turnover": 397290719128
+  },
+  {
+   "ticker": "373220",
+   "name": "LG에너지솔루션",
+   "market_cap": 76752000000000,
+   "avg_turnover": 112962566912
+  },
+  {
+   "ticker": "207940",
+   "name": "삼성바이오로직스",
+   "market_cap": 68742062235000,
+   "avg_turnover": 98663960152
+  },
+  {
+   "ticker": "032830",
+   "name": "삼성생명",
+   "market_cap": 62300000000000,
+   "avg_turnover": 154807241594
+  },
+  {
+   "ticker": "105560",
+   "name": "KB금융",
+   "market_cap": 59764883179000,
+   "avg_turnover": 274804479685
+  },
+  {
+   "ticker": "028260",
+   "name": "삼성물산",
+   "market_cap": 57001904721500,
+   "avg_turnover": 231442622481
+  },
+  {
+   "ticker": "000270",
+   "name": "기아",
+   "market_cap": 51495474436200,
+   "avg_turnover": 165579288207
+  },
+  {
+   "ticker": "329180",
+   "name": "HD현대중공업",
+   "market_cap": 50486349225000,
+   "avg_turnover": 153694167076
+  },
+  {
+   "ticker": "012450",
+   "name": "한화에어로스페이스",
+   "market_cap": 47283638717000,
+   "avg_turnover": 216273390954
+  },
+  {
+   "ticker": "055550",
+   "name": "신한지주",
+   "market_cap": 47273639067300,
+   "avg_turnover": 150735858905
+  },
+  {
+   "ticker": "068270",
+   "name": "셀트리온",
+   "market_cap": 43417776910200,
+   "avg_turnover": 136433759670
+  },
+  {
+   "ticker": "012330",
+   "name": "현대모비스",
+   "market_cap": 43188709508000,
+   "avg_turnover": 178593963117
+  },
+  {
+   "ticker": "034020",
+   "name": "두산에너빌리티",
+   "market_cap": 42981652896600,
+   "avg_turnover": 204848479002
+  },
+  {
+   "ticker": "034730",
+   "name": "SK",
+   "market_cap": 40384005571000,
+   "avg_turnover": 158353953933
+  },
+  {
+   "ticker": "086790",
+   "name": "하나금융지주",
+   "market_cap": 34405715599200,
+   "avg_turnover": 133225892905
+  },
+  {
+   "ticker": "035420",
+   "name": "NAVER",
+   "market_cap": 32644402336000,
+   "avg_turnover": 251097618872
+  },
+  {
+   "ticker": "006400",
+   "name": "삼성SDI",
+   "market_cap": 31992455410000,
+   "avg_turnover": 215520961837
+  },
+  {
+   "ticker": "000810",
+   "name": "삼성화재",
+   "market_cap": 28217202936000,
+   "avg_turnover": 79350670905
+  },
+  {
+   "ticker": "010120",
+   "name": "LS ELECTRIC",
+   "market_cap": 27720000000000,
+   "avg_turnover": 193784857797
+  },
+  {
+   "ticker": "009540",
+   "name": "HD한국조선해양",
+   "market_cap": 27212263102000,
+   "avg_turnover": 85411307524
+  },
+  {
+   "ticker": "066570",
+   "name": "LG전자",
+   "market_cap": 26403599819800,
+   "avg_turnover": 280469076220
+  },
+  {
+   "ticker": "042660",
+   "name": "한화오션",
+   "market_cap": 26106421168800,
+   "avg_turnover": 213624041002
+  },
+  {
+   "ticker": "005490",
+   "name": "POSCO홀딩스",
+   "market_cap": 24762977187500,
+   "avg_turnover": 99419688187
+  },
+  {
+   "ticker": "267260",
+   "name": "HD현대일렉트릭",
+   "market_cap": 24656240340000,
+   "avg_turnover": 143018083658
+  },
+  {
+   "ticker": "316140",
+   "name": "우리금융지주",
+   "market_cap": 24463813315200,
+   "avg_turnover": 78853538061
+  },
+  {
+   "ticker": "298040",
+   "name": "효성중공업",
+   "market_cap": 22537432516000,
+   "avg_turnover": 151359483750
+  },
+  {
+   "ticker": "015760",
+   "name": "한국전력",
+   "market_cap": 22340349879600,
+   "avg_turnover": 60177438323
+  },
+  {
+   "ticker": "010130",
+   "name": "고려아연",
+   "market_cap": 20852096031000,
+   "avg_turnover": 17045654525
+  },
+  {
+   "ticker": "138040",
+   "name": "메리츠금융지주",
+   "market_cap": 20751061852000,
+   "avg_turnover": 34603325822
+  },
+  {
+   "ticker": "042700",
+   "name": "한미반도체",
+   "market_cap": 20444466900000,
+   "avg_turnover": 222440343390
+  },
+  {
+   "ticker": "011200",
+   "name": "HMM",
+   "market_cap": 19760835471500,
+   "avg_turnover": 30215378923
+  },
+  {
+   "ticker": "006800",
+   "name": "미래에셋증권",
+   "market_cap": 19333035704000,
+   "avg_turnover": 82138533512
+  },
+  {
+   "ticker": "000150",
+   "name": "두산",
+   "market_cap": 18946786950000,
+   "avg_turnover": 106133760475
+  },
+  {
+   "ticker": "010140",
+   "name": "삼성중공업",
+   "market_cap": 18788000000000,
+   "avg_turnover": 89069331882
+  },
+  {
+   "ticker": "096770",
+   "name": "SK이노베이션",
+   "market_cap": 18680333074000,
+   "avg_turnover": 103871450227
+  },
+  {
+   "ticker": "033780",
+   "name": "KT&G",
+   "market_cap": 18592452669600,
+   "avg_turnover": 52022679275
+  },
+  {
+   "ticker": "051910",
+   "name": "LG화학",
+   "market_cap": 18212824494000,
+   "avg_turnover": 56268463275
+  },
+  {
+   "ticker": "017670",
+   "name": "SK텔레콤",
+   "market_cap": 17483910314200,
+   "avg_turnover": 132514740182
+  },
+  {
+   "ticker": "035720",
+   "name": "카카오",
+   "market_cap": 16567492018000,
+   "avg_turnover": 76070617856
+  },
+  {
+   "ticker": "196170",
+   "name": "알테오젠",
+   "market_cap": 16531386815500,
+   "avg_turnover": 134576985037
+  },
+  {
+   "ticker": "024110",
+   "name": "기업은행",
+   "market_cap": 16466844194850,
+   "avg_turnover": 25751667715
+  },
+  {
+   "ticker": "018260",
+   "name": "삼성에스디에스",
+   "market_cap": 15939826800000,
+   "avg_turnover": 66142856722
+  },
+  {
+   "ticker": "267250",
+   "name": "HD현대",
+   "market_cap": 15767019766000,
+   "avg_turnover": 33916251227
+  },
+  {
+   "ticker": "079550",
+   "name": "LIG디펜스앤에어로스페이스",
+   "market_cap": 15378000000000,
+   "avg_turnover": 117668010698
+  },
+  {
+   "ticker": "003550",
+   "name": "LG",
+   "market_cap": 15285511604400,
+   "avg_turnover": 35963336930
+  },
+  {
+   "ticker": "086280",
+   "name": "현대글로비스",
+   "market_cap": 15000000000000,
+   "avg_turnover": 39553227130
+  },
+  {
+   "ticker": "064350",
+   "name": "현대로템",
+   "market_cap": 14592324574100,
+   "avg_turnover": 102274173575
+  },
+  {
+   "ticker": "010950",
+   "name": "S-Oil",
+   "market_cap": 14331789421600,
+   "avg_turnover": 70311049172
+  },
+  {
+   "ticker": "030200",
+   "name": "KT",
+   "market_cap": 13079925451500,
+   "avg_turnover": 25848990154
+  },
+  {
+   "ticker": "047810",
+   "name": "한국항공우주",
+   "market_cap": 12408581121100,
+   "avg_turnover": 70690077092
+  },
+  {
+   "ticker": "003670",
+   "name": "포스코퓨처엠",
+   "market_cap": 12247894494000,
+   "avg_turnover": 43850583212
+  },
+  {
+   "ticker": "011070",
+   "name": "LG이노텍",
+   "market_cap": 12164892998000,
+   "avg_turnover": 196614995562
+  },
+  {
+   "ticker": "278470",
+   "name": "에이피알",
+   "market_cap": 11980209600000,
+   "avg_turnover": 89628175512
+  },
+  {
+   "ticker": "272210",
+   "name": "한화시스템",
+   "market_cap": 11807461812500,
+   "avg_turnover": 52168870092
+  },
+  {
+   "ticker": "071050",
+   "name": "한국금융지주",
+   "market_cap": 11507417348000,
+   "avg_turnover": 56219045008
+  },
+  {
+   "ticker": "259960",
+   "name": "크래프톤",
+   "market_cap": 11211493419000,
+   "avg_turnover": 26504155275
+  },
+  {
+   "ticker": "086520",
+   "name": "에코프로",
+   "market_cap": 10739893623200,
+   "avg_turnover": 85220909755
+  },
+  {
+   "ticker": "323410",
+   "name": "카카오뱅크",
+   "market_cap": 10544361657700,
+   "avg_turnover": 21905733924
+  },
+  {
+   "ticker": "000720",
+   "name": "현대건설",
+   "market_cap": 10534255369000,
+   "avg_turnover": 56712743177
+  },
+  {
+   "ticker": "005940",
+   "name": "NH투자증권",
+   "market_cap": 10522373992500,
+   "avg_turnover": 24008739238
+  },
+  {
+   "ticker": "005830",
+   "name": "DB손해보험",
+   "market_cap": 10283554793000,
+   "avg_turnover": 38743149467
+  },
+  {
+   "ticker": "247540",
+   "name": "에코프로비엠",
+   "market_cap": 10125449919000,
+   "avg_turnover": 49696044472
+  },
+  {
+   "ticker": "307950",
+   "name": "현대오토에버",
+   "market_cap": 9996041439000,
+   "avg_turnover": 39248602237
+  },
+  {
+   "ticker": "003490",
+   "name": "대한항공",
+   "market_cap": 9536915119900,
+   "avg_turnover": 79674682052
+  },
+  {
+   "ticker": "0126Z0",
+   "name": "삼성에피스홀딩스",
+   "market_cap": 9331143375000,
+   "avg_turnover": 21160713237
+  },
+  {
+   "ticker": "047050",
+   "name": "포스코인터내셔널",
+   "market_cap": 9183169533600,
+   "avg_turnover": 25647317926
+  },
+  {
+   "ticker": "016360",
+   "name": "삼성증권",
+   "market_cap": 8912140000000,
+   "avg_turnover": 54676206060
+  },
+  {
+   "ticker": "003230",
+   "name": "삼양식품",
+   "market_cap": 8798561520000,
+   "avg_turnover": 74701598475
+  },
+  {
+   "ticker": "028050",
+   "name": "삼성E&A",
+   "market_cap": 8584800000000,
+   "avg_turnover": 105346732926
+  },
+  {
+   "ticker": "277810",
+   "name": "레인보우로보틱스",
+   "market_cap": 8400138514000,
+   "avg_turnover": 72427262950
+  },
+  {
+   "ticker": "161390",
+   "name": "한국타이어앤테크놀로지",
+   "market_cap": 8373954664400,
+   "avg_turnover": 28753983894
+  },
+  {
+   "ticker": "006260",
+   "name": "LS",
+   "market_cap": 8330400000000,
+   "avg_turnover": 46607214437
+  },
+  {
+   "ticker": "078930",
+   "name": "GS",
+   "market_cap": 8267699055000,
+   "avg_turnover": 44840597995
+  },
+  {
+   "ticker": "443060",
+   "name": "HD현대마린솔루션",
+   "market_cap": 8249356640000,
+   "avg_turnover": 26444291619
+  },
+  {
+   "ticker": "039490",
+   "name": "키움증권",
+   "market_cap": 7698010746000,
+   "avg_turnover": 37207970765
+  },
+  {
+   "ticker": "090430",
+   "name": "아모레퍼시픽",
+   "market_cap": 7604058670000,
+   "avg_turnover": 47464539382
+  },
+  {
+   "ticker": "180640",
+   "name": "한진칼",
+   "market_cap": 7457346564300,
+   "avg_turnover": 15822076097
+  },
+  {
+   "ticker": "352820",
+   "name": "하이브",
+   "market_cap": 7276433916800,
+   "avg_turnover": 67661322078
+  },
+  {
+   "ticker": "005387",
+   "name": "현대차2우B",
+   "market_cap": 7027749930000,
+   "avg_turnover": 34342599295
+  },
+  {
+   "ticker": "021240",
+   "name": "코웨이",
+   "market_cap": 6475219479000,
+   "avg_turnover": 18611600197
+  },
+  {
+   "ticker": "032640",
+   "name": "LG유플러스",
+   "market_cap": 6273041878960,
+   "avg_turnover": 15261871134
+  },
+  {
+   "ticker": "326030",
+   "name": "SK바이오팜",
+   "market_cap": 6186746750000,
+   "avg_turnover": 9750905650
+  },
+  {
+   "ticker": "064400",
+   "name": "LG씨엔에스",
+   "market_cap": 6055371750000,
+   "avg_turnover": 74261331937
+  },
+  {
+   "ticker": "267270",
+   "name": "HD건설기계",
+   "market_cap": 5985444935300,
+   "avg_turnover": 38059546912
+  },
+  {
+   "ticker": "000880",
+   "name": "한화",
+   "market_cap": 5908563612200,
+   "avg_turnover": 15421231330
+  },
+  {
+   "ticker": "000100",
+   "name": "유한양행",
+   "market_cap": 5854098673500,
+   "avg_turnover": 20383022065
+  },
+  {
+   "ticker": "036930",
+   "name": "주성엔지니어링",
+   "market_cap": 5786899564500,
+   "avg_turnover": 325036756295
+  },
+  {
+   "ticker": "377300",
+   "name": "카카오페이",
+   "market_cap": 5762507325000,
+   "avg_turnover": 9645713617
+  },
+  {
+   "ticker": "241560",
+   "name": "두산밥캣",
+   "market_cap": 5732192687000,
+   "avg_turnover": 12682755120
+  },
+  {
+   "ticker": "007660",
+   "name": "이수페타시스",
+   "market_cap": 5468986815500,
+   "avg_turnover": 80903362440
+  },
+  {
+   "ticker": "029780",
+   "name": "삼성카드",
+   "market_cap": 5445367877000,
+   "avg_turnover": 5069598173
+  },
+  {
+   "ticker": "047040",
+   "name": "대우건설",
+   "market_cap": 5251399613640,
+   "avg_turnover": 70918012588
+  },
+  {
+   "ticker": "271560",
+   "name": "오리온",
+   "market_cap": 5209894258400,
+   "avg_turnover": 15093997535
+  },
+  {
+   "ticker": "036570",
+   "name": "NC",
+   "market_cap": 5052073159000,
+   "avg_turnover": 19252639875
+  },
+  {
+   "ticker": "175330",
+   "name": "JB금융지주",
+   "market_cap": 4933502244800,
+   "avg_turnover": 15182508488
+  },
+  {
+   "ticker": "058470",
+   "name": "리노공업",
+   "market_cap": 4885179585000,
+   "avg_turnover": 52794174277
+  },
+  {
+   "ticker": "088980",
+   "name": "맥쿼리인프라",
+   "market_cap": 4841901349230,
+   "avg_turnover": 13683414611
+  },
+  {
+   "ticker": "240810",
+   "name": "원익IPS",
+   "market_cap": 4790588737600,
+   "avg_turnover": 208715759347
+  },
+  {
+   "ticker": "353200",
+   "name": "대덕전자",
+   "market_cap": 4783558340000,
+   "avg_turnover": 140144656817
+  },
+  {
+   "ticker": "138930",
+   "name": "BNK금융지주",
+   "market_cap": 4707661090610,
+   "avg_turnover": 19364387202
+  },
+  {
+   "ticker": "005385",
+   "name": "현대차우",
+   "market_cap": 4658855616000,
+   "avg_turnover": 22348130352
+  },
+  {
+   "ticker": "034220",
+   "name": "LG디스플레이",
+   "market_cap": 4605000000000,
+   "avg_turnover": 47783597160
+  },
+  {
+   "ticker": "001440",
+   "name": "대한전선",
+   "market_cap": 4547028227200,
+   "avg_turnover": 61077183311
+  },
+  {
+   "ticker": "062040",
+   "name": "산일전기",
+   "market_cap": 4384189720000,
+   "avg_turnover": 43816679336
+  },
+  {
+   "ticker": "009830",
+   "name": "한화솔루션",
+   "market_cap": 4383259668000,
+   "avg_turnover": 92166205420
+  },
+  {
+   "ticker": "051900",
+   "name": "LG생활건강",
+   "market_cap": 4297975101000,
+   "avg_turnover": 22032690037
+  },
+  {
+   "ticker": "128940",
+   "name": "한미약품",
+   "market_cap": 4272465498500,
+   "avg_turnover": 39248525375
+  },
+  {
+   "ticker": "028300",
+   "name": "HLB",
+   "market_cap": 4075865623800,
+   "avg_turnover": 45951842998
+  },
+  {
+   "ticker": "000500",
+   "name": "가온전선",
+   "market_cap": 3996154859400,
+   "avg_turnover": 47967566652
+  },
+  {
+   "ticker": "004170",
+   "name": "신세계",
+   "market_cap": 3995311563000,
+   "avg_turnover": 54088000002
+  },
+  {
+   "ticker": "454910",
+   "name": "두산로보틱스",
+   "market_cap": 3992910768000,
+   "avg_turnover": 44240805080
+  },
+  {
+   "ticker": "111770",
+   "name": "영원무역",
+   "market_cap": 3961445239200,
+   "avg_turnover": 6429898667
+  },
+  {
+   "ticker": "088350",
+   "name": "한화생명",
+   "market_cap": 3838902600000,
+   "avg_turnover": 11599863015
+  },
+  {
+   "ticker": "001040",
+   "name": "CJ",
+   "market_cap": 3775503541200,
+   "avg_turnover": 16758791395
+  },
+  {
+   "ticker": "319660",
+   "name": "피에스케이",
+   "market_cap": 3754086134400,
+   "avg_turnover": 112354933710
+  },
+  {
+   "ticker": "298380",
+   "name": "에이비엘바이오",
+   "market_cap": 3739962528400,
+   "avg_turnover": 27182285935
+  },
+  {
+   "ticker": "039030",
+   "name": "이오테크닉스",
+   "market_cap": 3646586800000,
+   "avg_turnover": 44678729275
+  },
+  {
+   "ticker": "000990",
+   "name": "DB하이텍",
+   "market_cap": 3615231262800,
+   "avg_turnover": 46399070060
+  },
+  {
+   "ticker": "011790",
+   "name": "SKC",
+   "market_cap": 3580997115600,
+   "avg_turnover": 22650183620
+  },
+  {
+   "ticker": "010060",
+   "name": "OCI홀딩스",
+   "market_cap": 3552945149600,
+   "avg_turnover": 61947132480
+  },
+  {
+   "ticker": "214450",
+   "name": "파마리서치",
+   "market_cap": 3516895848000,
+   "avg_turnover": 70455930937
+  },
+  {
+   "ticker": "004020",
+   "name": "현대제철",
+   "market_cap": 3516296434750,
+   "avg_turnover": 14566475458
+  },
+  {
+   "ticker": "000250",
+   "name": "삼천당제약",
+   "market_cap": 3509237811200,
+   "avg_turnover": 46346803862
+  },
+  {
+   "ticker": "052690",
+   "name": "한전기술",
+   "market_cap": 3401580000000,
+   "avg_turnover": 12659798780
+  },
+  {
+   "ticker": "018880",
+   "name": "한온시스템",
+   "market_cap": 3391797734360,
+   "avg_turnover": 18620895002
+  },
+  {
+   "ticker": "002380",
+   "name": "KCC",
+   "market_cap": 3334043648000,
+   "avg_turnover": 10602727350
+  },
+  {
+   "ticker": "023530",
+   "name": "롯데쇼핑",
+   "market_cap": 3318270961500,
+   "avg_turnover": 20124211705
+  },
+  {
+   "ticker": "001450",
+   "name": "현대해상",
+   "market_cap": 3277795212500,
+   "avg_turnover": 18248023371
+  },
+  {
+   "ticker": "082740",
+   "name": "한화엔진",
+   "market_cap": 3258610895100,
+   "avg_turnover": 40753906782
+  },
+  {
+   "ticker": "141080",
+   "name": "리가켐바이오",
+   "market_cap": 3239199075000,
+   "avg_turnover": 45134201745
+  },
+  {
+   "ticker": "036460",
+   "name": "한국가스공사",
+   "market_cap": 3180182850000,
+   "avg_turnover": 5216991906
+  },
+  {
+   "ticker": "440110",
+   "name": "파두",
+   "market_cap": 3177039111800,
+   "avg_turnover": 48459103992
+  },
+  {
+   "ticker": "035250",
+   "name": "강원랜드",
+   "market_cap": 3144925350000,
+   "avg_turnover": 6334526992
+  },
+  {
+   "ticker": "251270",
+   "name": "넷마블",
+   "market_cap": 3138094069300,
+   "avg_turnover": 6239932996
+  },
+  {
+   "ticker": "222800",
+   "name": "심텍",
+   "market_cap": 3105759879900,
+   "avg_turnover": 70741443450
+  },
+  {
+   "ticker": "383220",
+   "name": "F&F",
+   "market_cap": 3083719537500,
+   "avg_turnover": 5377262435
+  },
+  {
+   "ticker": "031210",
+   "name": "서울보증보험",
+   "market_cap": 2998837634100,
+   "avg_turnover": 1467321808
+  },
+  {
+   "ticker": "214370",
+   "name": "케어젠",
+   "market_cap": 2986554000000,
+   "avg_turnover": 5276024251
+  },
+  {
+   "ticker": "066970",
+   "name": "엘앤에프",
+   "market_cap": 2982082958000,
+   "avg_turnover": 27912867395
+  },
+  {
+   "ticker": "087010",
+   "name": "펩트론",
+   "market_cap": 2979957330000,
+   "avg_turnover": 44699491160
+  },
+  {
+   "ticker": "022100",
+   "name": "포스코DX",
+   "market_cap": 2928188880540,
+   "avg_turnover": 7750907146
+  },
+  {
+   "ticker": "028670",
+   "name": "팬오션",
+   "market_cap": 2924095230640,
+   "avg_turnover": 12137694502
+  },
+  {
+   "ticker": "145020",
+   "name": "휴젤",
+   "market_cap": 2909777722500,
+   "avg_turnover": 11078097975
+  },
+  {
+   "ticker": "097950",
+   "name": "CJ제일제당",
+   "market_cap": 2881371200400,
+   "avg_turnover": 9915950655
+  },
+  {
+   "ticker": "011780",
+   "name": "금호석유화학",
+   "market_cap": 2877997980000,
+   "avg_turnover": 8953506595
+  },
+  {
+   "ticker": "403870",
+   "name": "HPSP",
+   "market_cap": 2847580000000,
+   "avg_turnover": 123812730864
+  },
+  {
+   "ticker": "483650",
+   "name": "달바글로벌",
+   "market_cap": 2761155215000,
+   "avg_turnover": 43059425976
+  },
+  {
+   "ticker": "095340",
+   "name": "ISC",
+   "market_cap": 2747138716800,
+   "avg_turnover": 34003153072
+  },
+  {
+   "ticker": "012750",
+   "name": "에스원",
+   "market_cap": 2705541473600,
+   "avg_turnover": 5192159979
+  },
+  {
+   "ticker": "108490",
+   "name": "로보티즈",
+   "market_cap": 2694696946400,
+   "avg_turnover": 38659683627
+  },
+  {
+   "ticker": "214150",
+   "name": "클래시스",
+   "market_cap": 2684447367850,
+   "avg_turnover": 10563815026
+  },
+  {
+   "ticker": "139130",
+   "name": "iM금융지주",
+   "market_cap": 2684259765600,
+   "avg_turnover": 10538234661
+  },
+  {
+   "ticker": "302440",
+   "name": "SK바이오사이언스",
+   "market_cap": 2655754319050,
+   "avg_turnover": 3158597207
+  },
+  {
+   "ticker": "017800",
+   "name": "현대엘리베이터",
+   "market_cap": 2654372941500,
+   "avg_turnover": 8236484477
+  },
+  {
+   "ticker": "084370",
+   "name": "유진테크",
+   "market_cap": 2573471516600,
+   "avg_turnover": 32540235097
+  },
+  {
+   "ticker": "069960",
+   "name": "현대백화점",
+   "market_cap": 2561911545600,
+   "avg_turnover": 22630752768
+  },
+  {
+   "ticker": "026960",
+   "name": "동서",
+   "market_cap": 2542350000000,
+   "avg_turnover": 2284902847
+  },
+  {
+   "ticker": "095610",
+   "name": "테스",
+   "market_cap": 2516800000000,
+   "avg_turnover": 102276135392
+  },
+  {
+   "ticker": "009970",
+   "name": "영원무역홀딩스",
+   "market_cap": 2487132864000,
+   "avg_turnover": 2637668125
+  },
+  {
+   "ticker": "103590",
+   "name": "일진전기",
+   "market_cap": 2479640280000,
+   "avg_turnover": 18925318577
+  },
+  {
+   "ticker": "005850",
+   "name": "에스엘",
+   "market_cap": 2457126708000,
+   "avg_turnover": 5578439413
+  },
+  {
+   "ticker": "008930",
+   "name": "한미사이언스",
+   "market_cap": 2451837067500,
+   "avg_turnover": 7473078842
+  },
+  {
+   "ticker": "003690",
+   "name": "코리안리",
+   "market_cap": 2433448596870,
+   "avg_turnover": 4061345724
+  },
+  {
+   "ticker": "004800",
+   "name": "효성",
+   "market_cap": 2418988811500,
+   "avg_turnover": 4788556675
+  },
+  {
+   "ticker": "011170",
+   "name": "롯데케미칼",
+   "market_cap": 2416811173500,
+   "avg_turnover": 6352335230
+  },
+  {
+   "ticker": "081660",
+   "name": "미스토홀딩스",
+   "market_cap": 2397096576000,
+   "avg_turnover": 6945325637
+  },
+  {
+   "ticker": "319400",
+   "name": "현대무벡스",
+   "market_cap": 2372309630700,
+   "avg_turnover": 42316433657
+  },
+  {
+   "ticker": "000240",
+   "name": "한국앤컴퍼니",
+   "market_cap": 2368634238000,
+   "avg_turnover": 2384498355
+  },
+  {
+   "ticker": "007340",
+   "name": "DN오토모티브",
+   "market_cap": 2360913402750,
+   "avg_turnover": 7511978713
+  },
+  {
+   "ticker": "004370",
+   "name": "농심",
+   "market_cap": 2329651886000,
+   "avg_turnover": 9105864087
+  },
+  {
+   "ticker": "347850",
+   "name": "디앤디파마텍",
+   "market_cap": 2310215493600,
+   "avg_turnover": 99350912971
+  },
+  {
+   "ticker": "001720",
+   "name": "신영증권",
+   "market_cap": 2306532000000,
+   "avg_turnover": 1739564632
+  },
+  {
+   "ticker": "450080",
+   "name": "에코프로머티",
+   "market_cap": 2280206614000,
+   "avg_turnover": 13366999747
+  },
+  {
+   "ticker": "279570",
+   "name": "케이뱅크",
+   "market_cap": 2267835894090,
+   "avg_turnover": 11643331396
+  },
+  {
+   "ticker": "009420",
+   "name": "한올바이오파마",
+   "market_cap": 2267243689200,
+   "avg_turnover": 19855919380
+  },
+  {
+   "ticker": "375500",
+   "name": "DL이앤씨",
+   "market_cap": 2263576945500,
+   "avg_turnover": 21159525172
+  },
+  {
+   "ticker": "004990",
+   "name": "롯데지주",
+   "market_cap": 2252401337600,
+   "avg_turnover": 3736159402
+  },
+  {
+   "ticker": "161890",
+   "name": "한국콜마",
+   "market_cap": 2247203330400,
+   "avg_turnover": 40136491415
+  },
+  {
+   "ticker": "014680",
+   "name": "한솔케미칼",
+   "market_cap": 2245159488000,
+   "avg_turnover": 12524912535
+  },
+  {
+   "ticker": "080220",
+   "name": "제주반도체",
+   "market_cap": 2242228428300,
+   "avg_turnover": 148929934996
+  },
+  {
+   "ticker": "257720",
+   "name": "실리콘투",
+   "market_cap": 2226313755400,
+   "avg_turnover": 21827609513
+  },
+  {
+   "ticker": "139480",
+   "name": "이마트",
+   "market_cap": 2202146356200,
+   "avg_turnover": 9566774912
+  },
+  {
+   "ticker": "030000",
+   "name": "제일기획",
+   "market_cap": 2177730389250,
+   "avg_turnover": 6334506535
+  },
+  {
+   "ticker": "282330",
+   "name": "BGF리테일",
+   "market_cap": 2160488250000,
+   "avg_turnover": 8327699859
+  },
+  {
+   "ticker": "005440",
+   "name": "현대지에프홀딩스",
+   "market_cap": 2160419004220,
+   "avg_turnover": 3368494543
+  },
+  {
+   "ticker": "489790",
+   "name": "한화비전",
+   "market_cap": 2120512380000,
+   "avg_turnover": 13831470736
+  },
+  {
+   "ticker": "031980",
+   "name": "피에스케이홀딩스",
+   "market_cap": 2108802231000,
+   "avg_turnover": 31377004950
+  },
+  {
+   "ticker": "178320",
+   "name": "서진시스템",
+   "market_cap": 2100474321000,
+   "avg_turnover": 43507145003
+  },
+  {
+   "ticker": "204320",
+   "name": "HL만도",
+   "market_cap": 2098983264000,
+   "avg_turnover": 32601131107
+  },
+  {
+   "ticker": "058610",
+   "name": "에스피지",
+   "market_cap": 2097978256000,
+   "avg_turnover": 44274651767
+  },
+  {
+   "ticker": "192820",
+   "name": "코스맥스",
+   "market_cap": 2096254312300,
+   "avg_turnover": 17012100570
+  },
+  {
+   "ticker": "073240",
+   "name": "금호타이어",
+   "market_cap": 2094127492230,
+   "avg_turnover": 61587028546
+  },
+  {
+   "ticker": "085620",
+   "name": "미래에셋생명",
+   "market_cap": 2093938200000,
+   "avg_turnover": 3829840834
+  },
+  {
+   "ticker": "263750",
+   "name": "펄어비스",
+   "market_cap": 2086417812000,
+   "avg_turnover": 8855377612
+  },
+  {
+   "ticker": "007070",
+   "name": "GS리테일",
+   "market_cap": 2069283521250,
+   "avg_turnover": 4784538293
+  },
+  {
+   "ticker": "018670",
+   "name": "SK가스",
+   "market_cap": 2068994034000,
+   "avg_turnover": 3543070825
+  },
+  {
+   "ticker": "131290",
+   "name": "티에스이",
+   "market_cap": 2064062651400,
+   "avg_turnover": 33847039690
+  },
+  {
+   "ticker": "310210",
+   "name": "보로노이",
+   "market_cap": 2045339013700,
+   "avg_turnover": 12258045402
+  },
+  {
+   "ticker": "051600",
+   "name": "한전KPS",
+   "market_cap": 2022750000000,
+   "avg_turnover": 4925624113
+  },
+  {
+   "ticker": "006360",
+   "name": "GS건설",
+   "market_cap": 2006885940500,
+   "avg_turnover": 83795113153
+  },
+  {
+   "ticker": "226950",
+   "name": "올릭스",
+   "market_cap": 1996758180000,
+   "avg_turnover": 33935101665
+  },
+  {
+   "ticker": "005290",
+   "name": "동진쎄미켐",
+   "market_cap": 1995480432900,
+   "avg_turnover": 19613100177
+  },
+  {
+   "ticker": "103140",
+   "name": "풍산",
+   "market_cap": 1995328593600,
+   "avg_turnover": 7855196812
+  },
+  {
+   "ticker": "067310",
+   "name": "하나마이크론",
+   "market_cap": 1974778809300,
+   "avg_turnover": 62616755411
+  },
+  {
+   "ticker": "357780",
+   "name": "솔브레인",
+   "market_cap": 1964087915000,
+   "avg_turnover": 15484122750
+  },
+  {
+   "ticker": "002790",
+   "name": "아모레퍼시픽홀딩스",
+   "market_cap": 1949683590000,
+   "avg_turnover": 3108145091
+  },
+  {
+   "ticker": "439260",
+   "name": "대한조선",
+   "market_cap": 1908245373000,
+   "avg_turnover": 3821866308
+  },
+  {
+   "ticker": "098460",
+   "name": "고영",
+   "market_cap": 1858564804250,
+   "avg_turnover": 33430323723
+  },
+  {
+   "ticker": "462870",
+   "name": "시프트업",
+   "market_cap": 1856243724000,
+   "avg_turnover": 2911761266
+  },
+  {
+   "ticker": "064760",
+   "name": "티씨케이",
+   "market_cap": 1850193348000,
+   "avg_turnover": 16721217695
+  },
+  {
+   "ticker": "237690",
+   "name": "에스티팜",
+   "market_cap": 1847582463000,
+   "avg_turnover": 16396827695
+  },
+  {
+   "ticker": "140410",
+   "name": "메지온",
+   "market_cap": 1805753646000,
+   "avg_turnover": 8091182697
+  },
+  {
+   "ticker": "140860",
+   "name": "파크시스템스",
+   "market_cap": 1785629595000,
+   "avg_turnover": 10761861000
+  },
+  {
+   "ticker": "068760",
+   "name": "셀트리온제약",
+   "market_cap": 1784973746400,
+   "avg_turnover": 3439600602
+  },
+  {
+   "ticker": "000155",
+   "name": "두산우",
+   "market_cap": 1756445049000,
+   "avg_turnover": 5038994600
+  },
+  {
+   "ticker": "089970",
+   "name": "브이엠",
+   "market_cap": 1724403107500,
+   "avg_turnover": 70092596960
+  },
+  {
+   "ticker": "008770",
+   "name": "호텔신라",
+   "market_cap": 1709255669550,
+   "avg_turnover": 12808341664
+  },
+  {
+   "ticker": "000120",
+   "name": "CJ대한통운",
+   "market_cap": 1699519628000,
+   "avg_turnover": 3763358667
+  },
+  {
+   "ticker": "071970",
+   "name": "HD현대마린엔진",
+   "market_cap": 1677417927750,
+   "avg_turnover": 17918066176
+  },
+  {
+   "ticker": "395400",
+   "name": "SK리츠",
+   "market_cap": 1649576557600,
+   "avg_turnover": 1312108073
+  },
+  {
+   "ticker": "336260",
+   "name": "두산퓨얼셀",
+   "market_cap": 1607870973300,
+   "avg_turnover": 23677690106
+  },
+  {
+   "ticker": "023590",
+   "name": "다우기술",
+   "market_cap": 1586479984800,
+   "avg_turnover": 2135942410
+  },
+  {
+   "ticker": "457190",
+   "name": "이수스페셜티케미컬",
+   "market_cap": 1583468892800,
+   "avg_turnover": 7045990712
+  },
+  {
+   "ticker": "011210",
+   "name": "현대위아",
+   "market_cap": 1582753830600,
+   "avg_turnover": 6133630536
+  },
+  {
+   "ticker": "112610",
+   "name": "씨에스윈드",
+   "market_cap": 1572993331900,
+   "avg_turnover": 20210621860
+  },
+  {
+   "ticker": "041510",
+   "name": "에스엠",
+   "market_cap": 1565996796000,
+   "avg_turnover": 8073553972
+  },
+  {
+   "ticker": "006040",
+   "name": "동원산업",
+   "market_cap": 1562584992600,
+   "avg_turnover": 1709501572
+  },
+  {
+   "ticker": "032820",
+   "name": "우리기술",
+   "market_cap": 1549594829580,
+   "avg_turnover": 29521239394
+  },
+  {
+   "ticker": "475150",
+   "name": "SK이터닉스",
+   "market_cap": 1548345331800,
+   "avg_turnover": 431269088887
+  },
+  {
+   "ticker": "089030",
+   "name": "테크윙",
+   "market_cap": 1535873585250,
+   "avg_turnover": 60127700167
+  },
+  {
+   "ticker": "035900",
+   "name": "JYP Ent.",
+   "market_cap": 1535003654400,
+   "avg_turnover": 10230411913
+  },
+  {
+   "ticker": "001800",
+   "name": "오리온홀딩스",
+   "market_cap": 1533994626000,
+   "avg_turnover": 2294657547
+  },
+  {
+   "ticker": "00680K",
+   "name": "미래에셋증권2우B",
+   "market_cap": 1493310000000,
+   "avg_turnover": 4613027252
+  },
+  {
+   "ticker": "001740",
+   "name": "SK네트웍스",
+   "market_cap": 1468347267480,
+   "avg_turnover": 14222118089
+  },
+  {
+   "ticker": "001120",
+   "name": "LX인터내셔널",
+   "market_cap": 1449624000000,
+   "avg_turnover": 3324696246
+  },
+  {
+   "ticker": "120110",
+   "name": "코오롱인더",
+   "market_cap": 1438906837600,
+   "avg_turnover": 10108912451
+  },
+  {
+   "ticker": "020150",
+   "name": "롯데에너지머티리얼즈",
+   "market_cap": 1432195413050,
+   "avg_turnover": 6340836793
+  },
+  {
+   "ticker": "089860",
+   "name": "롯데렌탈",
+   "market_cap": 1428774417800,
+   "avg_turnover": 3692670411
+  },
+  {
+   "ticker": "097230",
+   "name": "HJ중공업",
+   "market_cap": 1417636900800,
+   "avg_turnover": 9396763555
+  },
+  {
+   "ticker": "007390",
+   "name": "네이처셀",
+   "market_cap": 1417571232000,
+   "avg_turnover": 11504134561
+  },
+  {
+   "ticker": "096530",
+   "name": "씨젠",
+   "market_cap": 1404879238600,
+   "avg_turnover": 6691420333
+  },
+  {
+   "ticker": "290650",
+   "name": "엘앤씨바이오",
+   "market_cap": 1399727637600,
+   "avg_turnover": 17385996743
+  },
+  {
+   "ticker": "281820",
+   "name": "케이씨텍",
+   "market_cap": 1381946537800,
+   "avg_turnover": 23783156780
+  },
+  {
+   "ticker": "060370",
+   "name": "LS마린솔루션",
+   "market_cap": 1376493802900,
+   "avg_turnover": 4069066585
+  },
+  {
+   "ticker": "006280",
+   "name": "녹십자",
+   "market_cap": 1354469754200,
+   "avg_turnover": 5130692717
+  },
+  {
+   "ticker": "298020",
+   "name": "효성티앤씨",
+   "market_cap": 1332926056000,
+   "avg_turnover": 7020871375
+  },
+  {
+   "ticker": "010170",
+   "name": "대한광통신",
+   "market_cap": 1326292679800,
+   "avg_turnover": 89402891930
+  },
+  {
+   "ticker": "069620",
+   "name": "대웅제약",
+   "market_cap": 1318552235000,
+   "avg_turnover": 6604228307
+  },
+  {
+   "ticker": "0009K0",
+   "name": "에임드바이오",
+   "market_cap": 1312824568300,
+   "avg_turnover": 3437254849
+  },
+  {
+   "ticker": "420770",
+   "name": "기가비스",
+   "market_cap": 1311940953000,
+   "avg_turnover": 23142822652
+  },
+  {
+   "ticker": "294870",
+   "name": "IPARK현대산업개발",
+   "market_cap": 1308260500500,
+   "avg_turnover": 4577968979
+  },
+  {
+   "ticker": "415640",
+   "name": "KB발해인프라",
+   "market_cap": 1297757353320,
+   "avg_turnover": 1363452885
+  },
+  {
+   "ticker": "007310",
+   "name": "오뚜기",
+   "market_cap": 1296533005000,
+   "avg_turnover": 1767161625
+  },
+  {
+   "ticker": "192080",
+   "name": "더블유게임즈",
+   "market_cap": 1272525426800,
+   "avg_turnover": 3734616120
+  },
+  {
+   "ticker": "322000",
+   "name": "HD현대에너지솔루션",
+   "market_cap": 1255520000000,
+   "avg_turnover": 68622253785
+  },
+  {
+   "ticker": "083650",
+   "name": "비에이치아이",
+   "market_cap": 1247058312500,
+   "avg_turnover": 8847312778
+  },
+  {
+   "ticker": "082920",
+   "name": "비츠로셀",
+   "market_cap": 1241335617500,
+   "avg_turnover": 11171826755
+  },
+  {
+   "ticker": "131970",
+   "name": "두산테스나",
+   "market_cap": 1238875955800,
+   "avg_turnover": 24729428927
+  },
+  {
+   "ticker": "229640",
+   "name": "LS에코에너지",
+   "market_cap": 1235713867650,
+   "avg_turnover": 5175486722
+  },
+  {
+   "ticker": "003540",
+   "name": "대신증권",
+   "market_cap": 1232169357100,
+   "avg_turnover": 2503155758
+  },
+  {
+   "ticker": "181710",
+   "name": "NHN",
+   "market_cap": 1215141456900,
+   "avg_turnover": 4288180953
+  },
+  {
+   "ticker": "009155",
+   "name": "삼성전기우",
+   "market_cap": 1209305344000,
+   "avg_turnover": 28726352512
+  },
+  {
+   "ticker": "001430",
+   "name": "세아베스틸지주",
+   "market_cap": 1194208562700,
+   "avg_turnover": 4337358646
+  },
+  {
+   "ticker": "437730",
+   "name": "삼현",
+   "market_cap": 1193789897550,
+   "avg_turnover": 8573074223
+  },
+  {
+   "ticker": "012630",
+   "name": "HDC",
+   "market_cap": 1192444751160,
+   "avg_turnover": 1540897647
+  },
+  {
+   "ticker": "030530",
+   "name": "원익홀딩스",
+   "market_cap": 1180196349680,
+   "avg_turnover": 11010051693
+  },
+  {
+   "ticker": "004000",
+   "name": "롯데정밀화학",
+   "market_cap": 1151970000000,
+   "avg_turnover": 3092396622
+  },
+  {
+   "ticker": "000815",
+   "name": "삼성화재우",
+   "market_cap": 1151688660000,
+   "avg_turnover": 4961698768
+  },
+  {
+   "ticker": "039200",
+   "name": "오스코텍",
+   "market_cap": 1149658188800,
+   "avg_turnover": 5486736131
+  },
+  {
+   "ticker": "218410",
+   "name": "RFHIC",
+   "market_cap": 1134771373400,
+   "avg_turnover": 14312685967
+  },
+  {
+   "ticker": "183300",
+   "name": "코미코",
+   "market_cap": 1117664864000,
+   "avg_turnover": 11938220775
+  },
+  {
+   "ticker": "007810",
+   "name": "코리아써키트",
+   "market_cap": 1113992699000,
+   "avg_turnover": 19969912636
+  },
+  {
+   "ticker": "078600",
+   "name": "대주전자재료",
+   "market_cap": 1113423384200,
+   "avg_turnover": 10386466220
+  },
+  {
+   "ticker": "950160",
+   "name": "코오롱티슈진",
+   "market_cap": 1104612080000,
+   "avg_turnover": 66384319197
+  },
+  {
+   "ticker": "017960",
+   "name": "한국카본",
+   "market_cap": 1103292976100,
+   "avg_turnover": 7610203716
+  },
+  {
+   "ticker": "361610",
+   "name": "SK아이이테크놀로지",
+   "market_cap": 1084496946000,
+   "avg_turnover": 2547977233
+  },
+  {
+   "ticker": "000080",
+   "name": "하이트진로",
+   "market_cap": 1080057609400,
+   "avg_turnover": 1854710366
+  },
+  {
+   "ticker": "005070",
+   "name": "코스모신소재",
+   "market_cap": 1077812828950,
+   "avg_turnover": 4562083327
+  },
+  {
+   "ticker": "003380",
+   "name": "하림지주",
+   "market_cap": 1075253961600,
+   "avg_turnover": 5684973361
+  },
+  {
+   "ticker": "043260",
+   "name": "성호전자",
+   "market_cap": 1071822088620,
+   "avg_turnover": 32561158944
+  },
+  {
+   "ticker": "166090",
+   "name": "하나머티리얼즈",
+   "market_cap": 1040305652400,
+   "avg_turnover": 8719828838
+  },
+  {
+   "ticker": "003570",
+   "name": "SNT다이내믹스",
+   "market_cap": 1024183067600,
+   "avg_turnover": 1952263657
+  },
+  {
+   "ticker": "195940",
+   "name": "HK이노엔",
+   "market_cap": 1022709065100,
+   "avg_turnover": 5038582201
+  },
+  {
+   "ticker": "300720",
+   "name": "한일시멘트",
+   "market_cap": 1022278405100,
+   "avg_turnover": 1491932027
+  },
+  {
+   "ticker": "006340",
+   "name": "대원전선",
+   "market_cap": 1019387408000,
+   "avg_turnover": 180752729883
+  },
+  {
+   "ticker": "066575",
+   "name": "LG전자우",
+   "market_cap": 1015414770900,
+   "avg_turnover": 7484011735
+  },
+  {
+   "ticker": "127120",
+   "name": "제이에스링크",
+   "market_cap": 1006092344100,
+   "avg_turnover": 4436086397
+  },
+  {
+   "ticker": "475830",
+   "name": "오름테라퓨틱",
+   "market_cap": 968693714000,
+   "avg_turnover": 4409784838
+  },
+  {
+   "ticker": "093370",
+   "name": "후성",
+   "market_cap": 965297970000,
+   "avg_turnover": 44950205651
+  },
+  {
+   "ticker": "323280",
+   "name": "태성",
+   "market_cap": 954311875000,
+   "avg_turnover": 9642972585
+  },
+  {
+   "ticker": "003240",
+   "name": "태광산업",
+   "market_cap": 954183800000,
+   "avg_turnover": 2302600575
+  },
+  {
+   "ticker": "003090",
+   "name": "대웅",
+   "market_cap": 949458533400,
+   "avg_turnover": 1130482592
+  },
+  {
+   "ticker": "280360",
+   "name": "롯데웰푸드",
+   "market_cap": 948071122000,
+   "avg_turnover": 2019927485
+  },
+  {
+   "ticker": "491000",
+   "name": "리브스메드",
+   "market_cap": 945809898950,
+   "avg_turnover": 5868773378
+  },
+  {
+   "ticker": "005300",
+   "name": "롯데칠성",
+   "market_cap": 937167284000,
+   "avg_turnover": 2006552080
+  },
+  {
+   "ticker": "032350",
+   "name": "롯데관광개발",
+   "market_cap": 926409821960,
+   "avg_turnover": 8796937537
+  },
+  {
+   "ticker": "077970",
+   "name": "STX엔진",
+   "market_cap": 925412852150,
+   "avg_turnover": 4779912806
+  },
+  {
+   "ticker": "009450",
+   "name": "경동나비엔",
+   "market_cap": 925105592000,
+   "avg_turnover": 1919278310
+  },
+  {
+   "ticker": "185750",
+   "name": "종근당",
+   "market_cap": 923405982000,
+   "avg_turnover": 1589363330
+  },
+  {
+   "ticker": "009240",
+   "name": "한샘",
+   "market_cap": 915469799200,
+   "avg_turnover": 1742066051
+  },
+  {
+   "ticker": "051915",
+   "name": "LG화학우",
+   "market_cap": 911891680000,
+   "avg_turnover": 2436619780
+  },
+  {
+   "ticker": "458870",
+   "name": "씨어스",
+   "market_cap": 903918825000,
+   "avg_turnover": 6515946245
+  },
+  {
+   "ticker": "031330",
+   "name": "에스에이엠티",
+   "market_cap": 900955553670,
+   "avg_turnover": 10201589849
+  },
+  {
+   "ticker": "000210",
+   "name": "DL",
+   "market_cap": 900055217800,
+   "avg_turnover": 4514293791
+  },
+  {
+   "ticker": "034230",
+   "name": "파라다이스",
+   "market_cap": 898505005400,
+   "avg_turnover": 9471443705
+  },
+  {
+   "ticker": "006120",
+   "name": "SK디스커버리",
+   "market_cap": 896808176500,
+   "avg_turnover": 2303794231
+  },
+  {
+   "ticker": "079160",
+   "name": "CJ CGV",
+   "market_cap": 895801379100,
+   "avg_turnover": 2732642318
+  },
+  {
+   "ticker": "003530",
+   "name": "한화투자증권",
+   "market_cap": 890373266250,
+   "avg_turnover": 5195275790
+  },
+  {
+   "ticker": "071055",
+   "name": "한국금융지주우",
+   "market_cap": 881666775500,
+   "avg_turnover": 3156826400
+  },
+  {
+   "ticker": "101490",
+   "name": "에스앤에스텍",
+   "market_cap": 871529807150,
+   "avg_turnover": 10313486550
+  },
+  {
+   "ticker": "293490",
+   "name": "카카오게임즈",
+   "market_cap": 850759762050,
+   "avg_turnover": 3047968128
+  },
+  {
+   "ticker": "003470",
+   "name": "유안타증권",
+   "market_cap": 843938846760,
+   "avg_turnover": 2134937232
+  },
+  {
+   "ticker": "241710",
+   "name": "코스메카코리아",
+   "market_cap": 841584000000,
+   "avg_turnover": 8131945385
+  },
+  {
+   "ticker": "030190",
+   "name": "NICE평가정보",
+   "market_cap": 831241645970,
+   "avg_turnover": 1147493206
+  },
+  {
+   "ticker": "195870",
+   "name": "해성디에스",
+   "market_cap": 819400000000,
+   "avg_turnover": 11997402516
+  },
+  {
+   "ticker": "036530",
+   "name": "SNT홀딩스",
+   "market_cap": 814379105700,
+   "avg_turnover": 1035261702
+  },
+  {
+   "ticker": "365550",
+   "name": "ESR켄달스퀘어리츠",
+   "market_cap": 809632810000,
+   "avg_turnover": 1092443513
+  },
+  {
+   "ticker": "036540",
+   "name": "SFA반도체",
+   "market_cap": 800921675610,
+   "avg_turnover": 15129598887
+  },
+  {
+   "ticker": "065350",
+   "name": "신성델타테크",
+   "market_cap": 797034492000,
+   "avg_turnover": 4916097235
+  },
+  {
+   "ticker": "347700",
+   "name": "스피어",
+   "market_cap": 793890974800,
+   "avg_turnover": 19430423306
+  },
+  {
+   "ticker": "086450",
+   "name": "동국제약",
+   "market_cap": 791532350000,
+   "avg_turnover": 4673238659
+  },
+  {
+   "ticker": "083450",
+   "name": "GST",
+   "market_cap": 789725500000,
+   "avg_turnover": 6970679755
+  },
+  {
+   "ticker": "085660",
+   "name": "차바이오텍",
+   "market_cap": 785620548700,
+   "avg_turnover": 2726184731
+  },
+  {
+   "ticker": "100090",
+   "name": "SK오션플랜트",
+   "market_cap": 782226175080,
+   "avg_turnover": 45414358246
+  },
+  {
+   "ticker": "071320",
+   "name": "지역난방공사",
+   "market_cap": 776933722400,
+   "avg_turnover": 1006703492
+  },
+  {
+   "ticker": "204270",
+   "name": "제이앤티씨",
+   "market_cap": 766492174500,
+   "avg_turnover": 5408084583
+  },
+  {
+   "ticker": "214320",
+   "name": "이노션",
+   "market_cap": 761200000000,
+   "avg_turnover": 1474579211
+  },
+  {
+   "ticker": "038500",
+   "name": "삼표시멘트",
+   "market_cap": 756493305060,
+   "avg_turnover": 5236740396
+  },
+  {
+   "ticker": "213420",
+   "name": "덕산네오룩스",
+   "market_cap": 744935370000,
+   "avg_turnover": 4439856595
+  },
+  {
+   "ticker": "001820",
+   "name": "삼화콘덴서",
+   "market_cap": 744282000000,
+   "avg_turnover": 53044594952
+  },
+  {
+   "ticker": "090710",
+   "name": "휴림로봇",
+   "market_cap": 740070389510,
+   "avg_turnover": 16285786702
+  },
+  {
+   "ticker": "388720",
+   "name": "유일로보틱스",
+   "market_cap": 733977793500,
+   "avg_turnover": 2536230237
+  },
+  {
+   "ticker": "298050",
+   "name": "HS효성첨단소재",
+   "market_cap": 720375638400,
+   "avg_turnover": 2214840920
+  },
+  {
+   "ticker": "032190",
+   "name": "다우데이타",
+   "market_cap": 718891000000,
+   "avg_turnover": 1716816414
+  },
+  {
+   "ticker": "056190",
+   "name": "SFA",
+   "market_cap": 718175200000,
+   "avg_turnover": 2070939902
+  },
+  {
+   "ticker": "004490",
+   "name": "세방전지",
+   "market_cap": 713790000000,
+   "avg_turnover": 2137034776
+  },
+  {
+   "ticker": "122870",
+   "name": "와이지엔터테인먼트",
+   "market_cap": 713063519350,
+   "avg_turnover": 4198991192
+  },
+  {
+   "ticker": "281740",
+   "name": "레이크머티리얼즈",
+   "market_cap": 712519140320,
+   "avg_turnover": 3747470577
+  },
+  {
+   "ticker": "014620",
+   "name": "성광벤드",
+   "market_cap": 710409487000,
+   "avg_turnover": 3610258025
+  },
+  {
+   "ticker": "232140",
+   "name": "와이씨",
+   "market_cap": 708871824000,
+   "avg_turnover": 7149076047
+  },
+  {
+   "ticker": "099320",
+   "name": "쎄트렉아이",
+   "market_cap": 704167175400,
+   "avg_turnover": 4556862155
+  },
+  {
+   "ticker": "064960",
+   "name": "SNT모티브",
+   "market_cap": 703317208000,
+   "avg_turnover": 1788553207
+  },
+  {
+   "ticker": "417200",
+   "name": "LS머트리얼즈",
+   "market_cap": 700205020650,
+   "avg_turnover": 7325060863
+  },
+  {
+   "ticker": "499790",
+   "name": "GS피앤엘",
+   "market_cap": 699037145250,
+   "avg_turnover": 5103221178
+  },
+  {
+   "ticker": "388210",
+   "name": "씨엠티엑스",
+   "market_cap": 697050423600,
+   "avg_turnover": 5687865272
+  },
+  {
+   "ticker": "328130",
+   "name": "루닛",
+   "market_cap": 688738165000,
+   "avg_turnover": 2822788140
+  },
+  {
+   "ticker": "035760",
+   "name": "CJ ENM",
+   "market_cap": 687478977900,
+   "avg_turnover": 2446628518
+  },
+  {
+   "ticker": "285130",
+   "name": "SK케미칼",
+   "market_cap": 680706442100,
+   "avg_turnover": 2263825181
+  },
+  {
+   "ticker": "476830",
+   "name": "알지노믹스",
+   "market_cap": 677538779400,
+   "avg_turnover": 8613529294
+  },
+  {
+   "ticker": "137400",
+   "name": "피엔티",
+   "market_cap": 670447602400,
+   "avg_turnover": 3798870125
+  },
+  {
+   "ticker": "100790",
+   "name": "미래에셋벤처투자",
+   "market_cap": 664007225000,
+   "avg_turnover": 5028284553
+  },
+  {
+   "ticker": "033100",
+   "name": "제룡전기",
+   "market_cap": 663377491700,
+   "avg_turnover": 8107088715
+  },
+  {
+   "ticker": "252990",
+   "name": "샘씨엔에스",
+   "market_cap": 661192421220,
+   "avg_turnover": 11061535588
+  },
+  {
+   "ticker": "000370",
+   "name": "한화손해보험",
+   "market_cap": 660742258900,
+   "avg_turnover": 2412062239
+  },
+  {
+   "ticker": "074600",
+   "name": "원익QnC",
+   "market_cap": 649313600000,
+   "avg_turnover": 9121990372
+  },
+  {
+   "ticker": "253450",
+   "name": "스튜디오드래곤",
+   "market_cap": 649263556800,
+   "avg_turnover": 1412492633
+  },
+  {
+   "ticker": "002960",
+   "name": "한국쉘석유",
+   "market_cap": 648050000000,
+   "avg_turnover": 1069941587
+  },
+  {
+   "ticker": "248070",
+   "name": "솔루엠",
+   "market_cap": 647909997800,
+   "avg_turnover": 2060265861
+  },
+  {
+   "ticker": "445680",
+   "name": "큐리옥스바이오시스템즈",
+   "market_cap": 645982225250,
+   "avg_turnover": 3464991727
+  },
+  {
+   "ticker": "036830",
+   "name": "솔브레인홀딩스",
+   "market_cap": 635623411000,
+   "avg_turnover": 1841771821
+  },
+  {
+   "ticker": "093320",
+   "name": "케이아이엔엑스",
+   "market_cap": 632936000000,
+   "avg_turnover": 2051705345
+  },
+  {
+   "ticker": "293940",
+   "name": "신한알파리츠",
+   "market_cap": 631307442060,
+   "avg_turnover": 1036491375
+  },
+  {
+   "ticker": "079940",
+   "name": "가비아",
+   "market_cap": 630772148000,
+   "avg_turnover": 1214539283
+  },
+  {
+   "ticker": "019210",
+   "name": "와이지-원",
+   "market_cap": 628945940480,
+   "avg_turnover": 22598816337
+  },
+  {
+   "ticker": "005180",
+   "name": "빙그레",
+   "market_cap": 627513398700,
+   "avg_turnover": 1475454590
+  },
+  {
+   "ticker": "025540",
+   "name": "한국단자",
+   "market_cap": 626118500000,
+   "avg_turnover": 1291645117
+  },
+  {
+   "ticker": "115180",
+   "name": "큐리언트",
+   "market_cap": 624956600660,
+   "avg_turnover": 1916657523
+  },
+  {
+   "ticker": "189300",
+   "name": "인텔리안테크",
+   "market_cap": 624922325400,
+   "avg_turnover": 4742949238
+  },
+  {
+   "ticker": "006730",
+   "name": "서부T&D",
+   "market_cap": 624771691560,
+   "avg_turnover": 4962792862
+  },
+  {
+   "ticker": "041830",
+   "name": "인바디",
+   "market_cap": 622816748400,
+   "avg_turnover": 5342773636
+  },
+  {
+   "ticker": "000670",
+   "name": "영풍",
+   "market_cap": 619519482950,
+   "avg_turnover": 1127332520
+  },
+  {
+   "ticker": "456040",
+   "name": "OCI",
+   "market_cap": 616826905500,
+   "avg_turnover": 5638848330
+  },
+  {
+   "ticker": "001680",
+   "name": "대상",
+   "market_cap": 613963003000,
+   "avg_turnover": 1252479302
+  },
+  {
+   "ticker": "069260",
+   "name": "TKG휴켐스",
+   "market_cap": 608682175320,
+   "avg_turnover": 1162470366
+  },
+  {
+   "ticker": "005690",
+   "name": "파미셀",
+   "market_cap": 607840661820,
+   "avg_turnover": 6624990403
+  },
+  {
+   "ticker": "032500",
+   "name": "케이엠더블유",
+   "market_cap": 604185158320,
+   "avg_turnover": 3487782849
+  },
+  {
+   "ticker": "017940",
+   "name": "E1",
+   "market_cap": 602994000000,
+   "avg_turnover": 1005185325
+  },
+  {
+   "ticker": "119850",
+   "name": "지엔씨에너지",
+   "market_cap": 602030069400,
+   "avg_turnover": 32039844248
+  },
+  {
+   "ticker": "171090",
+   "name": "선익시스템",
+   "market_cap": 600568221800,
+   "avg_turnover": 3205300533
+  },
+  {
+   "ticker": "005880",
+   "name": "대한해운",
+   "market_cap": 600310052400,
+   "avg_turnover": 6781290418
+  },
+  {
+   "ticker": "090360",
+   "name": "로보스타",
+   "market_cap": 598650000000,
+   "avg_turnover": 8812412307
+  },
+  {
+   "ticker": "014820",
+   "name": "동원시스템즈",
+   "market_cap": 597220409200,
+   "avg_turnover": 1151329074
+  },
+  {
+   "ticker": "000640",
+   "name": "동아쏘시오홀딩스",
+   "market_cap": 593808881400,
+   "avg_turnover": 1646628537
+  },
+  {
+   "ticker": "102710",
+   "name": "이엔에프테크놀로지",
+   "market_cap": 592945194000,
+   "avg_turnover": 3738883848
+  },
+  {
+   "ticker": "466100",
+   "name": "클로봇",
+   "market_cap": 590654344800,
+   "avg_turnover": 6300033781
+  },
+  {
+   "ticker": "000400",
+   "name": "롯데손해보험",
+   "market_cap": 590570016960,
+   "avg_turnover": 2921791001
+  },
+  {
+   "ticker": "053800",
+   "name": "안랩",
+   "market_cap": 589704818000,
+   "avg_turnover": 2963180842
+  },
+  {
+   "ticker": "005090",
+   "name": "SGC에너지",
+   "market_cap": 587180319750,
+   "avg_turnover": 5942631207
+  },
+  {
+   "ticker": "114090",
+   "name": "GKL",
+   "market_cap": 580206184600,
+   "avg_turnover": 2158770262
+  },
+  {
+   "ticker": "052400",
+   "name": "코나아이",
+   "market_cap": 578162652700,
+   "avg_turnover": 2517189381
+  },
+  {
+   "ticker": "075580",
+   "name": "세진중공업",
+   "market_cap": 575316494720,
+   "avg_turnover": 3777685210
+  },
+  {
+   "ticker": "003620",
+   "name": "KG모빌리티",
+   "market_cap": 574744750080,
+   "avg_turnover": 1442911645
+  },
+  {
+   "ticker": "399720",
+   "name": "가온칩스",
+   "market_cap": 574560991800,
+   "avg_turnover": 21554084487
+  },
+  {
+   "ticker": "251970",
+   "name": "펌텍코리아",
+   "market_cap": 571640000000,
+   "avg_turnover": 3824921683
+  },
+  {
+   "ticker": "003160",
+   "name": "디아이",
+   "market_cap": 570245000000,
+   "avg_turnover": 5801732610
+  },
+  {
+   "ticker": "048410",
+   "name": "현대바이오",
+   "market_cap": 569382874800,
+   "avg_turnover": 5556716352
+  },
+  {
+   "ticker": "00088K",
+   "name": "한화3우B",
+   "market_cap": 567579899250,
+   "avg_turnover": 1313125302
+  },
+  {
+   "ticker": "023160",
+   "name": "태광",
+   "market_cap": 563905875600,
+   "avg_turnover": 3166003250
+  },
+  {
+   "ticker": "161580",
+   "name": "필옵틱스",
+   "market_cap": 562613928000,
+   "avg_turnover": 3797519229
+  },
+  {
+   "ticker": "094170",
+   "name": "동운아나텍",
+   "market_cap": 562477278400,
+   "avg_turnover": 3285661572
+  },
+  {
+   "ticker": "490470",
+   "name": "세미파이브",
+   "market_cap": 561079505600,
+   "avg_turnover": 5807417109
+  },
+  {
+   "ticker": "108320",
+   "name": "LX세미콘",
+   "market_cap": 556239060000,
+   "avg_turnover": 3092245165
+  },
+  {
+   "ticker": "006650",
+   "name": "대한유화",
+   "market_cap": 555750000000,
+   "avg_turnover": 2655426602
+  },
+  {
+   "ticker": "067160",
+   "name": "SOOP",
+   "market_cap": 551748816000,
+   "avg_turnover": 2523642470
+  },
+  {
+   "ticker": "044490",
+   "name": "태웅",
+   "market_cap": 549202608450,
+   "avg_turnover": 3042990221
+  },
+  {
+   "ticker": "010780",
+   "name": "아이에스동서",
+   "market_cap": 544271177280,
+   "avg_turnover": 1220711359
+  },
+  {
+   "ticker": "016380",
+   "name": "KG스틸",
+   "market_cap": 544048399680,
+   "avg_turnover": 1508318116
+  },
+  {
+   "ticker": "112040",
+   "name": "위메이드",
+   "market_cap": 542836243170,
+   "avg_turnover": 4073310838
+  },
+  {
+   "ticker": "041960",
+   "name": "코미팜",
+   "market_cap": 538632548550,
+   "avg_turnover": 1120074825
+  },
+  {
+   "ticker": "00104K",
+   "name": "CJ4우(전환)",
+   "market_cap": 532963163200,
+   "avg_turnover": 1380587590
+  },
+  {
+   "ticker": "037460",
+   "name": "삼지전자",
+   "market_cap": 531167891100,
+   "avg_turnover": 2886497988
+  },
+  {
+   "ticker": "045100",
+   "name": "한양이엔지",
+   "market_cap": 530250000000,
+   "avg_turnover": 4137551821
+  },
+  {
+   "ticker": "086900",
+   "name": "메디톡스",
+   "market_cap": 525491784000,
+   "avg_turnover": 1679282292
+  },
+  {
+   "ticker": "178920",
+   "name": "PI첨단소재",
+   "market_cap": 523307858040,
+   "avg_turnover": 1398539010
+  },
+  {
+   "ticker": "053610",
+   "name": "프로텍",
+   "market_cap": 519300000000,
+   "avg_turnover": 2492087385
+  },
+  {
+   "ticker": "397030",
+   "name": "에이프릴바이오",
+   "market_cap": 518616245900,
+   "avg_turnover": 5347809538
+  },
+  {
+   "ticker": "005810",
+   "name": "풍산홀딩스",
+   "market_cap": 516859918200,
+   "avg_turnover": 1104951540
+  },
+  {
+   "ticker": "222080",
+   "name": "SFA넥셀",
+   "market_cap": 516460156160,
+   "avg_turnover": 4438980579
+  },
+  {
+   "ticker": "100840",
+   "name": "SNT에너지",
+   "market_cap": 514951496700,
+   "avg_turnover": 3087712936
+  },
+  {
+   "ticker": "050890",
+   "name": "쏠리드",
+   "market_cap": 514607842980,
+   "avg_turnover": 7327134377
+  },
+  {
+   "ticker": "376900",
+   "name": "로킷헬스케어",
+   "market_cap": 510342316350,
+   "avg_turnover": 16958962356
+  },
+  {
+   "ticker": "090460",
+   "name": "비에이치",
+   "market_cap": 508032877660,
+   "avg_turnover": 5726147311
+  },
+  {
+   "ticker": "383310",
+   "name": "에코프로에이치엔",
+   "market_cap": 500252128200,
+   "avg_turnover": 5538871141
+  },
+  {
+   "ticker": "046890",
+   "name": "서울반도체",
+   "market_cap": 496178954000,
+   "avg_turnover": 3052281175
+  },
+  {
+   "ticker": "211050",
+   "name": "인카금융서비스",
+   "market_cap": 492143933430,
+   "avg_turnover": 1276934888
+  },
+  {
+   "ticker": "476060",
+   "name": "온코닉테라퓨틱스",
+   "market_cap": 491312828800,
+   "avg_turnover": 6856902685
+  },
+  {
+   "ticker": "121600",
+   "name": "나노신소재",
+   "market_cap": 489874530450,
+   "avg_turnover": 2658324902
+  },
+  {
+   "ticker": "059090",
+   "name": "미코",
+   "market_cap": 489555797700,
+   "avg_turnover": 3420590178
+  },
+  {
+   "ticker": "052020",
+   "name": "에스티큐브",
+   "market_cap": 488799862290,
+   "avg_turnover": 1595823450
+  },
+  {
+   "ticker": "060250",
+   "name": "NHN KCP",
+   "market_cap": 488754635870,
+   "avg_turnover": 6981099640
+  },
+  {
+   "ticker": "124500",
+   "name": "아이티센글로벌",
+   "market_cap": 488455293350,
+   "avg_turnover": 3475006195
+  },
+  {
+   "ticker": "460930",
+   "name": "현대힘스",
+   "market_cap": 484720659150,
+   "avg_turnover": 17863443229
+  },
+  {
+   "ticker": "101160",
+   "name": "월덱스",
+   "market_cap": 484597644550,
+   "avg_turnover": 3473011963
+  },
+  {
+   "ticker": "099190",
+   "name": "아이센스",
+   "market_cap": 481684925750,
+   "avg_turnover": 1104215503
+  },
+  {
+   "ticker": "003545",
+   "name": "대신증권우",
+   "market_cap": 479376346440,
+   "avg_turnover": 1437383375
+  },
+  {
+   "ticker": "033240",
+   "name": "자화전자",
+   "market_cap": 478561869300,
+   "avg_turnover": 2219689386
+  },
+  {
+   "ticker": "358570",
+   "name": "지아이이노베이션",
+   "market_cap": 478063604460,
+   "avg_turnover": 3281560550
+  },
+  {
+   "ticker": "005945",
+   "name": "NH투자증권우",
+   "market_cap": 476491942000,
+   "avg_turnover": 1576300376
+  },
+  {
+   "ticker": "039130",
+   "name": "하나투어",
+   "market_cap": 474766415800,
+   "avg_turnover": 1041887266
+  },
+  {
+   "ticker": "376300",
+   "name": "디어유",
+   "market_cap": 470969975040,
+   "avg_turnover": 1935940849
+  },
+  {
+   "ticker": "033500",
+   "name": "동성화인텍",
+   "market_cap": 470535160860,
+   "avg_turnover": 1918817907
+  },
+  {
+   "ticker": "001500",
+   "name": "현대차증권",
+   "market_cap": 466839482200,
+   "avg_turnover": 1182510359
+  },
+  {
+   "ticker": "001510",
+   "name": "SK증권",
+   "market_cap": 466059596275,
+   "avg_turnover": 5490875514
+  },
+  {
+   "ticker": "122640",
+   "name": "예스티",
+   "market_cap": 464498362500,
+   "avg_turnover": 14951782477
+  },
+  {
+   "ticker": "006110",
+   "name": "삼아알미늄",
+   "market_cap": 460509204750,
+   "avg_turnover": 5551709746
+  },
+  {
+   "ticker": "340570",
+   "name": "티앤엘",
+   "market_cap": 451916800000,
+   "avg_turnover": 2780708480
+  },
+  {
+   "ticker": "336370",
+   "name": "솔루스첨단소재",
+   "market_cap": 451497521920,
+   "avg_turnover": 1283669446
+  },
+  {
+   "ticker": "082270",
+   "name": "젬백스",
+   "market_cap": 450660486540,
+   "avg_turnover": 1915447469
+  },
+  {
+   "ticker": "035890",
+   "name": "서희건설",
+   "market_cap": 449964958806,
+   "avg_turnover": 1651764319
+  },
+  {
+   "ticker": "015750",
+   "name": "성우하이텍",
+   "market_cap": 448800000000,
+   "avg_turnover": 1619611466
+  },
+  {
+   "ticker": "456160",
+   "name": "지투지바이오",
+   "market_cap": 448163030700,
+   "avg_turnover": 4406390233
+  },
+  {
+   "ticker": "460860",
+   "name": "동국제강",
+   "market_cap": 446968233170,
+   "avg_turnover": 1680326555
+  },
+  {
+   "ticker": "079900",
+   "name": "전진건설로봇",
+   "market_cap": 442154113500,
+   "avg_turnover": 1492087042
+  },
+  {
+   "ticker": "005389",
+   "name": "현대차3우B",
+   "market_cap": 441284899200,
+   "avg_turnover": 2695520075
+  },
+  {
+   "ticker": "475960",
+   "name": "토모큐브",
+   "market_cap": 437975655000,
+   "avg_turnover": 1625198403
+  },
+  {
+   "ticker": "144960",
+   "name": "뉴파워프라즈마",
+   "market_cap": 437363166240,
+   "avg_turnover": 14183657324
+  },
+  {
+   "ticker": "249420",
+   "name": "일동제약",
+   "market_cap": 434393199960,
+   "avg_turnover": 1536061004
+  },
+  {
+   "ticker": "336570",
+   "name": "원텍",
+   "market_cap": 434350342790,
+   "avg_turnover": 3500990747
+  },
+  {
+   "ticker": "033790",
+   "name": "피노",
+   "market_cap": 434107031270,
+   "avg_turnover": 2612347111
+  },
+  {
+   "ticker": "003030",
+   "name": "세아제강지주",
+   "market_cap": 433217322200,
+   "avg_turnover": 3031406275
+  },
+  {
+   "ticker": "417310",
+   "name": "코람코더원리츠",
+   "market_cap": 432280000000,
+   "avg_turnover": 1658716562
+  },
+  {
+   "ticker": "160190",
+   "name": "하이젠알앤엠",
+   "market_cap": 432123120000,
+   "avg_turnover": 1570155966
+  },
+  {
+   "ticker": "008060",
+   "name": "대덕",
+   "market_cap": 432074823380,
+   "avg_turnover": 1633830210
+  },
+  {
+   "ticker": "004690",
+   "name": "삼천리",
+   "market_cap": 429047719100,
+   "avg_turnover": 1110306027
+  },
+  {
+   "ticker": "214430",
+   "name": "아이쓰리시스템",
+   "market_cap": 428933520500,
+   "avg_turnover": 2360663597
+  },
+  {
+   "ticker": "009520",
+   "name": "포스코엠텍",
+   "market_cap": 426004851690,
+   "avg_turnover": 1869589310
+  },
+  {
+   "ticker": "215200",
+   "name": "메가스터디교육",
+   "market_cap": 424455595200,
+   "avg_turnover": 1308981258
+  },
+  {
+   "ticker": "020000",
+   "name": "한섬",
+   "market_cap": 423096781800,
+   "avg_turnover": 1972086825
+  },
+  {
+   "ticker": "295310",
+   "name": "에이치브이엠",
+   "market_cap": 421630335000,
+   "avg_turnover": 4712005357
+  },
+  {
+   "ticker": "056080",
+   "name": "유진로봇",
+   "market_cap": 416766797400,
+   "avg_turnover": 4134141335
+  },
+  {
+   "ticker": "484870",
+   "name": "엠앤씨솔루션",
+   "market_cap": 412474734000,
+   "avg_turnover": 1791640042
+  },
+  {
+   "ticker": "030520",
+   "name": "한컴",
+   "market_cap": 412264635200,
+   "avg_turnover": 1913397476
+  },
+  {
+   "ticker": "018290",
+   "name": "브이티",
+   "market_cap": 408470086220,
+   "avg_turnover": 2056013242
+  },
+  {
+   "ticker": "014830",
+   "name": "유니드",
+   "market_cap": 408086280000,
+   "avg_turnover": 1005232892
+  },
+  {
+   "ticker": "042000",
+   "name": "카페24",
+   "market_cap": 407402147650,
+   "avg_turnover": 1262942150
+  },
+  {
+   "ticker": "126340",
+   "name": "비나텍",
+   "market_cap": 405693391000,
+   "avg_turnover": 8754588607
+  },
+  {
+   "ticker": "161000",
+   "name": "애경케미칼",
+   "market_cap": 401351849250,
+   "avg_turnover": 1266746061
+  },
+  {
+   "ticker": "001200",
+   "name": "유진투자증권",
+   "market_cap": 401026970520,
+   "avg_turnover": 2499780890
+  },
+  {
+   "ticker": "003280",
+   "name": "흥아해운",
+   "market_cap": 399586182138,
+   "avg_turnover": 39867092048
+  },
+  {
+   "ticker": "036810",
+   "name": "에프에스티",
+   "market_cap": 398572615490,
+   "avg_turnover": 2396275068
+  },
+  {
+   "ticker": "077360",
+   "name": "덕산하이메탈",
+   "market_cap": 398028137520,
+   "avg_turnover": 6038681254
+  },
+  {
+   "ticker": "002030",
+   "name": "아세아",
+   "market_cap": 397358436000,
+   "avg_turnover": 1022547727
+  },
+  {
+   "ticker": "486990",
+   "name": "노타",
+   "market_cap": 397043500800,
+   "avg_turnover": 4030688728
+  },
+  {
+   "ticker": "095660",
+   "name": "네오위즈",
+   "market_cap": 395298105930,
+   "avg_turnover": 1173852740
+  },
+  {
+   "ticker": "104830",
+   "name": "원익머트리얼즈",
+   "market_cap": 395260800000,
+   "avg_turnover": 2982470623
+  },
+  {
+   "ticker": "003000",
+   "name": "부광약품",
+   "market_cap": 393672037290,
+   "avg_turnover": 1363520499
+  },
+  {
+   "ticker": "174900",
+   "name": "앱클론",
+   "market_cap": 393056941300,
+   "avg_turnover": 2505917792
+  },
+  {
+   "ticker": "272290",
+   "name": "이녹스첨단소재",
+   "market_cap": 390775176400,
+   "avg_turnover": 2645243678
+  },
+  {
+   "ticker": "219130",
+   "name": "타이거일렉",
+   "market_cap": 382645974000,
+   "avg_turnover": 4830057340
+  },
+  {
+   "ticker": "348370",
+   "name": "엔켐",
+   "market_cap": 381908607990,
+   "avg_turnover": 4150876366
+  },
+  {
+   "ticker": "013030",
+   "name": "하이록코리아",
+   "market_cap": 371873350400,
+   "avg_turnover": 1186837465
+  },
+  {
+   "ticker": "036620",
+   "name": "감성코퍼레이션",
+   "market_cap": 368887385120,
+   "avg_turnover": 1643202796
+  },
+  {
+   "ticker": "368770",
+   "name": "파이버프로",
+   "market_cap": 365338982000,
+   "avg_turnover": 1597366953
+  },
+  {
+   "ticker": "170920",
+   "name": "엘티씨",
+   "market_cap": 364990553300,
+   "avg_turnover": 16923120131
+  },
+  {
+   "ticker": "041190",
+   "name": "우리기술투자",
+   "market_cap": 364980000000,
+   "avg_turnover": 2145558755
+  },
+  {
+   "ticker": "069080",
+   "name": "웹젠",
+   "market_cap": 364476587750,
+   "avg_turnover": 1342764245
+  },
+  {
+   "ticker": "389470",
+   "name": "인벤티지랩",
+   "market_cap": 362635043000,
+   "avg_turnover": 1571541743
+  },
+  {
+   "ticker": "365340",
+   "name": "성일하이텍",
+   "market_cap": 362437275750,
+   "avg_turnover": 1584760803
+  },
+  {
+   "ticker": "253590",
+   "name": "네오셈",
+   "market_cap": 361920603000,
+   "avg_turnover": 3314240463
+  },
+  {
+   "ticker": "027360",
+   "name": "아주IB투자",
+   "market_cap": 361619036910,
+   "avg_turnover": 3364489861
+  },
+  {
+   "ticker": "452260",
+   "name": "한화갤러리아",
+   "market_cap": 361548172650,
+   "avg_turnover": 3013147322
+  },
+  {
+   "ticker": "425420",
+   "name": "티에프이",
+   "market_cap": 361155044250,
+   "avg_turnover": 3351153846
+  },
+  {
+   "ticker": "200710",
+   "name": "에이디테크놀로지",
+   "market_cap": 360108687250,
+   "avg_turnover": 10274006056
+  },
+  {
+   "ticker": "078340",
+   "name": "컴투스",
+   "market_cap": 357902864800,
+   "avg_turnover": 1174909088
+  },
+  {
+   "ticker": "064290",
+   "name": "인텍플러스",
+   "market_cap": 357629152800,
+   "avg_turnover": 17012306820
+  },
+  {
+   "ticker": "236200",
+   "name": "슈프리마",
+   "market_cap": 356387292100,
+   "avg_turnover": 1462386557
+  },
+  {
+   "ticker": "007690",
+   "name": "국도화학",
+   "market_cap": 353763782400,
+   "avg_turnover": 1393309246
+  },
+  {
+   "ticker": "199800",
+   "name": "툴젠",
+   "market_cap": 353606819700,
+   "avg_turnover": 1184902993
+  },
+  {
+   "ticker": "194370",
+   "name": "제이에스코퍼레이션",
+   "market_cap": 352553609700,
+   "avg_turnover": 1188817182
+  },
+  {
+   "ticker": "372320",
+   "name": "큐로셀",
+   "market_cap": 351747211200,
+   "avg_turnover": 1498843730
+  },
+  {
+   "ticker": "033160",
+   "name": "엠케이전자",
+   "market_cap": 350577812340,
+   "avg_turnover": 11731450833
+  },
+  {
+   "ticker": "033640",
+   "name": "네패스",
+   "market_cap": 349577502320,
+   "avg_turnover": 3589629851
+  },
+  {
+   "ticker": "025980",
+   "name": "아난티",
+   "market_cap": 348337544200,
+   "avg_turnover": 2331440533
+  },
+  {
+   "ticker": "290550",
+   "name": "디케이티",
+   "market_cap": 346021279000,
+   "avg_turnover": 6188803413
+  },
+  {
+   "ticker": "064260",
+   "name": "다날",
+   "market_cap": 341917465640,
+   "avg_turnover": 18477771898
+  },
+  {
+   "ticker": "005420",
+   "name": "코스모화학",
+   "market_cap": 341065064640,
+   "avg_turnover": 1342525349
+  },
+  {
+   "ticker": "060280",
+   "name": "큐렉소",
+   "market_cap": 340393267500,
+   "avg_turnover": 1573013496
+  },
+  {
+   "ticker": "039440",
+   "name": "에스티아이",
+   "market_cap": 340379681650,
+   "avg_turnover": 2858327925
+  },
+  {
+   "ticker": "332570",
+   "name": "PS일렉트로닉스",
+   "market_cap": 339593063010,
+   "avg_turnover": 25082581418
+  },
+  {
+   "ticker": "002990",
+   "name": "금호건설",
+   "market_cap": 339438363140,
+   "avg_turnover": 140122432458
+  },
+  {
+   "ticker": "008730",
+   "name": "율촌화학",
+   "market_cap": 336288000000,
+   "avg_turnover": 1057780852
+  },
+  {
+   "ticker": "130660",
+   "name": "한전산업",
+   "market_cap": 336106000000,
+   "avg_turnover": 1364554867
+  },
+  {
+   "ticker": "204620",
+   "name": "글로벌텍스프리",
+   "market_cap": 333142984200,
+   "avg_turnover": 4106108541
+  },
+  {
+   "ticker": "006220",
+   "name": "제주은행",
+   "market_cap": 332627301600,
+   "avg_turnover": 3257510435
+  },
+  {
+   "ticker": "160980",
+   "name": "싸이맥스",
+   "market_cap": 330458350750,
+   "avg_turnover": 6392282015
+  },
+  {
+   "ticker": "089010",
+   "name": "켐트로닉스",
+   "market_cap": 327015526500,
+   "avg_turnover": 2048668456
+  },
+  {
+   "ticker": "089890",
+   "name": "코세스",
+   "market_cap": 326723751400,
+   "avg_turnover": 9778975401
+  },
+  {
+   "ticker": "005950",
+   "name": "이수화학",
+   "market_cap": 326047695600,
+   "avg_turnover": 9475655157
+  },
+  {
+   "ticker": "348340",
+   "name": "뉴로메카",
+   "market_cap": 324499298650,
+   "avg_turnover": 4824228048
+  },
+  {
+   "ticker": "025320",
+   "name": "시노펙스",
+   "market_cap": 319342899645,
+   "avg_turnover": 2933908141
+  },
+  {
+   "ticker": "029460",
+   "name": "케이씨",
+   "market_cap": 314636274250,
+   "avg_turnover": 1200528690
+  },
+  {
+   "ticker": "356860",
+   "name": "티엘비",
+   "market_cap": 314308632000,
+   "avg_turnover": 12741847446
+  },
+  {
+   "ticker": "448900",
+   "name": "한국피아이엠",
+   "market_cap": 311619644100,
+   "avg_turnover": 4921507766
+  },
+  {
+   "ticker": "455900",
+   "name": "엔젤로보틱스",
+   "market_cap": 310168567150,
+   "avg_turnover": 2105078495
+  },
+  {
+   "ticker": "02826K",
+   "name": "삼성물산우B",
+   "market_cap": 309661490000,
+   "avg_turnover": 1769591632
+  },
+  {
+   "ticker": "092730",
+   "name": "네오팜",
+   "market_cap": 306455149680,
+   "avg_turnover": 1034954108
+  },
+  {
+   "ticker": "348210",
+   "name": "넥스틴",
+   "market_cap": 302261594250,
+   "avg_turnover": 3481469590
+  },
+  {
+   "ticker": "009290",
+   "name": "광동제약",
+   "market_cap": 301288838400,
+   "avg_turnover": 1176056712
+  },
+  {
+   "ticker": "017900",
+   "name": "광전자",
+   "market_cap": 300728129970,
+   "avg_turnover": 9641232067
+  },
+  {
+   "ticker": "002020",
+   "name": "코오롱",
+   "market_cap": 298167408000,
+   "avg_turnover": 4465311855
+  },
+  {
+   "ticker": "441270",
+   "name": "파인엠텍",
+   "market_cap": 296830971820,
+   "avg_turnover": 1756003901
+  },
+  {
+   "ticker": "206650",
+   "name": "유바이오로직스",
+   "market_cap": 291445794510,
+   "avg_turnover": 1127267612
+  },
+  {
+   "ticker": "012030",
+   "name": "DB",
+   "market_cap": 290897507118,
+   "avg_turnover": 1083570565
+  },
+  {
+   "ticker": "004430",
+   "name": "송원산업",
+   "market_cap": 288960000000,
+   "avg_turnover": 2858339884
+  },
+  {
+   "ticker": "037710",
+   "name": "광주신세계",
+   "market_cap": 288307101600,
+   "avg_turnover": 18051910351
+  },
+  {
+   "ticker": "330860",
+   "name": "네패스아크",
+   "market_cap": 287543462000,
+   "avg_turnover": 8509090968
+  },
+  {
+   "ticker": "005430",
+   "name": "한국공항",
+   "market_cap": 287188398500,
+   "avg_turnover": 1794770760
+  },
+  {
+   "ticker": "389650",
+   "name": "넥스트바이오메디컬",
+   "market_cap": 286807959900,
+   "avg_turnover": 1513529696
+  },
+  {
+   "ticker": "215600",
+   "name": "신라젠",
+   "market_cap": 286805877480,
+   "avg_turnover": 1030707657
+  },
+  {
+   "ticker": "011930",
+   "name": "신성이엔지",
+   "market_cap": 286317166200,
+   "avg_turnover": 3805328864
+  },
+  {
+   "ticker": "0120G0",
+   "name": "삼양바이오팜",
+   "market_cap": 286280995000,
+   "avg_turnover": 1183262825
+  },
+  {
+   "ticker": "121440",
+   "name": "골프존홀딩스",
+   "market_cap": 285721576060,
+   "avg_turnover": 3223911648
+  },
+  {
+   "ticker": "110990",
+   "name": "디아이티",
+   "market_cap": 285390000000,
+   "avg_turnover": 1596671404
+  },
+  {
+   "ticker": "049070",
+   "name": "인탑스",
+   "market_cap": 285166993240,
+   "avg_turnover": 2867303363
+  },
+  {
+   "ticker": "004710",
+   "name": "한솔테크닉스",
+   "market_cap": 284533660830,
+   "avg_turnover": 8843210916
+  },
+  {
+   "ticker": "006910",
+   "name": "보성파워텍",
+   "market_cap": 282496488000,
+   "avg_turnover": 5804103909
+  },
+  {
+   "ticker": "136480",
+   "name": "하림",
+   "market_cap": 281986758810,
+   "avg_turnover": 1106183837
+  },
+  {
+   "ticker": "228760",
+   "name": "지노믹트리",
+   "market_cap": 281903350680,
+   "avg_turnover": 1266956907
+  },
+  {
+   "ticker": "092790",
+   "name": "넥스틸",
+   "market_cap": 280821600000,
+   "avg_turnover": 2956992608
+  },
+  {
+   "ticker": "006405",
+   "name": "삼성SDI우",
+   "market_cap": 280543166400,
+   "avg_turnover": 1158647067
+  },
+  {
+   "ticker": "356680",
+   "name": "엑스게이트",
+   "market_cap": 280297091440,
+   "avg_turnover": 9886292690
+  },
+  {
+   "ticker": "017890",
+   "name": "한국알콜",
+   "market_cap": 278678860880,
+   "avg_turnover": 1269170167
+  },
+  {
+   "ticker": "078520",
+   "name": "에이블씨엔씨",
+   "market_cap": 278351522700,
+   "avg_turnover": 1218355039
+  },
+  {
+   "ticker": "101730",
+   "name": "위메이드맥스",
+   "market_cap": 278226909520,
+   "avg_turnover": 3360408329
+  },
+  {
+   "ticker": "117730",
+   "name": "티로보틱스",
+   "market_cap": 277689509330,
+   "avg_turnover": 1209631411
+  },
+  {
+   "ticker": "419530",
+   "name": "SAMG엔터",
+   "market_cap": 277639566400,
+   "avg_turnover": 2225556093
+  },
+  {
+   "ticker": "192650",
+   "name": "드림텍",
+   "market_cap": 276395247655,
+   "avg_turnover": 1812208570
+  },
+  {
+   "ticker": "078350",
+   "name": "한양디지텍",
+   "market_cap": 275465982740,
+   "avg_turnover": 2650422939
+  },
+  {
+   "ticker": "265520",
+   "name": "AP시스템",
+   "market_cap": 274827991460,
+   "avg_turnover": 1384934209
+  },
+  {
+   "ticker": "900290",
+   "name": "GRT",
+   "market_cap": 274439000000,
+   "avg_turnover": 2452900047
+  },
+  {
+   "ticker": "025860",
+   "name": "남해화학",
+   "market_cap": 270252905920,
+   "avg_turnover": 2722911480
+  },
+  {
+   "ticker": "047920",
+   "name": "HLB제약",
+   "market_cap": 267314751400,
+   "avg_turnover": 4177817928
+  },
+  {
+   "ticker": "482630",
+   "name": "삼양엔씨켐",
+   "market_cap": 266599250400,
+   "avg_turnover": 2546578562
+  },
+  {
+   "ticker": "105840",
+   "name": "우진",
+   "market_cap": 266407267300,
+   "avg_turnover": 2163748918
+  },
+  {
+   "ticker": "125490",
+   "name": "한라캐스트",
+   "market_cap": 266102146080,
+   "avg_turnover": 4149321214
+  },
+  {
+   "ticker": "042520",
+   "name": "한스바이오메드",
+   "market_cap": 265261426200,
+   "avg_turnover": 4247401922
+  },
+  {
+   "ticker": "099440",
+   "name": "스맥",
+   "market_cap": 265125585690,
+   "avg_turnover": 2582486435
+  },
+  {
+   "ticker": "024850",
+   "name": "HLB이노베이션",
+   "market_cap": 263554415200,
+   "avg_turnover": 3649079275
+  },
+  {
+   "ticker": "079370",
+   "name": "제우스",
+   "market_cap": 262093565500,
+   "avg_turnover": 2396336559
+  },
+  {
+   "ticker": "098070",
+   "name": "한텍",
+   "market_cap": 261346813500,
+   "avg_turnover": 1274382206
+  },
+  {
+   "ticker": "010820",
+   "name": "퍼스텍",
+   "market_cap": 260442148920,
+   "avg_turnover": 4396949662
+  },
+  {
+   "ticker": "107640",
+   "name": "한중엔시에스",
+   "market_cap": 257444466400,
+   "avg_turnover": 2279140471
+  },
+  {
+   "ticker": "168360",
+   "name": "펨트론",
+   "market_cap": 256618703220,
+   "avg_turnover": 1868786301
+  },
+  {
+   "ticker": "058430",
+   "name": "포스코스틸리온",
+   "market_cap": 256500000000,
+   "avg_turnover": 1226360106
+  },
+  {
+   "ticker": "194700",
+   "name": "노바렉스",
+   "market_cap": 255567872000,
+   "avg_turnover": 1233878356
+  },
+  {
+   "ticker": "439090",
+   "name": "마녀공장",
+   "market_cap": 254587327800,
+   "avg_turnover": 7845595997
+  },
+  {
+   "ticker": "217590",
+   "name": "티엠씨",
+   "market_cap": 252507478000,
+   "avg_turnover": 8566215972
+  },
+  {
+   "ticker": "298000",
+   "name": "효성화학",
+   "market_cap": 252155431500,
+   "avg_turnover": 6664251210
+  },
+  {
+   "ticker": "010690",
+   "name": "화신",
+   "market_cap": 251776156100,
+   "avg_turnover": 3194692474
+  },
+  {
+   "ticker": "317400",
+   "name": "자이에스앤디",
+   "market_cap": 248208128000,
+   "avg_turnover": 7687169539
+  },
+  {
+   "ticker": "010955",
+   "name": "S-Oil우",
+   "market_cap": 248152895900,
+   "avg_turnover": 1700284890
+  },
+  {
+   "ticker": "002900",
+   "name": "TYM",
+   "market_cap": 246330000000,
+   "avg_turnover": 1258585107
+  },
+  {
+   "ticker": "067630",
+   "name": "HLB생명과학",
+   "market_cap": 246272457160,
+   "avg_turnover": 1659998232
+  },
+  {
+   "ticker": "023410",
+   "name": "유진기업",
+   "market_cap": 246235098655,
+   "avg_turnover": 5518977347
+  },
+  {
+   "ticker": "064820",
+   "name": "케이프",
+   "market_cap": 245030107100,
+   "avg_turnover": 1640506381
+  },
+  {
+   "ticker": "287840",
+   "name": "인투셀",
+   "market_cap": 243055312800,
+   "avg_turnover": 1515706572
+  },
+  {
+   "ticker": "114810",
+   "name": "한솔아이원스",
+   "market_cap": 240342705960,
+   "avg_turnover": 3325997159
+  },
+  {
+   "ticker": "003200",
+   "name": "일신방직",
+   "market_cap": 239472800000,
+   "avg_turnover": 1614670349
+  },
+  {
+   "ticker": "484590",
+   "name": "삼양컴텍",
+   "market_cap": 236960087500,
+   "avg_turnover": 1526895707
+  },
+  {
+   "ticker": "187660",
+   "name": "페니트리움바이오",
+   "market_cap": 236286237780,
+   "avg_turnover": 2979014991
+  },
+  {
+   "ticker": "039830",
+   "name": "오로라",
+   "market_cap": 236245435500,
+   "avg_turnover": 2312389137
+  },
+  {
+   "ticker": "005500",
+   "name": "삼진제약",
+   "market_cap": 236163600000,
+   "avg_turnover": 1058226386
+  },
+  {
+   "ticker": "060720",
+   "name": "KH바텍",
+   "market_cap": 229907961820,
+   "avg_turnover": 5086737066
+  },
+  {
+   "ticker": "036200",
+   "name": "유니셈",
+   "market_cap": 229675030270,
+   "avg_turnover": 1684181222
+  },
+  {
+   "ticker": "234340",
+   "name": "헥토파이낸셜",
+   "market_cap": 229398171520,
+   "avg_turnover": 3834637233
+  },
+  {
+   "ticker": "493280",
+   "name": "아이엠바이오로직스",
+   "market_cap": 227147565190,
+   "avg_turnover": 1475370627
+  },
+  {
+   "ticker": "080580",
+   "name": "오킨스전자",
+   "market_cap": 225462308950,
+   "avg_turnover": 2213306502
+  },
+  {
+   "ticker": "194480",
+   "name": "데브시스터즈",
+   "market_cap": 223904109000,
+   "avg_turnover": 1693454007
+  },
+  {
+   "ticker": "001790",
+   "name": "대한제당",
+   "market_cap": 222935350275,
+   "avg_turnover": 2114828158
+  },
+  {
+   "ticker": "290690",
+   "name": "아리바이오홀딩스",
+   "market_cap": 220918362000,
+   "avg_turnover": 5770019569
+  },
+  {
+   "ticker": "475400",
+   "name": "씨메스로보틱스",
+   "market_cap": 220670848860,
+   "avg_turnover": 1565121429
+  },
+  {
+   "ticker": "389260",
+   "name": "대명에너지",
+   "market_cap": 218758328250,
+   "avg_turnover": 7024076276
+  },
+  {
+   "ticker": "085910",
+   "name": "네오티스",
+   "market_cap": 218647865300,
+   "avg_turnover": 4190685012
+  },
+  {
+   "ticker": "108860",
+   "name": "셀바스AI",
+   "market_cap": 217471503200,
+   "avg_turnover": 6804121320
+  },
+  {
+   "ticker": "092190",
+   "name": "서울바이오시스",
+   "market_cap": 217186793505,
+   "avg_turnover": 1003396538
+  },
+  {
+   "ticker": "003720",
+   "name": "삼영",
+   "market_cap": 213520000000,
+   "avg_turnover": 1871456343
+  },
+  {
+   "ticker": "393890",
+   "name": "더블유씨피",
+   "market_cap": 212534944320,
+   "avg_turnover": 1264191638
+  },
+  {
+   "ticker": "069540",
+   "name": "빛과전자",
+   "market_cap": 211635382566,
+   "avg_turnover": 31182014835
+  },
+  {
+   "ticker": "217730",
+   "name": "강스템바이오텍",
+   "market_cap": 211621835250,
+   "avg_turnover": 2866897989
+  },
+  {
+   "ticker": "094360",
+   "name": "칩스앤미디어",
+   "market_cap": 209495237940,
+   "avg_turnover": 1664204164
+  },
+  {
+   "ticker": "061090",
+   "name": "세나테크놀로지",
+   "market_cap": 208313655000,
+   "avg_turnover": 2019705412
+  },
+  {
+   "ticker": "001250",
+   "name": "GS글로벌",
+   "market_cap": 207572416460,
+   "avg_turnover": 1879692103
+  },
+  {
+   "ticker": "484810",
+   "name": "티엑스알로보틱스",
+   "market_cap": 207505788450,
+   "avg_turnover": 5574684573
+  },
+  {
+   "ticker": "417840",
+   "name": "저스템",
+   "market_cap": 206739204240,
+   "avg_turnover": 10042754183
+  },
+  {
+   "ticker": "052710",
+   "name": "아모텍",
+   "market_cap": 205160145840,
+   "avg_turnover": 5516303135
+  },
+  {
+   "ticker": "001340",
+   "name": "PKC",
+   "market_cap": 204652664505,
+   "avg_turnover": 1102095548
+  },
+  {
+   "ticker": "468530",
+   "name": "프로티나",
+   "market_cap": 204372052160,
+   "avg_turnover": 1251462615
+  },
+  {
+   "ticker": "200470",
+   "name": "에이팩트",
+   "market_cap": 203338046400,
+   "avg_turnover": 3471317091
+  },
+  {
+   "ticker": "389500",
+   "name": "에스비비테크",
+   "market_cap": 202236375200,
+   "avg_turnover": 3289914307
+  },
+  {
+   "ticker": "073490",
+   "name": "LIG아큐버",
+   "market_cap": 201501919000,
+   "avg_turnover": 2235238543
+  },
+  {
+   "ticker": "327260",
+   "name": "RF머트리얼즈",
+   "market_cap": 201041267250,
+   "avg_turnover": 7948499811
+  },
+  {
+   "ticker": "452280",
+   "name": "한선엔지니어링",
+   "market_cap": 200175768000,
+   "avg_turnover": 1939145099
+  },
+  {
+   "ticker": "272110",
+   "name": "케이엔제이",
+   "market_cap": 199029796000,
+   "avg_turnover": 2232086151
+  },
+  {
+   "ticker": "095500",
+   "name": "미래나노텍",
+   "market_cap": 198774093590,
+   "avg_turnover": 3808649768
+  },
+  {
+   "ticker": "241520",
+   "name": "DSC인베스트먼트",
+   "market_cap": 198702000000,
+   "avg_turnover": 1719104957
+  },
+  {
+   "ticker": "042370",
+   "name": "비츠로테크",
+   "market_cap": 198596189500,
+   "avg_turnover": 1243075410
+  },
+  {
+   "ticker": "254490",
+   "name": "미래반도체",
+   "market_cap": 197944980000,
+   "avg_turnover": 1788787318
+  },
+  {
+   "ticker": "03473K",
+   "name": "SK우",
+   "market_cap": 197014980000,
+   "avg_turnover": 1266532125
+  },
+  {
+   "ticker": "005010",
+   "name": "휴스틸",
+   "market_cap": 196658262500,
+   "avg_turnover": 1261819685
+  },
+  {
+   "ticker": "014940",
+   "name": "오리엔탈정공",
+   "market_cap": 196422478910,
+   "avg_turnover": 3185502859
+  },
+  {
+   "ticker": "017860",
+   "name": "DS단석",
+   "market_cap": 195883303170,
+   "avg_turnover": 1295112464
+  },
+  {
+   "ticker": "237880",
+   "name": "클리오",
+   "market_cap": 195532039460,
+   "avg_turnover": 1347720516
+  },
+  {
+   "ticker": "123330",
+   "name": "제닉",
+   "market_cap": 195232660000,
+   "avg_turnover": 7195996816
+  },
+  {
+   "ticker": "065680",
+   "name": "우주일렉트로",
+   "market_cap": 194511914550,
+   "avg_turnover": 1820283560
+  },
+  {
+   "ticker": "138080",
+   "name": "오이솔루션",
+   "market_cap": 194330800600,
+   "avg_turnover": 2610152094
+  },
+  {
+   "ticker": "071200",
+   "name": "인피니트헬스케어",
+   "market_cap": 193951841100,
+   "avg_turnover": 1079848983
+  },
+  {
+   "ticker": "462350",
+   "name": "이노스페이스",
+   "market_cap": 193401654160,
+   "avg_turnover": 1928262672
+  },
+  {
+   "ticker": "446540",
+   "name": "메가터치",
+   "market_cap": 192212923710,
+   "avg_turnover": 1827969743
+  },
+  {
+   "ticker": "0011T0",
+   "name": "채비",
+   "market_cap": 191789079235,
+   "avg_turnover": 1366193501
+  },
+  {
+   "ticker": "445090",
+   "name": "에이직랜드",
+   "market_cap": 191417528160,
+   "avg_turnover": 3296476300
+  },
+  {
+   "ticker": "230240",
+   "name": "에치에프알",
+   "market_cap": 190851060000,
+   "avg_turnover": 2988293954
+  },
+  {
+   "ticker": "456010",
+   "name": "아이씨티케이",
+   "market_cap": 190415855500,
+   "avg_turnover": 4140206071
+  },
+  {
+   "ticker": "013120",
+   "name": "동원개발",
+   "market_cap": 189788929000,
+   "avg_turnover": 7792354363
+  },
+  {
+   "ticker": "064850",
+   "name": "에프앤가이드",
+   "market_cap": 188955097920,
+   "avg_turnover": 1230582099
+  },
+  {
+   "ticker": "018000",
+   "name": "유니슨",
+   "market_cap": 188655252468,
+   "avg_turnover": 1450160843
+  },
+  {
+   "ticker": "102940",
+   "name": "코오롱생명과학",
+   "market_cap": 187064716870,
+   "avg_turnover": 4020850970
+  },
+  {
+   "ticker": "318060",
+   "name": "그래피",
+   "market_cap": 186378368820,
+   "avg_turnover": 1823754631
+  },
+  {
+   "ticker": "061970",
+   "name": "LB세미콘",
+   "market_cap": 185865619200,
+   "avg_turnover": 1376209256
+  },
+  {
+   "ticker": "117580",
+   "name": "대성에너지",
+   "market_cap": 185625000000,
+   "avg_turnover": 1125059249
+  },
+  {
+   "ticker": "159010",
+   "name": "아스플로",
+   "market_cap": 185086177320,
+   "avg_turnover": 2329016814
+  },
+  {
+   "ticker": "004980",
+   "name": "성신양회",
+   "market_cap": 184851190420,
+   "avg_turnover": 2348168979
+  },
+  {
+   "ticker": "094480",
+   "name": "갤럭시아머니트리",
+   "market_cap": 184184089410,
+   "avg_turnover": 1753103215
+  },
+  {
+   "ticker": "112290",
+   "name": "와이씨켐",
+   "market_cap": 184011919000,
+   "avg_turnover": 1428157438
+  },
+  {
+   "ticker": "068790",
+   "name": "DMS",
+   "market_cap": 183947325600,
+   "avg_turnover": 1239934948
+  },
+  {
+   "ticker": "365270",
+   "name": "큐라클",
+   "market_cap": 182352044160,
+   "avg_turnover": 1110194991
+  },
+  {
+   "ticker": "459510",
+   "name": "나우로보틱스",
+   "market_cap": 179231455420,
+   "avg_turnover": 1497164023
+  },
+  {
+   "ticker": "203650",
+   "name": "드림시큐리티",
+   "market_cap": 175745348352,
+   "avg_turnover": 3094950946
+  },
+  {
+   "ticker": "086390",
+   "name": "유니테스트",
+   "market_cap": 175624587060,
+   "avg_turnover": 2904838021
+  },
+  {
+   "ticker": "425040",
+   "name": "티이엠씨",
+   "market_cap": 175383184000,
+   "avg_turnover": 2693792622
+  },
+  {
+   "ticker": "053690",
+   "name": "한미글로벌",
+   "market_cap": 174115469500,
+   "avg_turnover": 2110495995
+  },
+  {
+   "ticker": "004310",
+   "name": "현대약품",
+   "market_cap": 171520000000,
+   "avg_turnover": 31894984556
+  },
+  {
+   "ticker": "098120",
+   "name": "마이크로컨텍솔",
+   "market_cap": 171242979600,
+   "avg_turnover": 1465119722
+  },
+  {
+   "ticker": "092870",
+   "name": "엑시콘",
+   "market_cap": 170834932730,
+   "avg_turnover": 4969326603
+  },
+  {
+   "ticker": "402030",
+   "name": "코난테크놀로지",
+   "market_cap": 170363011680,
+   "avg_turnover": 1006363554
+  },
+  {
+   "ticker": "054210",
+   "name": "이랜텍",
+   "market_cap": 170209843300,
+   "avg_turnover": 1010076631
+  },
+  {
+   "ticker": "046970",
+   "name": "우리로",
+   "market_cap": 170040996120,
+   "avg_turnover": 3777961454
+  },
+  {
+   "ticker": "078150",
+   "name": "HB테크놀러지",
+   "market_cap": 170040989944,
+   "avg_turnover": 1647120992
+  },
+  {
+   "ticker": "091580",
+   "name": "상신이디피",
+   "market_cap": 169934792250,
+   "avg_turnover": 1494065984
+  },
+  {
+   "ticker": "025560",
+   "name": "미래산업",
+   "market_cap": 168506406800,
+   "avg_turnover": 5335667667
+  },
+  {
+   "ticker": "045390",
+   "name": "대아티아이",
+   "market_cap": 168079004145,
+   "avg_turnover": 1178952604
+  },
+  {
+   "ticker": "024060",
+   "name": "흥구석유",
+   "market_cap": 167100000000,
+   "avg_turnover": 74778129869
+  },
+  {
+   "ticker": "092200",
+   "name": "디아이씨",
+   "market_cap": 165665303940,
+   "avg_turnover": 2000703461
+  },
+  {
+   "ticker": "067080",
+   "name": "대화제약",
+   "market_cap": 165315852000,
+   "avg_turnover": 1428974955
+  },
+  {
+   "ticker": "065660",
+   "name": "안트로젠",
+   "market_cap": 164400223000,
+   "avg_turnover": 1051792785
+  },
+  {
+   "ticker": "013580",
+   "name": "계룡건설",
+   "market_cap": 163882143450,
+   "avg_turnover": 5653328436
+  },
+  {
+   "ticker": "138360",
+   "name": "앤로보틱스",
+   "market_cap": 162185382912,
+   "avg_turnover": 3630698855
+  },
+  {
+   "ticker": "036710",
+   "name": "심텍홀딩스",
+   "market_cap": 161652927240,
+   "avg_turnover": 1044887696
+  },
+  {
+   "ticker": "094820",
+   "name": "일진파워",
+   "market_cap": 160588250850,
+   "avg_turnover": 1185514837
+  },
+  {
+   "ticker": "024840",
+   "name": "KBI메탈",
+   "market_cap": 160554783360,
+   "avg_turnover": 17013290052
+  },
+  {
+   "ticker": "270660",
+   "name": "에브리봇",
+   "market_cap": 160408969120,
+   "avg_turnover": 2005530133
+  },
+  {
+   "ticker": "307180",
+   "name": "아이엘",
+   "market_cap": 158552828420,
+   "avg_turnover": 1592252104
+  },
+  {
+   "ticker": "187870",
+   "name": "디바이스",
+   "market_cap": 158355690000,
+   "avg_turnover": 1477108619
+  },
+  {
+   "ticker": "304100",
+   "name": "솔트룩스",
+   "market_cap": 158304757350,
+   "avg_turnover": 2261764582
+  },
+  {
+   "ticker": "125020",
+   "name": "티씨머티리얼즈",
+   "market_cap": 156447125750,
+   "avg_turnover": 2495726734
+  },
+  {
+   "ticker": "036170",
+   "name": "에이치엠넥스",
+   "market_cap": 154948205650,
+   "avg_turnover": 1064887103
+  },
+  {
+   "ticker": "489460",
+   "name": "바이오비쥬",
+   "market_cap": 154909513500,
+   "avg_turnover": 1746379324
+  },
+  {
+   "ticker": "0015G0",
+   "name": "그린광학",
+   "market_cap": 153537337920,
+   "avg_turnover": 1287024331
+  },
+  {
+   "ticker": "041920",
+   "name": "메디아나",
+   "market_cap": 152691410830,
+   "avg_turnover": 1071595055
+  },
+  {
+   "ticker": "354320",
+   "name": "알멕",
+   "market_cap": 150197453500,
+   "avg_turnover": 1795364290
+  },
+  {
+   "ticker": "314130",
+   "name": "지놈앤컴퍼니",
+   "market_cap": 148907713040,
+   "avg_turnover": 1306807422
+  },
+  {
+   "ticker": "115450",
+   "name": "HLB테라퓨틱스",
+   "market_cap": 146777240613,
+   "avg_turnover": 1424893667
+  },
+  {
+   "ticker": "199430",
+   "name": "케이엔알시스템",
+   "market_cap": 146681263300,
+   "avg_turnover": 3698621781
+  },
+  {
+   "ticker": "013990",
+   "name": "아가방컴퍼니",
+   "market_cap": 146678410560,
+   "avg_turnover": 1177734897
+  },
+  {
+   "ticker": "126700",
+   "name": "하이비젼시스템",
+   "market_cap": 146133855360,
+   "avg_turnover": 1153239372
+  },
+  {
+   "ticker": "009470",
+   "name": "삼화전기",
+   "market_cap": 143850585000,
+   "avg_turnover": 1668125977
+  },
+  {
+   "ticker": "119830",
+   "name": "아이텍",
+   "market_cap": 142511938320,
+   "avg_turnover": 1057275400
+  },
+  {
+   "ticker": "222040",
+   "name": "코스맥스엔비티",
+   "market_cap": 142333200000,
+   "avg_turnover": 1947476410
+  },
+  {
+   "ticker": "199820",
+   "name": "제일일렉트릭",
+   "market_cap": 141985800000,
+   "avg_turnover": 1146328121
+  },
+  {
+   "ticker": "413630",
+   "name": "씨피시스템",
+   "market_cap": 140827478325,
+   "avg_turnover": 40087359081
+  },
+  {
+   "ticker": "264850",
+   "name": "이랜시스",
+   "market_cap": 140566999680,
+   "avg_turnover": 6126825588
+  },
+  {
+   "ticker": "260970",
+   "name": "에스앤디",
+   "market_cap": 139430742800,
+   "avg_turnover": 1447159130
+  },
+  {
+   "ticker": "046120",
+   "name": "오르비텍",
+   "market_cap": 139315106795,
+   "avg_turnover": 1171252508
+  },
+  {
+   "ticker": "041020",
+   "name": "폴라리스오피스",
+   "market_cap": 138866201435,
+   "avg_turnover": 2078618972
+  },
+  {
+   "ticker": "464080",
+   "name": "에스오에스랩",
+   "market_cap": 138012776050,
+   "avg_turnover": 1002615742
+  },
+  {
+   "ticker": "126640",
+   "name": "화신정공",
+   "market_cap": 137068608100,
+   "avg_turnover": 5625554030
+  },
+  {
+   "ticker": "018470",
+   "name": "조일알미늄",
+   "market_cap": 134482887702,
+   "avg_turnover": 1180799597
+  },
+  {
+   "ticker": "382800",
+   "name": "지앤비에스 에코",
+   "market_cap": 134326993020,
+   "avg_turnover": 1185874713
+  },
+  {
+   "ticker": "001540",
+   "name": "안국약품",
+   "market_cap": 133163108200,
+   "avg_turnover": 1037252354
+  },
+  {
+   "ticker": "004090",
+   "name": "한국석유",
+   "market_cap": 132653554000,
+   "avg_turnover": 8026666713
+  },
+  {
+   "ticker": "039860",
+   "name": "나노엔텍",
+   "market_cap": 132563824440,
+   "avg_turnover": 2792697992
+  },
+  {
+   "ticker": "037070",
+   "name": "파세코",
+   "market_cap": 132200000000,
+   "avg_turnover": 39519923979
+  },
+  {
+   "ticker": "049720",
+   "name": "고려신용정보",
+   "market_cap": 131417000000,
+   "avg_turnover": 3646576491
+  },
+  {
+   "ticker": "000020",
+   "name": "동화약품",
+   "market_cap": 130719279600,
+   "avg_turnover": 4940636551
+  },
+  {
+   "ticker": "255220",
+   "name": "SG",
+   "market_cap": 129832512870,
+   "avg_turnover": 3532552414
+  },
+  {
+   "ticker": "212560",
+   "name": "네오오토",
+   "market_cap": 129603804280,
+   "avg_turnover": 1823379627
+  },
+  {
+   "ticker": "054450",
+   "name": "텔레칩스",
+   "market_cap": 127665884190,
+   "avg_turnover": 1100893816
+  },
+  {
+   "ticker": "322310",
+   "name": "오로스테크놀로지",
+   "market_cap": 127572302040,
+   "avg_turnover": 2001809024
+  },
+  {
+   "ticker": "003100",
+   "name": "선광",
+   "market_cap": 127380000000,
+   "avg_turnover": 1007629355
+  },
+  {
+   "ticker": "008350",
+   "name": "남선알미늄",
+   "market_cap": 127142903650,
+   "avg_turnover": 1779347256
+  },
+  {
+   "ticker": "049630",
+   "name": "재영솔루텍",
+   "market_cap": 124769842260,
+   "avg_turnover": 1343049652
+  },
+  {
+   "ticker": "382900",
+   "name": "범한퓨얼셀",
+   "market_cap": 123792930000,
+   "avg_turnover": 1539863725
+  },
+  {
+   "ticker": "388050",
+   "name": "지투파워",
+   "market_cap": 123482284200,
+   "avg_turnover": 1426609318
+  },
+  {
+   "ticker": "333430",
+   "name": "일승",
+   "market_cap": 123060621735,
+   "avg_turnover": 7980874054
+  },
+  {
+   "ticker": "0007C0",
+   "name": "아크릴",
+   "market_cap": 121418498880,
+   "avg_turnover": 1009834812
+  },
+  {
+   "ticker": "147830",
+   "name": "제룡산업",
+   "market_cap": 119000000000,
+   "avg_turnover": 1027043241
+  },
+  {
+   "ticker": "274090",
+   "name": "켄코아에어로스페이스",
+   "market_cap": 118044953990,
+   "avg_turnover": 1714434813
+  },
+  {
+   "ticker": "102120",
+   "name": "어보브반도체",
+   "market_cap": 117530777330,
+   "avg_turnover": 1039752825
+  },
+  {
+   "ticker": "032580",
+   "name": "피델릭스",
+   "market_cap": 117287506560,
+   "avg_turnover": 4471519982
+  },
+  {
+   "ticker": "242040",
+   "name": "나무에이엑스",
+   "market_cap": 117142203640,
+   "avg_turnover": 2047010984
+  },
+  {
+   "ticker": "355150",
+   "name": "코스텍시스",
+   "market_cap": 115556727000,
+   "avg_turnover": 1150672539
+  },
+  {
+   "ticker": "027710",
+   "name": "팜스토리",
+   "market_cap": 114090598400,
+   "avg_turnover": 1137605877
+  },
+  {
+   "ticker": "362320",
+   "name": "청담글로벌",
+   "market_cap": 113793940200,
+   "avg_turnover": 1006310740
+  },
+  {
+   "ticker": "002780",
+   "name": "진흥기업",
+   "market_cap": 113758904590,
+   "avg_turnover": 10503696317
+  },
+  {
+   "ticker": "232680",
+   "name": "라온로보틱스",
+   "market_cap": 112953900000,
+   "avg_turnover": 1271281987
+  },
+  {
+   "ticker": "037350",
+   "name": "성도이엔지",
+   "market_cap": 109816200000,
+   "avg_turnover": 1756850637
+  },
+  {
+   "ticker": "149950",
+   "name": "아바텍",
+   "market_cap": 109478301030,
+   "avg_turnover": 1301879950
+  },
+  {
+   "ticker": "059120",
+   "name": "아진엑스텍",
+   "market_cap": 107113886100,
+   "avg_turnover": 7691279234
+  },
+  {
+   "ticker": "402490",
+   "name": "그린리소스",
+   "market_cap": 105845106250,
+   "avg_turnover": 1134685167
+  },
+  {
+   "ticker": "357880",
+   "name": "SKAI",
+   "market_cap": 105297755472,
+   "avg_turnover": 2642572706
+  },
+  {
+   "ticker": "469610",
+   "name": "이노테크",
+   "market_cap": 104900217000,
+   "avg_turnover": 1029019987
+  },
+  {
+   "ticker": "396300",
+   "name": "세아메카닉스",
+   "market_cap": 104501077500,
+   "avg_turnover": 7530011025
+  },
+  {
+   "ticker": "067290",
+   "name": "JW신약",
+   "market_cap": 104116937374,
+   "avg_turnover": 25188422676
+  },
+  {
+   "ticker": "432720",
+   "name": "퀄리타스반도체",
+   "market_cap": 103711151320,
+   "avg_turnover": 1229322473
+  },
+  {
+   "ticker": "054920",
+   "name": "한컴위드",
+   "market_cap": 102145833220,
+   "avg_turnover": 1113624893
+  }
+ ]
+}
