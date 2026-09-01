@@ -7,6 +7,9 @@
 # 월 1회 돌려 data/lead_lag.json으로 남기고, 파이프라인은 그 파일을 읽는다.
 name: lead-lag
 
+# **정기 실행은 꺼 뒀다.** daily-screen과 같은 이유다 — 파이프라인이 미완성인 채로
+# 저절로 도는 걸 멈춰 달라는 요청이었는데, 이 워크플로의 월간 cron을 놓쳐서
+# 2026-09-01에 한 번 더 돌았다. 다시 켤 때 아래 두 줄의 주석을 푼다.
 on:
   workflow_dispatch:
     inputs:
@@ -14,8 +17,8 @@ on:
         description: 패널 거래일 수 (기본 924 = 약 44개월)
         required: false
         default: "924"
-  schedule:
-    - cron: "0 20 1 * *"   # 매월 1일 05:00 KST
+  # schedule:
+  #   - cron: "0 20 1 * *"   # 매월 1일 05:00 KST
 
 permissions:
   contents: write        # 이게 없어 github-actions[bot]이 403을 받았다
