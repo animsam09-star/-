@@ -1,468 +1,966 @@
 {
- "asof": "20260730",
+ "asof": "20260831",
  "panel_days": 924,
  "max_lag_months": 18,
  "min_obs_months": 24,
  "lags": {
   "ESS·전력→유틸리티·발전": {
    "lag_months": 0,
-   "corr": 0.525,
+   "corr": 0.51,
    "obs": 43,
    "overlap": 0.0
   },
+  "유틸리티·발전→ESS·전력": {
+   "lag_months": 0,
+   "corr": 0.51,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
+  },
   "ESS·전력→분리막·전해액": {
-   "lag_months": -17,
-   "corr": 0.469,
-   "obs": 26,
+   "lag_months": 0,
+   "corr": 0.474,
+   "obs": 43,
    "overlap": 0.0
   },
+  "분리막·전해액→ESS·전력": {
+   "lag_months": 0,
+   "corr": 0.474,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
+  },
   "ESS·전력→신재생": {
-   "lag_months": -15,
-   "corr": -0.466,
-   "obs": 28,
+   "lag_months": 0,
+   "corr": 0.369,
+   "obs": 43,
    "overlap": 0.0
+  },
+  "신재생→ESS·전력": {
+   "lag_months": 0,
+   "corr": 0.369,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
   },
   "ESS·전력→음극재·동박": {
    "lag_months": 0,
-   "corr": 0.728,
+   "corr": 0.736,
    "obs": 43,
    "overlap": 0.0
+  },
+  "음극재·동박→ESS·전력": {
+   "lag_months": 0,
+   "corr": 0.736,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
   },
   "ESS·전력→이차전지": {
    "lag_months": 0,
-   "corr": 0.79,
+   "corr": 0.784,
    "obs": 43,
-   "overlap": 0.29
+   "overlap": 0.3
+  },
+  "이차전지→ESS·전력": {
+   "lag_months": 0,
+   "corr": 0.784,
+   "obs": 43,
+   "overlap": 0.3,
+   "mirrored": true
   },
   "ESS·전력→전구체": {
    "lag_months": 0,
-   "corr": 0.463,
+   "corr": 0.498,
    "obs": 43,
    "overlap": 0.0
+  },
+  "전구체→ESS·전력": {
+   "lag_months": 0,
+   "corr": 0.498,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
   },
   "LNG·가스→유틸리티·발전": {
    "lag_months": 0,
-   "corr": 0.653,
+   "corr": 0.668,
    "obs": 43,
-   "overlap": 0.25
+   "overlap": 0.2
+  },
+  "유틸리티·발전→LNG·가스": {
+   "lag_months": 0,
+   "corr": 0.668,
+   "obs": 43,
+   "overlap": 0.2,
+   "mirrored": true
   },
   "LNG·가스→정유": {
    "lag_months": 0,
-   "corr": 0.845,
+   "corr": 0.804,
    "obs": 43,
-   "overlap": 0.17
+   "overlap": 0.22
+  },
+  "정유→LNG·가스": {
+   "lag_months": 0,
+   "corr": 0.804,
+   "obs": 43,
+   "overlap": 0.22,
+   "mirrored": true
   },
   "LNG·가스→철강": {
    "lag_months": 0,
-   "corr": 0.561,
+   "corr": 0.515,
    "obs": 43,
-   "overlap": 0.09
+   "overlap": 0.08
+  },
+  "철강→LNG·가스": {
+   "lag_months": 0,
+   "corr": 0.515,
+   "obs": 43,
+   "overlap": 0.08,
+   "mirrored": true
   },
   "LNG·가스→건설·EPC": {
    "lag_months": 0,
-   "corr": 0.409,
-   "obs": 43,
-   "overlap": 0.0
-  },
-  "LNG·가스→해운": {
-   "lag_months": 0,
-   "corr": 0.46,
+   "corr": 0.359,
    "obs": 43,
    "overlap": 0.0
   },
   "건설·EPC→LNG·가스": {
    "lag_months": 0,
-   "corr": 0.409,
+   "corr": 0.359,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "LNG·가스→해운": {
+   "lag_months": 0,
+   "corr": 0.453,
    "obs": 43,
    "overlap": 0.0
+  },
+  "해운→LNG·가스": {
+   "lag_months": 0,
+   "corr": 0.453,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "가전→부품·구동·광학": {
+   "lag_months": 15,
+   "corr": 0.382,
+   "obs": 28,
+   "overlap": 0.0
+  },
+  "부품·구동·광학→가전": {
+   "lag_months": -15,
+   "corr": 0.382,
+   "obs": 28,
+   "overlap": 0.0,
+   "mirrored": true
   },
   "건설·EPC→리츠·자산운용": {
    "lag_months": 0,
-   "corr": 0.356,
+   "corr": 0.318,
    "obs": 43,
    "overlap": 0.0
+  },
+  "리츠·자산운용→건설·EPC": {
+   "lag_months": 0,
+   "corr": 0.318,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
   },
   "건설·EPC→부동산 개발·시행": {
    "lag_months": 0,
-   "corr": 0.396,
+   "corr": 0.455,
    "obs": 43,
-   "overlap": 0.18
+   "overlap": 0.21
+  },
+  "부동산 개발·시행→건설·EPC": {
+   "lag_months": 0,
+   "corr": 0.455,
+   "obs": 43,
+   "overlap": 0.21,
+   "mirrored": true
   },
   "건설·EPC→석유화학": {
-   "lag_months": 2,
-   "corr": -0.455,
-   "obs": 41,
+   "lag_months": 0,
+   "corr": 0.442,
+   "obs": 43,
    "overlap": 0.0
+  },
+  "석유화학→건설·EPC": {
+   "lag_months": 0,
+   "corr": 0.442,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
   },
   "건설·EPC→유틸리티·발전": {
    "lag_months": 0,
-   "corr": 0.547,
+   "corr": 0.522,
    "obs": 43,
-   "overlap": 0.1
+   "overlap": 0.07
+  },
+  "유틸리티·발전→건설·EPC": {
+   "lag_months": 0,
+   "corr": 0.522,
+   "obs": 43,
+   "overlap": 0.07,
+   "mirrored": true
   },
   "건설·EPC→정유": {
    "lag_months": 2,
-   "corr": -0.463,
+   "corr": -0.516,
    "obs": 41,
    "overlap": 0.0
   },
+  "정유→건설·EPC": {
+   "lag_months": -2,
+   "corr": -0.516,
+   "obs": 41,
+   "overlap": 0.0,
+   "mirrored": true
+  },
   "건설·EPC→건설기계": {
    "lag_months": 0,
-   "corr": 0.613,
+   "corr": 0.657,
    "obs": 43,
    "overlap": 0.0
-  },
-  "건설·EPC→건자재·마감재": {
-   "lag_months": 0,
-   "corr": 0.404,
-   "obs": 43,
-   "overlap": 0.0
-  },
-  "건설·EPC→시멘트·레미콘": {
-   "lag_months": 0,
-   "corr": 0.366,
-   "obs": 43,
-   "overlap": 0.05
-  },
-  "건설·EPC→아연·연 제련": {
-   "lag_months": -18,
-   "corr": -0.354,
-   "obs": 25,
-   "overlap": 0.0
-  },
-  "건설·EPC→전력기기·전선": {
-   "lag_months": 9,
-   "corr": 0.532,
-   "obs": 34,
-   "overlap": 0.04
-  },
-  "건설·EPC→전선·구리 가공": {
-   "lag_months": 9,
-   "corr": 0.629,
-   "obs": 34,
-   "overlap": 0.0
-  },
-  "건설·EPC→철강": {
-   "lag_months": 0,
-   "corr": 0.51,
-   "obs": 43,
-   "overlap": 0.09
-  },
-  "건설·EPC→철근·형강": {
-   "lag_months": 0,
-   "corr": 0.496,
-   "obs": 43,
-   "overlap": 0.0
-  },
-  "건설·EPC→후판·강재": {
-   "lag_months": 0,
-   "corr": 0.504,
-   "obs": 43,
-   "overlap": 0.05
   },
   "건설기계→건설·EPC": {
    "lag_months": 0,
-   "corr": 0.613,
+   "corr": 0.657,
    "obs": 43,
-   "overlap": 0.0
+   "overlap": 0.0,
+   "mirrored": true
   },
-  "건설기계→건설기계 부품": {
+  "건설·EPC→건자재·마감재": {
    "lag_months": 0,
-   "corr": 0.605,
+   "corr": 0.447,
    "obs": 43,
-   "overlap": 0.0
-  },
-  "건설기계→철강": {
-   "lag_months": 16,
-   "corr": -0.46,
-   "obs": 27,
-   "overlap": 0.0
-  },
-  "건설기계 부품→건설기계": {
-   "lag_months": 0,
-   "corr": 0.605,
-   "obs": 43,
-   "overlap": 0.0
-  },
-  "건설기계 부품→철강": {
-   "lag_months": 14,
-   "corr": 0.53,
-   "obs": 29,
    "overlap": 0.0
   },
   "건자재·마감재→건설·EPC": {
    "lag_months": 0,
-   "corr": 0.404,
+   "corr": 0.447,
    "obs": 43,
-   "overlap": 0.0
+   "overlap": 0.0,
+   "mirrored": true
   },
-  "기판·패키징→반도체": {
-   "lag_months": 18,
-   "corr": -0.475,
-   "obs": 25,
-   "overlap": 0.0
-  },
-  "기판·패키징→서버·전자기기": {
+  "건설·EPC→산업용 엔진·발전기": {
    "lag_months": -17,
-   "corr": -0.524,
+   "corr": -0.465,
    "obs": 26,
    "overlap": 0.0
   },
-  "기판·패키징→완성차": {
-   "lag_months": 5,
-   "corr": 0.299,
-   "obs": 38,
+  "산업용 엔진·발전기→건설·EPC": {
+   "lag_months": 17,
+   "corr": -0.465,
+   "obs": 26,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "건설·EPC→시멘트·레미콘": {
+   "lag_months": 0,
+   "corr": 0.358,
+   "obs": 43,
+   "overlap": 0.03
+  },
+  "시멘트·레미콘→건설·EPC": {
+   "lag_months": 0,
+   "corr": 0.358,
+   "obs": 43,
+   "overlap": 0.03,
+   "mirrored": true
+  },
+  "건설·EPC→아연·연 제련": {
+   "lag_months": 14,
+   "corr": 0.385,
+   "obs": 29,
    "overlap": 0.0
+  },
+  "아연·연 제련→건설·EPC": {
+   "lag_months": -14,
+   "corr": 0.385,
+   "obs": 29,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "건설·EPC→전력기기·전선": {
+   "lag_months": 0,
+   "corr": 0.565,
+   "obs": 43,
+   "overlap": 0.03
+  },
+  "전력기기·전선→건설·EPC": {
+   "lag_months": 0,
+   "corr": 0.565,
+   "obs": 43,
+   "overlap": 0.03,
+   "mirrored": true
+  },
+  "건설·EPC→전선·구리 가공": {
+   "lag_months": 9,
+   "corr": 0.622,
+   "obs": 34,
+   "overlap": 0.0
+  },
+  "전선·구리 가공→건설·EPC": {
+   "lag_months": -9,
+   "corr": 0.622,
+   "obs": 34,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "건설·EPC→철강": {
+   "lag_months": 0,
+   "corr": 0.484,
+   "obs": 43,
+   "overlap": 0.1
+  },
+  "철강→건설·EPC": {
+   "lag_months": 0,
+   "corr": 0.484,
+   "obs": 43,
+   "overlap": 0.1,
+   "mirrored": true
+  },
+  "건설·EPC→철근·형강": {
+   "lag_months": 0,
+   "corr": 0.501,
+   "obs": 43,
+   "overlap": 0.0
+  },
+  "철근·형강→건설·EPC": {
+   "lag_months": 0,
+   "corr": 0.501,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "건설·EPC→후판·강재": {
+   "lag_months": 0,
+   "corr": 0.459,
+   "obs": 43,
+   "overlap": 0.04
+  },
+  "후판·강재→건설·EPC": {
+   "lag_months": 0,
+   "corr": 0.459,
+   "obs": 43,
+   "overlap": 0.04,
+   "mirrored": true
+  },
+  "건설기계→건설기계 부품": {
+   "lag_months": 0,
+   "corr": 0.619,
+   "obs": 43,
+   "overlap": 0.0
+  },
+  "건설기계 부품→건설기계": {
+   "lag_months": 0,
+   "corr": 0.619,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "건설기계→철강": {
+   "lag_months": 16,
+   "corr": -0.44,
+   "obs": 27,
+   "overlap": 0.0
+  },
+  "철강→건설기계": {
+   "lag_months": -16,
+   "corr": -0.44,
+   "obs": 27,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "건설기계 부품→철강": {
+   "lag_months": -4,
+   "corr": -0.384,
+   "obs": 39,
+   "overlap": 0.0
+  },
+  "철강→건설기계 부품": {
+   "lag_months": 4,
+   "corr": -0.384,
+   "obs": 39,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "기판·패키징→반도체": {
+   "lag_months": 1,
+   "corr": 0.63,
+   "obs": 42,
+   "overlap": 0.0
+  },
+  "반도체→기판·패키징": {
+   "lag_months": -1,
+   "corr": 0.63,
+   "obs": 42,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "기판·패키징→서버·전자기기": {
+   "lag_months": -11,
+   "corr": -0.424,
+   "obs": 32,
+   "overlap": 0.0
+  },
+  "서버·전자기기→기판·패키징": {
+   "lag_months": 11,
+   "corr": -0.424,
+   "obs": 32,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "기판·패키징→완성차": {
+   "lag_months": 11,
+   "corr": 0.502,
+   "obs": 32,
+   "overlap": 0.0
+  },
+  "완성차→기판·패키징": {
+   "lag_months": -11,
+   "corr": 0.502,
+   "obs": 32,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "기판·패키징→자동차 부품·모듈": {
+   "lag_months": -11,
+   "corr": -0.421,
+   "obs": 32,
+   "overlap": 0.0
+  },
+  "자동차 부품·모듈→기판·패키징": {
+   "lag_months": 11,
+   "corr": -0.421,
+   "obs": 32,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "기판·패키징→소재(전구체·특수가스·CMP)": {
+   "lag_months": -1,
+   "corr": 0.535,
+   "obs": 42,
+   "overlap": 0.03
+  },
+  "소재(전구체·특수가스·CMP)→기판·패키징": {
+   "lag_months": 1,
+   "corr": 0.535,
+   "obs": 42,
+   "overlap": 0.03,
+   "mirrored": true
   },
   "기판·패키징→음극재·동박": {
-   "lag_months": 5,
-   "corr": 0.534,
-   "obs": 38,
+   "lag_months": 14,
+   "corr": 0.559,
+   "obs": 29,
    "overlap": 0.0
   },
+  "음극재·동박→기판·패키징": {
+   "lag_months": -14,
+   "corr": 0.559,
+   "obs": 29,
+   "overlap": 0.0,
+   "mirrored": true
+  },
   "내화물→시멘트·레미콘": {
-   "lag_months": 8,
-   "corr": 0.382,
-   "obs": 35,
+   "lag_months": -17,
+   "corr": 0.393,
+   "obs": 26,
    "overlap": 0.0
+  },
+  "시멘트·레미콘→내화물": {
+   "lag_months": 17,
+   "corr": 0.393,
+   "obs": 26,
+   "overlap": 0.0,
+   "mirrored": true
   },
   "내화물→철강": {
    "lag_months": 0,
-   "corr": 0.398,
+   "corr": 0.359,
    "obs": 43,
    "overlap": 0.0
+  },
+  "철강→내화물": {
+   "lag_months": 0,
+   "corr": 0.359,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "데이터센터·건설→산업용 엔진·발전기": {
+   "lag_months": -8,
+   "corr": -0.347,
+   "obs": 35,
+   "overlap": 0.0
+  },
+  "산업용 엔진·발전기→데이터센터·건설": {
+   "lag_months": 8,
+   "corr": -0.347,
+   "obs": 35,
+   "overlap": 0.0,
+   "mirrored": true
   },
   "데이터센터·건설→유틸리티·발전": {
    "lag_months": 7,
-   "corr": 0.415,
+   "corr": 0.435,
    "obs": 36,
    "overlap": 0.0
   },
+  "유틸리티·발전→데이터센터·건설": {
+   "lag_months": -7,
+   "corr": 0.435,
+   "obs": 36,
+   "overlap": 0.0,
+   "mirrored": true
+  },
   "데이터센터·건설→전력기기·전선": {
    "lag_months": -12,
-   "corr": 0.405,
+   "corr": 0.385,
    "obs": 31,
    "overlap": 0.0
   },
+  "전력기기·전선→데이터센터·건설": {
+   "lag_months": 12,
+   "corr": 0.385,
+   "obs": 31,
+   "overlap": 0.0,
+   "mirrored": true
+  },
   "동제련→변압기 부품·권선": {
+   "lag_months": 16,
+   "corr": -0.531,
+   "obs": 27,
+   "overlap": 0.0
+  },
+  "변압기 부품·권선→동제련": {
+   "lag_months": -16,
+   "corr": -0.531,
+   "obs": 27,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "동제련→음극재·동박": {
    "lag_months": 18,
-   "corr": 0.414,
+   "corr": 0.512,
    "obs": 25,
    "overlap": 0.0
   },
-  "동제련→음극재·동박": {
+  "음극재·동박→동제련": {
    "lag_months": -18,
-   "corr": 0.479,
+   "corr": 0.512,
    "obs": 25,
-   "overlap": 0.0
+   "overlap": 0.0,
+   "mirrored": true
   },
   "동제련→전력기기·전선": {
    "lag_months": 0,
-   "corr": 0.645,
+   "corr": 0.653,
    "obs": 43,
-   "overlap": 0.08
+   "overlap": 0.07
+  },
+  "전력기기·전선→동제련": {
+   "lag_months": 0,
+   "corr": 0.653,
+   "obs": 43,
+   "overlap": 0.07,
+   "mirrored": true
   },
   "동제련→전선·구리 가공": {
    "lag_months": 17,
-   "corr": 0.463,
+   "corr": 0.449,
    "obs": 26,
    "overlap": 0.29
+  },
+  "전선·구리 가공→동제련": {
+   "lag_months": -17,
+   "corr": 0.449,
+   "obs": 26,
+   "overlap": 0.29,
+   "mirrored": true
   },
   "동제련→비철·소재": {
    "skipped": "구성 중복",
    "overlap": 0.5
   },
-  "리츠·자산운용→건설·EPC": {
-   "lag_months": 0,
-   "corr": 0.356,
-   "obs": 43,
-   "overlap": 0.0
+  "비철·소재→동제련": {
+   "skipped": "구성 중복",
+   "overlap": 0.5,
+   "mirrored": true
   },
   "물류·포워딩→완성차": {
-   "lag_months": 0,
-   "corr": 0.485,
-   "obs": 43,
-   "overlap": 0.0
-  },
-  "물류·포워딩→정유": {
-   "lag_months": -15,
-   "corr": -0.425,
-   "obs": 28,
-   "overlap": 0.0
-  },
-  "물류·포워딩→해운": {
-   "lag_months": 0,
-   "corr": 0.813,
-   "obs": 43,
-   "overlap": 0.17
-  },
-  "반도체→서버·전자기기": {
-   "lag_months": 0,
-   "corr": 0.616,
-   "obs": 43,
-   "overlap": 0.25
-  },
-  "반도체→기판·패키징": {
-   "lag_months": -18,
-   "corr": -0.475,
-   "obs": 25,
-   "overlap": 0.0
-  },
-  "반도체→산업자동화": {
-   "lag_months": 0,
-   "corr": -0.485,
-   "obs": 43,
-   "overlap": 0.0
-  },
-  "반도체→소재(전구체·특수가스·CMP)": {
-   "lag_months": -2,
-   "corr": 0.42,
-   "obs": 41,
-   "overlap": 0.0
-  },
-  "반도체→원전 기자재": {
-   "lag_months": 0,
-   "corr": -0.63,
-   "obs": 43,
-   "overlap": 0.0
-  },
-  "반도체→이차전지": {
-   "lag_months": 0,
-   "corr": -0.358,
-   "obs": 43,
-   "overlap": 0.0
-  },
-  "반도체→장비": {
-   "lag_months": -1,
-   "corr": 0.492,
-   "obs": 42,
-   "overlap": 0.0
-  },
-  "반도체→전공정 장비": {
-   "lag_months": -3,
-   "corr": 0.494,
-   "obs": 40,
-   "overlap": 0.0
-  },
-  "반도체→전력기기·전선": {
-   "lag_months": 0,
-   "corr": -0.39,
-   "obs": 43,
-   "overlap": 0.0
-  },
-  "반도체→후공정·HBM 장비": {
-   "lag_months": 17,
-   "corr": -0.476,
-   "obs": 26,
-   "overlap": 0.0
-  },
-  "방위산업→완성차": {
-   "lag_months": 0,
-   "corr": 0.586,
-   "obs": 43,
-   "overlap": 0.07
-  },
-  "방위산업→철강": {
-   "lag_months": -17,
-   "corr": 0.553,
-   "obs": 26,
-   "overlap": 0.0
-  },
-  "방위산업→함정(방산 교차)": {
-   "lag_months": 0,
-   "corr": 0.583,
-   "obs": 43,
-   "overlap": 0.13
-  },
-  "방위산업→부품·구동·광학": {
-   "lag_months": 0,
-   "corr": 0.712,
-   "obs": 43,
-   "overlap": 0.43
-  },
-  "방위산업→우주·발사체": {
-   "lag_months": 0,
-   "corr": 0.954,
-   "obs": 43,
-   "overlap": 0.27
-  },
-  "방위산업→탄약·화약": {
-   "lag_months": 0,
-   "corr": 0.654,
-   "obs": 43,
-   "overlap": 0.15
-  },
-  "변압기 부품·권선→유틸리티·발전": {
-   "lag_months": -11,
-   "corr": -0.439,
-   "obs": 32,
-   "overlap": 0.0
-  },
-  "변압기 부품·권선→전력기기·전선": {
-   "lag_months": 11,
-   "corr": 0.426,
-   "obs": 32,
-   "overlap": 0.25
-  },
-  "변압기 부품·권선→동제련": {
-   "lag_months": -18,
-   "corr": 0.414,
-   "obs": 25,
-   "overlap": 0.0
-  },
-  "부동산 개발·시행→건설·EPC": {
-   "lag_months": 0,
-   "corr": 0.396,
-   "obs": 43,
-   "overlap": 0.18
-  },
-  "부품·구동·광학→방위산업": {
-   "lag_months": 0,
-   "corr": 0.712,
-   "obs": 43,
-   "overlap": 0.43
-  },
-  "부품·구동·광학→우주·발사체": {
-   "lag_months": 0,
-   "corr": 0.565,
-   "obs": 43,
-   "overlap": 0.0
-  },
-  "부품·구동·광학→자동차 부품·모듈": {
-   "lag_months": 15,
-   "corr": 0.494,
-   "obs": 28,
-   "overlap": 0.11
-  },
-  "부품·구동·광학→전공정 장비": {
-   "lag_months": 12,
-   "corr": 0.525,
-   "obs": 31,
-   "overlap": 0.0
-  },
-  "분리막·전해액→ESS·전력": {
-   "lag_months": 17,
-   "corr": 0.469,
-   "obs": 26,
-   "overlap": 0.0
-  },
-  "분리막·전해액→완성차": {
-   "lag_months": 5,
-   "corr": 0.346,
-   "obs": 38,
-   "overlap": 0.0
-  },
-  "분리막·전해액→이차전지": {
    "lag_months": 0,
    "corr": 0.486,
    "obs": 43,
    "overlap": 0.0
   },
-  "분리막·전해액→장비": {
+  "완성차→물류·포워딩": {
+   "lag_months": 0,
+   "corr": 0.486,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "물류·포워딩→정유": {
+   "lag_months": -15,
+   "corr": -0.418,
+   "obs": 28,
+   "overlap": 0.0
+  },
+  "정유→물류·포워딩": {
+   "lag_months": 15,
+   "corr": -0.418,
+   "obs": 28,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "물류·포워딩→해운": {
+   "lag_months": 0,
+   "corr": 0.837,
+   "obs": 43,
+   "overlap": 0.14
+  },
+  "해운→물류·포워딩": {
+   "lag_months": 0,
+   "corr": 0.837,
+   "obs": 43,
+   "overlap": 0.14,
+   "mirrored": true
+  },
+  "반도체→서버·전자기기": {
+   "lag_months": 0,
+   "corr": 0.607,
+   "obs": 43,
+   "overlap": 0.29
+  },
+  "서버·전자기기→반도체": {
+   "lag_months": 0,
+   "corr": 0.607,
+   "obs": 43,
+   "overlap": 0.29,
+   "mirrored": true
+  },
+  "반도체→반도체 설계": {
+   "lag_months": 18,
+   "corr": -0.417,
+   "obs": 25,
+   "overlap": 0.0
+  },
+  "반도체 설계→반도체": {
+   "lag_months": -18,
+   "corr": -0.417,
+   "obs": 25,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "반도체→산업자동화": {
+   "lag_months": 0,
+   "corr": -0.574,
+   "obs": 43,
+   "overlap": 0.0
+  },
+  "산업자동화→반도체": {
+   "lag_months": 0,
+   "corr": -0.574,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "반도체→소재(전구체·특수가스·CMP)": {
+   "lag_months": 0,
+   "corr": -0.443,
+   "obs": 43,
+   "overlap": 0.0
+  },
+  "소재(전구체·특수가스·CMP)→반도체": {
+   "lag_months": 0,
+   "corr": -0.443,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "반도체→원전 기자재": {
+   "lag_months": 0,
+   "corr": -0.68,
+   "obs": 43,
+   "overlap": 0.0
+  },
+  "원전 기자재→반도체": {
+   "lag_months": 0,
+   "corr": -0.68,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "반도체→이차전지": {
+   "lag_months": 0,
+   "corr": -0.375,
+   "obs": 43,
+   "overlap": 0.0
+  },
+  "이차전지→반도체": {
+   "lag_months": 0,
+   "corr": -0.375,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "반도체→장비": {
+   "lag_months": -8,
+   "corr": -0.442,
+   "obs": 35,
+   "overlap": 0.0
+  },
+  "장비→반도체": {
+   "lag_months": 8,
+   "corr": -0.442,
+   "obs": 35,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "반도체→전공정 장비": {
+   "lag_months": -3,
+   "corr": 0.514,
+   "obs": 40,
+   "overlap": 0.0
+  },
+  "전공정 장비→반도체": {
+   "lag_months": 3,
+   "corr": 0.514,
+   "obs": 40,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "반도체→전력기기·전선": {
+   "lag_months": 0,
+   "corr": -0.46,
+   "obs": 43,
+   "overlap": 0.0
+  },
+  "전력기기·전선→반도체": {
+   "lag_months": 0,
+   "corr": -0.46,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "반도체→후공정·HBM 장비": {
+   "lag_months": -3,
+   "corr": 0.52,
+   "obs": 40,
+   "overlap": 0.0
+  },
+  "후공정·HBM 장비→반도체": {
+   "lag_months": 3,
+   "corr": 0.52,
+   "obs": 40,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "방위산업→완성차": {
+   "lag_months": 0,
+   "corr": 0.609,
+   "obs": 43,
+   "overlap": 0.22
+  },
+  "완성차→방위산업": {
+   "lag_months": 0,
+   "corr": 0.609,
+   "obs": 43,
+   "overlap": 0.22,
+   "mirrored": true
+  },
+  "방위산업→철강": {
+   "lag_months": -17,
+   "corr": 0.546,
+   "obs": 26,
+   "overlap": 0.0
+  },
+  "철강→방위산업": {
+   "lag_months": 17,
+   "corr": 0.546,
+   "obs": 26,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "방위산업→함정(방산 교차)": {
+   "lag_months": 0,
+   "corr": 0.595,
+   "obs": 43,
+   "overlap": 0.11
+  },
+  "함정(방산 교차)→방위산업": {
+   "lag_months": 0,
+   "corr": 0.595,
+   "obs": 43,
+   "overlap": 0.11,
+   "mirrored": true
+  },
+  "방위산업→부품·구동·광학": {
+   "lag_months": 0,
+   "corr": 0.623,
+   "obs": 43,
+   "overlap": 0.29
+  },
+  "부품·구동·광학→방위산업": {
+   "lag_months": 0,
+   "corr": 0.623,
+   "obs": 43,
+   "overlap": 0.29,
+   "mirrored": true
+  },
+  "방위산업→우주·발사체": {
+   "lag_months": 0,
+   "corr": 0.961,
+   "obs": 43,
+   "overlap": 0.35
+  },
+  "우주·발사체→방위산업": {
+   "lag_months": 0,
+   "corr": 0.961,
+   "obs": 43,
+   "overlap": 0.35,
+   "mirrored": true
+  },
+  "방위산업→탄약·화약": {
+   "lag_months": 0,
+   "corr": 0.621,
+   "obs": 43,
+   "overlap": 0.18
+  },
+  "탄약·화약→방위산업": {
+   "lag_months": 0,
+   "corr": 0.621,
+   "obs": 43,
+   "overlap": 0.18,
+   "mirrored": true
+  },
+  "변압기 부품·권선→유틸리티·발전": {
+   "lag_months": -9,
+   "corr": 0.436,
+   "obs": 34,
+   "overlap": 0.0
+  },
+  "유틸리티·발전→변압기 부품·권선": {
+   "lag_months": 9,
+   "corr": 0.436,
+   "obs": 34,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "변압기 부품·권선→전력기기·전선": {
+   "lag_months": 11,
+   "corr": 0.412,
+   "obs": 32,
+   "overlap": 0.21
+  },
+  "전력기기·전선→변압기 부품·권선": {
+   "lag_months": -11,
+   "corr": 0.412,
+   "obs": 32,
+   "overlap": 0.21,
+   "mirrored": true
+  },
+  "부품·구동·광학→서버·전자기기": {
    "lag_months": -14,
-   "corr": 0.401,
+   "corr": -0.418,
    "obs": 29,
    "overlap": 0.0
+  },
+  "서버·전자기기→부품·구동·광학": {
+   "lag_months": 14,
+   "corr": -0.418,
+   "obs": 29,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "부품·구동·광학→우주·발사체": {
+   "lag_months": 0,
+   "corr": 0.527,
+   "obs": 43,
+   "overlap": 0.0
+  },
+  "우주·발사체→부품·구동·광학": {
+   "lag_months": 0,
+   "corr": 0.527,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "부품·구동·광학→자동차 부품·모듈": {
+   "lag_months": -14,
+   "corr": -0.419,
+   "obs": 29,
+   "overlap": 0.06
+  },
+  "자동차 부품·모듈→부품·구동·광학": {
+   "lag_months": 14,
+   "corr": -0.419,
+   "obs": 29,
+   "overlap": 0.06,
+   "mirrored": true
+  },
+  "부품·구동·광학→전공정 장비": {
+   "lag_months": -12,
+   "corr": 0.445,
+   "obs": 31,
+   "overlap": 0.0
+  },
+  "전공정 장비→부품·구동·광학": {
+   "lag_months": 12,
+   "corr": 0.445,
+   "obs": 31,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "분리막·전해액→완성차": {
+   "lag_months": -5,
+   "corr": -0.351,
+   "obs": 38,
+   "overlap": 0.0
+  },
+  "완성차→분리막·전해액": {
+   "lag_months": 5,
+   "corr": -0.351,
+   "obs": 38,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "분리막·전해액→이차전지": {
+   "lag_months": 0,
+   "corr": 0.493,
+   "obs": 43,
+   "overlap": 0.0
+  },
+  "이차전지→분리막·전해액": {
+   "lag_months": 0,
+   "corr": 0.493,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "분리막·전해액→장비": {
+   "lag_months": -2,
+   "corr": -0.345,
+   "obs": 41,
+   "overlap": 0.0
+  },
+  "장비→분리막·전해액": {
+   "lag_months": 2,
+   "corr": -0.345,
+   "obs": 41,
+   "overlap": 0.0,
+   "mirrored": true
   },
   "비철 스크랩→비철·소재": {
    "lag_months": 0,
@@ -470,513 +968,775 @@
    "obs": 43,
    "overlap": 0.2
   },
+  "비철·소재→비철 스크랩": {
+   "lag_months": 0,
+   "corr": 0.971,
+   "obs": 43,
+   "overlap": 0.2,
+   "mirrored": true
+  },
   "비철 스크랩→전선·구리 가공": {
    "lag_months": 10,
-   "corr": -0.375,
+   "corr": -0.39,
    "obs": 33,
    "overlap": 0.0
   },
+  "전선·구리 가공→비철 스크랩": {
+   "lag_months": -10,
+   "corr": -0.39,
+   "obs": 33,
+   "overlap": 0.0,
+   "mirrored": true
+  },
   "비철 스크랩→철근·형강": {
    "lag_months": 18,
-   "corr": -0.46,
+   "corr": -0.464,
    "obs": 25,
    "overlap": 0.0
+  },
+  "철근·형강→비철 스크랩": {
+   "lag_months": -18,
+   "corr": -0.464,
+   "obs": 25,
+   "overlap": 0.0,
+   "mirrored": true
   },
   "비철 스크랩→후판·강재": {
    "lag_months": 18,
-   "corr": -0.452,
+   "corr": -0.441,
    "obs": 25,
    "overlap": 0.0
   },
-  "비철·소재→동제련": {
-   "skipped": "구성 중복",
-   "overlap": 0.5
+  "후판·강재→비철 스크랩": {
+   "lag_months": -18,
+   "corr": -0.441,
+   "obs": 25,
+   "overlap": 0.0,
+   "mirrored": true
   },
   "비철·소재→아연·연 제련": {
    "skipped": "구성 중복",
    "overlap": 0.5
   },
+  "아연·연 제련→비철·소재": {
+   "skipped": "구성 중복",
+   "overlap": 0.5,
+   "mirrored": true
+  },
   "비철·소재→장비": {
    "lag_months": 17,
-   "corr": 0.635,
+   "corr": 0.707,
    "obs": 26,
    "overlap": 0.0
+  },
+  "장비→비철·소재": {
+   "lag_months": -17,
+   "corr": 0.707,
+   "obs": 26,
+   "overlap": 0.0,
+   "mirrored": true
   },
   "비철·소재→전구체": {
    "lag_months": 0,
-   "corr": 0.888,
+   "corr": 0.879,
    "obs": 43,
    "overlap": 0.17
   },
+  "전구체→비철·소재": {
+   "lag_months": 0,
+   "corr": 0.879,
+   "obs": 43,
+   "overlap": 0.17,
+   "mirrored": true
+  },
   "비철·소재→전선·구리 가공": {
    "lag_months": 10,
-   "corr": -0.422,
+   "corr": -0.44,
    "obs": 33,
    "overlap": 0.22
   },
-  "비철·소재→비철 스크랩": {
-   "lag_months": 0,
-   "corr": 0.971,
-   "obs": 43,
-   "overlap": 0.2
+  "전선·구리 가공→비철·소재": {
+   "lag_months": -10,
+   "corr": -0.44,
+   "obs": 33,
+   "overlap": 0.22,
+   "mirrored": true
   },
-  "산업자동화→반도체": {
-   "lag_months": 0,
-   "corr": -0.485,
-   "obs": 43,
+  "산업용 엔진·발전기→유틸리티·발전": {
+   "lag_months": 12,
+   "corr": -0.395,
+   "obs": 31,
    "overlap": 0.0
+  },
+  "유틸리티·발전→산업용 엔진·발전기": {
+   "lag_months": -12,
+   "corr": -0.395,
+   "obs": 31,
+   "overlap": 0.0,
+   "mirrored": true
   },
   "산업자동화→서버·전자기기": {
-   "lag_months": 0,
-   "corr": -0.459,
-   "obs": 43,
+   "lag_months": 5,
+   "corr": -0.441,
+   "obs": 38,
    "overlap": 0.0
   },
+  "서버·전자기기→산업자동화": {
+   "lag_months": -5,
+   "corr": -0.441,
+   "obs": 38,
+   "overlap": 0.0,
+   "mirrored": true
+  },
   "산업자동화→완성차": {
-   "lag_months": -14,
-   "corr": 0.393,
-   "obs": 29,
+   "lag_months": 11,
+   "corr": 0.397,
+   "obs": 32,
    "overlap": 0.0
+  },
+  "완성차→산업자동화": {
+   "lag_months": -11,
+   "corr": 0.397,
+   "obs": 32,
+   "overlap": 0.0,
+   "mirrored": true
   },
   "산업자동화→이차전지": {
    "lag_months": -14,
-   "corr": 0.484,
+   "corr": 0.435,
    "obs": 29,
    "overlap": 0.0
   },
+  "이차전지→산업자동화": {
+   "lag_months": 14,
+   "corr": 0.435,
+   "obs": 29,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "산업자동화→조선": {
+   "lag_months": 0,
+   "corr": 0.405,
+   "obs": 43,
+   "overlap": 0.0
+  },
+  "조선→산업자동화": {
+   "lag_months": 0,
+   "corr": 0.405,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "산업자동화→철도차량": {
+   "lag_months": 11,
+   "corr": 0.42,
+   "obs": 32,
+   "overlap": 0.04
+  },
+  "철도차량→산업자동화": {
+   "lag_months": -11,
+   "corr": 0.42,
+   "obs": 32,
+   "overlap": 0.04,
+   "mirrored": true
+  },
   "산업자동화→전력기기·전선": {
    "lag_months": 0,
-   "corr": 0.826,
+   "corr": 0.734,
    "obs": 43,
-   "overlap": 0.11
+   "overlap": 0.06
   },
-  "서버·전자기기→기판·패키징": {
-   "lag_months": 17,
-   "corr": -0.524,
-   "obs": 26,
-   "overlap": 0.0
-  },
-  "서버·전자기기→반도체": {
+  "전력기기·전선→산업자동화": {
    "lag_months": 0,
-   "corr": 0.616,
+   "corr": 0.734,
    "obs": 43,
-   "overlap": 0.25
-  },
-  "서버·전자기기→산업자동화": {
-   "lag_months": 0,
-   "corr": -0.459,
-   "obs": 43,
-   "overlap": 0.0
+   "overlap": 0.06,
+   "mirrored": true
   },
   "서버·전자기기→소재(전구체·특수가스·CMP)": {
    "lag_months": -16,
-   "corr": 0.521,
+   "corr": 0.528,
    "obs": 27,
-   "overlap": 0.0
-  },
-  "서버·전자기기→음극재·동박": {
-   "lag_months": -18,
-   "corr": -0.485,
-   "obs": 25,
-   "overlap": 0.0
-  },
-  "서버·전자기기→철강": {
-   "lag_months": 17,
-   "corr": 0.381,
-   "obs": 26,
-   "overlap": 0.0
-  },
-  "석유화학→조선 기자재(엔진·보냉재·의장)": {
-   "lag_months": -16,
-   "corr": -0.528,
-   "obs": 27,
-   "overlap": 0.0
-  },
-  "석유화학→건설·EPC": {
-   "lag_months": -2,
-   "corr": -0.455,
-   "obs": 41,
-   "overlap": 0.0
-  },
-  "석유화학→정유": {
-   "skipped": "구성 중복",
-   "overlap": 0.6
-  },
-  "석회석→양극재": {
-   "lag_months": 6,
-   "corr": -0.391,
-   "obs": 37,
-   "overlap": 0.0
-  },
-  "석회석→철강": {
-   "lag_months": 13,
-   "corr": -0.37,
-   "obs": 30,
-   "overlap": 0.0
-  },
-  "선박 도료·케이블→완성차": {
-   "lag_months": 13,
-   "corr": -0.401,
-   "obs": 30,
-   "overlap": 0.0
-  },
-  "선박 도료·케이블→조선": {
-   "lag_months": -16,
-   "corr": -0.439,
-   "obs": 27,
-   "overlap": 0.0
-  },
-  "소재(전구체·특수가스·CMP)→반도체": {
-   "lag_months": 2,
-   "corr": 0.42,
-   "obs": 41,
    "overlap": 0.0
   },
   "소재(전구체·특수가스·CMP)→서버·전자기기": {
    "lag_months": 16,
-   "corr": 0.521,
+   "corr": 0.528,
+   "obs": 27,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "서버·전자기기→음극재·동박": {
+   "lag_months": -14,
+   "corr": -0.468,
+   "obs": 29,
+   "overlap": 0.0
+  },
+  "음극재·동박→서버·전자기기": {
+   "lag_months": 14,
+   "corr": -0.468,
+   "obs": 29,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "서버·전자기기→철강": {
+   "lag_months": 17,
+   "corr": 0.466,
+   "obs": 26,
+   "overlap": 0.0
+  },
+  "철강→서버·전자기기": {
+   "lag_months": -17,
+   "corr": 0.466,
+   "obs": 26,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "석유화학→조선 기자재(엔진·보냉재·의장)": {
+   "lag_months": -16,
+   "corr": -0.521,
    "obs": 27,
    "overlap": 0.0
   },
-  "소재(전구체·특수가스·CMP)→완성차": {
-   "lag_months": -3,
-   "corr": 0.469,
+  "조선 기자재(엔진·보냉재·의장)→석유화학": {
+   "lag_months": 16,
+   "corr": -0.521,
+   "obs": 27,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "석유화학→타이어": {
+   "lag_months": 0,
+   "corr": 0.419,
+   "obs": 43,
+   "overlap": 0.0
+  },
+  "타이어→석유화학": {
+   "lag_months": 0,
+   "corr": 0.419,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "석유화학→화장품 ODM": {
+   "lag_months": 3,
+   "corr": -0.347,
    "obs": 40,
    "overlap": 0.0
   },
-  "소재(전구체·특수가스·CMP)→태양광": {
-   "lag_months": -15,
-   "corr": 0.46,
-   "obs": 28,
-   "overlap": 0.0
+  "화장품 ODM→석유화학": {
+   "lag_months": -3,
+   "corr": -0.347,
+   "obs": 40,
+   "overlap": 0.0,
+   "mirrored": true
   },
-  "시멘트·레미콘→건설·EPC": {
+  "석유화학→정유": {
    "lag_months": 0,
-   "corr": 0.366,
+   "corr": 0.889,
    "obs": 43,
-   "overlap": 0.05
+   "overlap": 0.26
   },
-  "시멘트·레미콘→철강": {
-   "lag_months": 15,
-   "corr": 0.452,
-   "obs": 28,
-   "overlap": 0.0
-  },
-  "시멘트·레미콘→철도차량": {
-   "lag_months": 1,
-   "corr": 0.582,
-   "obs": 42,
-   "overlap": 0.0
-  },
-  "시멘트·레미콘→내화물": {
-   "lag_months": -8,
-   "corr": 0.382,
-   "obs": 35,
-   "overlap": 0.0
-  },
-  "시멘트·레미콘→유틸리티·발전": {
-   "lag_months": 17,
-   "corr": 0.465,
-   "obs": 26,
-   "overlap": 0.0
-  },
-  "시멘트·레미콘→철근·형강": {
+  "정유→석유화학": {
    "lag_months": 0,
-   "corr": 0.477,
+   "corr": 0.889,
    "obs": 43,
-   "overlap": 0.0
+   "overlap": 0.26,
+   "mirrored": true
   },
-  "신재생→ESS·전력": {
-   "lag_months": 15,
-   "corr": -0.466,
-   "obs": 28,
-   "overlap": 0.0
-  },
-  "신재생→태양광": {
-   "lag_months": 10,
-   "corr": -0.511,
-   "obs": 33,
-   "overlap": 0.29
-  },
-  "신재생→풍력": {
-   "lag_months": 15,
-   "corr": -0.452,
-   "obs": 28,
-   "overlap": 0.25
-  },
-  "신재생→전력기기·전선": {
-   "lag_months": 17,
-   "corr": 0.39,
-   "obs": 26,
-   "overlap": 0.0
-  },
-  "신재생→후판·강재": {
-   "lag_months": 14,
-   "corr": 0.426,
-   "obs": 29,
-   "overlap": 0.0
-  },
-  "아연·연 제련→건설·EPC": {
-   "lag_months": 18,
-   "corr": -0.354,
-   "obs": 25,
-   "overlap": 0.0
-  },
-  "아연·연 제련→완성차": {
-   "lag_months": 14,
-   "corr": 0.501,
-   "obs": 29,
-   "overlap": 0.0
-  },
-  "아연·연 제련→전선·구리 가공": {
-   "lag_months": -17,
-   "corr": 0.378,
-   "obs": 26,
-   "overlap": 0.0
-  },
-  "아연·연 제련→철강": {
-   "lag_months": -14,
-   "corr": 0.451,
-   "obs": 29,
-   "overlap": 0.0
-  },
-  "아연·연 제련→비철·소재": {
-   "skipped": "구성 중복",
-   "overlap": 0.5
-  },
-  "양극재→완성차": {
-   "lag_months": 10,
-   "corr": 0.29,
-   "obs": 33,
-   "overlap": 0.0
-  },
-  "양극재→이차전지": {
-   "lag_months": 0,
-   "corr": 0.691,
-   "obs": 43,
-   "overlap": 0.0
-  },
-  "양극재→철강": {
-   "lag_months": 0,
-   "corr": 0.573,
-   "obs": 43,
-   "overlap": 0.17
-  },
-  "양극재→석회석": {
-   "lag_months": -6,
-   "corr": -0.391,
+  "석회석→양극재": {
+   "lag_months": 6,
+   "corr": -0.36,
    "obs": 37,
    "overlap": 0.0
   },
-  "양극재→전구체": {
-   "lag_months": 0,
-   "corr": 0.496,
-   "obs": 43,
-   "overlap": 0.12
+  "양극재→석회석": {
+   "lag_months": -6,
+   "corr": -0.36,
+   "obs": 37,
+   "overlap": 0.0,
+   "mirrored": true
   },
-  "완성차→기판·패키징": {
-   "lag_months": -5,
-   "corr": 0.299,
-   "obs": 38,
-   "overlap": 0.0
-  },
-  "완성차→물류·포워딩": {
+  "석회석→철강": {
    "lag_months": 0,
-   "corr": 0.485,
+   "corr": 0.333,
    "obs": 43,
    "overlap": 0.0
   },
-  "완성차→방위산업": {
+  "철강→석회석": {
    "lag_months": 0,
-   "corr": 0.586,
+   "corr": 0.333,
    "obs": 43,
-   "overlap": 0.07
+   "overlap": 0.0,
+   "mirrored": true
   },
-  "완성차→분리막·전해액": {
-   "lag_months": -5,
-   "corr": 0.346,
-   "obs": 38,
-   "overlap": 0.0
-  },
-  "완성차→산업자동화": {
-   "lag_months": 14,
-   "corr": 0.393,
-   "obs": 29,
+  "선박 도료·케이블→완성차": {
+   "lag_months": 13,
+   "corr": -0.411,
+   "obs": 30,
    "overlap": 0.0
   },
   "완성차→선박 도료·케이블": {
    "lag_months": -13,
-   "corr": -0.401,
+   "corr": -0.411,
    "obs": 30,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "선박 도료·케이블→조선": {
+   "lag_months": -9,
+   "corr": -0.438,
+   "obs": 34,
+   "overlap": 0.0
+  },
+  "조선→선박 도료·케이블": {
+   "lag_months": 9,
+   "corr": -0.438,
+   "obs": 34,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "소재(전구체·특수가스·CMP)→완성차": {
+   "lag_months": -3,
+   "corr": 0.48,
+   "obs": 40,
    "overlap": 0.0
   },
   "완성차→소재(전구체·특수가스·CMP)": {
    "lag_months": 3,
-   "corr": 0.469,
+   "corr": 0.48,
    "obs": 40,
-   "overlap": 0.0
+   "overlap": 0.0,
+   "mirrored": true
   },
-  "완성차→아연·연 제련": {
-   "lag_months": -14,
-   "corr": 0.501,
-   "obs": 29,
-   "overlap": 0.0
-  },
-  "완성차→양극재": {
-   "lag_months": -10,
-   "corr": 0.29,
-   "obs": 33,
-   "overlap": 0.0
-  },
-  "완성차→이차전지": {
-   "lag_months": -8,
-   "corr": -0.404,
-   "obs": 35,
-   "overlap": 0.0
-  },
-  "완성차→자동차 부품·모듈": {
+  "소재(전구체·특수가스·CMP)→태양광": {
    "lag_months": -15,
-   "corr": -0.426,
+   "corr": 0.581,
    "obs": 28,
    "overlap": 0.0
   },
-  "완성차→전력기기·전선": {
-   "lag_months": 18,
-   "corr": 0.438,
-   "obs": 25,
+  "태양광→소재(전구체·특수가스·CMP)": {
+   "lag_months": 15,
+   "corr": 0.581,
+   "obs": 28,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "시멘트·레미콘→철강": {
+   "lag_months": 15,
+   "corr": 0.426,
+   "obs": 28,
    "overlap": 0.0
   },
-  "완성차→전선·구리 가공": {
-   "lag_months": 14,
-   "corr": 0.462,
-   "obs": 29,
+  "철강→시멘트·레미콘": {
+   "lag_months": -15,
+   "corr": 0.426,
+   "obs": 28,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "시멘트·레미콘→철도차량": {
+   "lag_months": 1,
+   "corr": 0.497,
+   "obs": 42,
    "overlap": 0.0
   },
-  "완성차→철강": {
-   "lag_months": 16,
-   "corr": 0.5,
-   "obs": 27,
-   "overlap": 0.0
+  "철도차량→시멘트·레미콘": {
+   "lag_months": -1,
+   "corr": 0.497,
+   "obs": 42,
+   "overlap": 0.0,
+   "mirrored": true
   },
-  "완성차→후판·강재": {
-   "lag_months": 16,
-   "corr": 0.459,
-   "obs": 27,
-   "overlap": 0.0
-  },
-  "우주·발사체→방위산업": {
-   "lag_months": 0,
-   "corr": 0.954,
-   "obs": 43,
-   "overlap": 0.27
-  },
-  "우주·발사체→부품·구동·광학": {
-   "lag_months": 0,
-   "corr": 0.565,
-   "obs": 43,
-   "overlap": 0.0
-  },
-  "원전 기자재→반도체": {
-   "lag_months": 0,
-   "corr": -0.63,
-   "obs": 43,
-   "overlap": 0.0
-  },
-  "원전 기자재→유틸리티·발전": {
-   "lag_months": 12,
-   "corr": -0.547,
-   "obs": 31,
-   "overlap": 0.22
-  },
-  "원전 기자재→철강": {
-   "lag_months": 16,
-   "corr": -0.403,
-   "obs": 27,
-   "overlap": 0.0
-  },
-  "유틸리티·발전→데이터센터·건설": {
-   "lag_months": -7,
-   "corr": 0.415,
+  "시멘트·레미콘→유틸리티·발전": {
+   "lag_months": 7,
+   "corr": 0.427,
    "obs": 36,
    "overlap": 0.0
   },
   "유틸리티·발전→시멘트·레미콘": {
-   "lag_months": -17,
-   "corr": 0.465,
-   "obs": 26,
-   "overlap": 0.0
+   "lag_months": -7,
+   "corr": 0.427,
+   "obs": 36,
+   "overlap": 0.0,
+   "mirrored": true
   },
-  "유틸리티·발전→ESS·전력": {
+  "시멘트·레미콘→철근·형강": {
    "lag_months": 0,
-   "corr": 0.525,
+   "corr": 0.444,
    "obs": 43,
    "overlap": 0.0
   },
-  "유틸리티·발전→LNG·가스": {
+  "철근·형강→시멘트·레미콘": {
    "lag_months": 0,
-   "corr": 0.653,
+   "corr": 0.444,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "신재생→태양광": {
+   "lag_months": 0,
+   "corr": 0.495,
    "obs": 43,
    "overlap": 0.25
   },
-  "유틸리티·발전→건설·EPC": {
+  "태양광→신재생": {
+   "lag_months": 0,
+   "corr": 0.495,
+   "obs": 43,
+   "overlap": 0.25,
+   "mirrored": true
+  },
+  "신재생→풍력": {
+   "lag_months": 0,
+   "corr": 0.402,
+   "obs": 43,
+   "overlap": 0.15
+  },
+  "풍력→신재생": {
+   "lag_months": 0,
+   "corr": 0.402,
+   "obs": 43,
+   "overlap": 0.15,
+   "mirrored": true
+  },
+  "신재생→전력기기·전선": {
+   "lag_months": 0,
+   "corr": 0.418,
+   "obs": 43,
+   "overlap": 0.0
+  },
+  "전력기기·전선→신재생": {
+   "lag_months": 0,
+   "corr": 0.418,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "신재생→후판·강재": {
+   "lag_months": 14,
+   "corr": 0.382,
+   "obs": 29,
+   "overlap": 0.0
+  },
+  "후판·강재→신재생": {
+   "lag_months": -14,
+   "corr": 0.382,
+   "obs": 29,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "아연·연 제련→완성차": {
+   "lag_months": 14,
+   "corr": 0.554,
+   "obs": 29,
+   "overlap": 0.0
+  },
+  "완성차→아연·연 제련": {
+   "lag_months": -14,
+   "corr": 0.554,
+   "obs": 29,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "아연·연 제련→전선·구리 가공": {
+   "lag_months": 10,
+   "corr": -0.392,
+   "obs": 33,
+   "overlap": 0.0
+  },
+  "전선·구리 가공→아연·연 제련": {
+   "lag_months": -10,
+   "corr": -0.392,
+   "obs": 33,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "아연·연 제련→철강": {
+   "lag_months": -14,
+   "corr": 0.464,
+   "obs": 29,
+   "overlap": 0.0
+  },
+  "철강→아연·연 제련": {
+   "lag_months": 14,
+   "corr": 0.464,
+   "obs": 29,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "양극재→완성차": {
+   "lag_months": -7,
+   "corr": 0.291,
+   "obs": 36,
+   "overlap": 0.0
+  },
+  "완성차→양극재": {
+   "lag_months": 7,
+   "corr": 0.291,
+   "obs": 36,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "양극재→이차전지": {
+   "lag_months": 0,
+   "corr": 0.719,
+   "obs": 43,
+   "overlap": 0.0
+  },
+  "이차전지→양극재": {
+   "lag_months": 0,
+   "corr": 0.719,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "양극재→철강": {
+   "lag_months": 0,
+   "corr": 0.469,
+   "obs": 43,
+   "overlap": 0.15
+  },
+  "철강→양극재": {
+   "lag_months": 0,
+   "corr": 0.469,
+   "obs": 43,
+   "overlap": 0.15,
+   "mirrored": true
+  },
+  "양극재→전구체": {
    "lag_months": 0,
    "corr": 0.547,
    "obs": 43,
-   "overlap": 0.1
+   "overlap": 0.12
   },
-  "유틸리티·발전→변압기 부품·권선": {
-   "lag_months": 11,
-   "corr": -0.439,
-   "obs": 32,
-   "overlap": 0.0
-  },
-  "유틸리티·발전→원전 기자재": {
-   "lag_months": -12,
-   "corr": -0.547,
-   "obs": 31,
-   "overlap": 0.22
-  },
-  "유틸리티·발전→전력기기·전선": {
-   "lag_months": -14,
-   "corr": 0.455,
-   "obs": 29,
-   "overlap": 0.06
-  },
-  "유틸리티·발전→전선·구리 가공": {
-   "lag_months": 17,
-   "corr": 0.378,
-   "obs": 26,
-   "overlap": 0.0
-  },
-  "유틸리티·발전→정유": {
+  "전구체→양극재": {
    "lag_months": 0,
-   "corr": 0.564,
+   "corr": 0.547,
+   "obs": 43,
+   "overlap": 0.12,
+   "mirrored": true
+  },
+  "완성차→자동차 판매·금융": {
+   "lag_months": 0,
+   "corr": 0.496,
    "obs": 43,
    "overlap": 0.0
   },
-  "유틸리티·발전→조선 기자재(엔진·보냉재·의장)": {
-   "lag_months": -16,
-   "corr": -0.507,
+  "자동차 판매·금융→완성차": {
+   "lag_months": 0,
+   "corr": 0.496,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "완성차→이차전지": {
+   "lag_months": -8,
+   "corr": -0.397,
+   "obs": 35,
+   "overlap": 0.0
+  },
+  "이차전지→완성차": {
+   "lag_months": 8,
+   "corr": -0.397,
+   "obs": 35,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "완성차→자동차 부품·모듈": {
+   "lag_months": -9,
+   "corr": 0.351,
+   "obs": 34,
+   "overlap": 0.0
+  },
+  "자동차 부품·모듈→완성차": {
+   "lag_months": 9,
+   "corr": 0.351,
+   "obs": 34,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "완성차→전력기기·전선": {
+   "lag_months": 1,
+   "corr": 0.293,
+   "obs": 42,
+   "overlap": 0.0
+  },
+  "전력기기·전선→완성차": {
+   "lag_months": -1,
+   "corr": 0.293,
+   "obs": 42,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "완성차→전선·구리 가공": {
+   "lag_months": 14,
+   "corr": 0.459,
+   "obs": 29,
+   "overlap": 0.0
+  },
+  "전선·구리 가공→완성차": {
+   "lag_months": -14,
+   "corr": 0.459,
+   "obs": 29,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "완성차→철강": {
+   "lag_months": 16,
+   "corr": 0.435,
    "obs": 27,
    "overlap": 0.0
   },
-  "유틸리티·발전→철도차량": {
-   "lag_months": 11,
-   "corr": -0.448,
-   "obs": 32,
+  "철강→완성차": {
+   "lag_months": -16,
+   "corr": 0.435,
+   "obs": 27,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "완성차→타이어": {
+   "lag_months": 6,
+   "corr": 0.501,
+   "obs": 37,
    "overlap": 0.0
   },
-  "유틸리티·발전→풍력": {
-   "lag_months": -12,
-   "corr": -0.457,
-   "obs": 31,
+  "타이어→완성차": {
+   "lag_months": -6,
+   "corr": 0.501,
+   "obs": 37,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "완성차→후판·강재": {
+   "lag_months": -10,
+   "corr": 0.44,
+   "obs": 33,
    "overlap": 0.0
+  },
+  "후판·강재→완성차": {
+   "lag_months": 10,
+   "corr": 0.44,
+   "obs": 33,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "원전 기자재→유틸리티·발전": {
+   "lag_months": 12,
+   "corr": -0.53,
+   "obs": 31,
+   "overlap": 0.18
+  },
+  "유틸리티·발전→원전 기자재": {
+   "lag_months": -12,
+   "corr": -0.53,
+   "obs": 31,
+   "overlap": 0.18,
+   "mirrored": true
+  },
+  "원전 기자재→철강": {
+   "lag_months": 16,
+   "corr": -0.385,
+   "obs": 27,
+   "overlap": 0.0
+  },
+  "철강→원전 기자재": {
+   "lag_months": -16,
+   "corr": -0.385,
+   "obs": 27,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "유틸리티·발전→전력기기·전선": {
+   "lag_months": -5,
+   "corr": 0.448,
+   "obs": 38,
+   "overlap": 0.05
+  },
+  "전력기기·전선→유틸리티·발전": {
+   "lag_months": 5,
+   "corr": 0.448,
+   "obs": 38,
+   "overlap": 0.05,
+   "mirrored": true
+  },
+  "유틸리티·발전→전선·구리 가공": {
+   "lag_months": 17,
+   "corr": 0.432,
+   "obs": 26,
+   "overlap": 0.0
+  },
+  "전선·구리 가공→유틸리티·발전": {
+   "lag_months": -17,
+   "corr": 0.432,
+   "obs": 26,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "유틸리티·발전→정유": {
+   "lag_months": 0,
+   "corr": 0.55,
+   "obs": 43,
+   "overlap": 0.0
+  },
+  "정유→유틸리티·발전": {
+   "lag_months": 0,
+   "corr": 0.55,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "유틸리티·발전→조선 기자재(엔진·보냉재·의장)": {
+   "lag_months": -16,
+   "corr": -0.554,
+   "obs": 27,
+   "overlap": 0.0
+  },
+  "조선 기자재(엔진·보냉재·의장)→유틸리티·발전": {
+   "lag_months": 16,
+   "corr": -0.554,
+   "obs": 27,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "유틸리티·발전→철도차량": {
+   "lag_months": -16,
+   "corr": 0.45,
+   "obs": 27,
+   "overlap": 0.0
+  },
+  "철도차량→유틸리티·발전": {
+   "lag_months": 16,
+   "corr": 0.45,
+   "obs": 27,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "유틸리티·발전→풍력": {
+   "lag_months": -5,
+   "corr": 0.435,
+   "obs": 38,
+   "overlap": 0.0
+  },
+  "풍력→유틸리티·발전": {
+   "lag_months": 5,
+   "corr": 0.435,
+   "obs": 38,
+   "overlap": 0.0,
+   "mirrored": true
   },
   "유틸리티·발전→해양플랜트": {
    "lag_months": -16,
-   "corr": -0.455,
+   "corr": -0.468,
    "obs": 27,
    "overlap": 0.0
+  },
+  "해양플랜트→유틸리티·발전": {
+   "lag_months": 16,
+   "corr": -0.468,
+   "obs": 27,
+   "overlap": 0.0,
+   "mirrored": true
   },
   "유틸리티·발전→해운": {
    "lag_months": 0,
@@ -984,429 +1744,285 @@
    "obs": 43,
    "overlap": 0.0
   },
-  "음극재·동박→ESS·전력": {
+  "해운→유틸리티·발전": {
    "lag_months": 0,
-   "corr": 0.728,
+   "corr": 0.416,
    "obs": 43,
-   "overlap": 0.0
-  },
-  "음극재·동박→기판·패키징": {
-   "lag_months": -5,
-   "corr": 0.534,
-   "obs": 38,
-   "overlap": 0.0
-  },
-  "음극재·동박→서버·전자기기": {
-   "lag_months": 18,
-   "corr": -0.485,
-   "obs": 25,
-   "overlap": 0.0
+   "overlap": 0.0,
+   "mirrored": true
   },
   "음극재·동박→이차전지": {
    "lag_months": 0,
-   "corr": 0.762,
-   "obs": 43,
-   "overlap": 0.0
-  },
-  "음극재·동박→통신장비·케이블": {
-   "lag_months": 13,
-   "corr": 0.395,
-   "obs": 30,
-   "overlap": 0.0
-  },
-  "음극재·동박→동제련": {
-   "lag_months": 18,
-   "corr": 0.479,
-   "obs": 25,
-   "overlap": 0.0
-  },
-  "음극재·동박→장비": {
-   "lag_months": 8,
-   "corr": -0.4,
-   "obs": 35,
-   "overlap": 0.0
-  },
-  "이차전지→ESS·전력": {
-   "lag_months": 0,
-   "corr": 0.79,
-   "obs": 43,
-   "overlap": 0.29
-  },
-  "이차전지→반도체": {
-   "lag_months": 0,
-   "corr": -0.358,
-   "obs": 43,
-   "overlap": 0.0
-  },
-  "이차전지→완성차": {
-   "lag_months": 8,
-   "corr": -0.404,
-   "obs": 35,
-   "overlap": 0.0
-  },
-  "이차전지→분리막·전해액": {
-   "lag_months": 0,
-   "corr": 0.486,
-   "obs": 43,
-   "overlap": 0.0
-  },
-  "이차전지→산업자동화": {
-   "lag_months": 14,
-   "corr": 0.484,
-   "obs": 29,
-   "overlap": 0.0
-  },
-  "이차전지→양극재": {
-   "lag_months": 0,
-   "corr": 0.691,
+   "corr": 0.778,
    "obs": 43,
    "overlap": 0.0
   },
   "이차전지→음극재·동박": {
    "lag_months": 0,
-   "corr": 0.762,
+   "corr": 0.778,
    "obs": 43,
-   "overlap": 0.0
+   "overlap": 0.0,
+   "mirrored": true
   },
-  "이차전지→장비": {
-   "lag_months": -15,
-   "corr": -0.371,
-   "obs": 28,
-   "overlap": 0.0
-  },
-  "자동차 부품·모듈→완성차": {
-   "lag_months": 15,
-   "corr": -0.426,
-   "obs": 28,
-   "overlap": 0.0
-  },
-  "자동차 부품·모듈→부품·구동·광학": {
-   "lag_months": -15,
-   "corr": 0.494,
-   "obs": 28,
-   "overlap": 0.11
-  },
-  "장비→반도체": {
+  "음극재·동박→통신장비·케이블": {
    "lag_months": 1,
-   "corr": 0.492,
+   "corr": 0.402,
    "obs": 42,
    "overlap": 0.0
   },
-  "장비→분리막·전해액": {
-   "lag_months": 14,
-   "corr": 0.401,
-   "obs": 29,
-   "overlap": 0.0
+  "통신장비·케이블→음극재·동박": {
+   "lag_months": -1,
+   "corr": 0.402,
+   "obs": 42,
+   "overlap": 0.0,
+   "mirrored": true
   },
-  "장비→음극재·동박": {
-   "lag_months": -8,
-   "corr": -0.4,
-   "obs": 35,
-   "overlap": 0.0
-  },
-  "장비→이차전지": {
-   "lag_months": 15,
-   "corr": -0.371,
-   "obs": 28,
-   "overlap": 0.0
-  },
-  "장비→비철·소재": {
-   "lag_months": -17,
-   "corr": 0.635,
-   "obs": 26,
-   "overlap": 0.0
-  },
-  "장비→철강": {
-   "lag_months": -15,
-   "corr": -0.378,
-   "obs": 28,
-   "overlap": 0.0
-  },
-  "장비→후판·강재": {
-   "lag_months": -14,
-   "corr": 0.516,
-   "obs": 29,
-   "overlap": 0.0
-  },
-  "전공정 장비→반도체": {
-   "lag_months": 3,
-   "corr": 0.494,
-   "obs": 40,
-   "overlap": 0.0
-  },
-  "전공정 장비→부품·구동·광학": {
-   "lag_months": -12,
-   "corr": 0.525,
-   "obs": 31,
-   "overlap": 0.0
-  },
-  "전구체→ESS·전력": {
-   "lag_months": 0,
-   "corr": 0.463,
-   "obs": 43,
-   "overlap": 0.0
-  },
-  "전구체→양극재": {
-   "lag_months": 0,
-   "corr": 0.496,
-   "obs": 43,
-   "overlap": 0.12
-  },
-  "전구체→철강": {
-   "lag_months": -14,
-   "corr": 0.378,
-   "obs": 29,
-   "overlap": 0.0
-  },
-  "전구체→비철·소재": {
-   "lag_months": 0,
-   "corr": 0.888,
-   "obs": 43,
-   "overlap": 0.17
-  },
-  "전력기기·전선→건설·EPC": {
-   "lag_months": -9,
-   "corr": 0.532,
-   "obs": 34,
-   "overlap": 0.04
-  },
-  "전력기기·전선→데이터센터·건설": {
-   "lag_months": 12,
-   "corr": 0.405,
-   "obs": 31,
-   "overlap": 0.0
-  },
-  "전력기기·전선→반도체": {
-   "lag_months": 0,
-   "corr": -0.39,
-   "obs": 43,
-   "overlap": 0.0
-  },
-  "전력기기·전선→산업자동화": {
-   "lag_months": 0,
-   "corr": 0.826,
-   "obs": 43,
-   "overlap": 0.11
-  },
-  "전력기기·전선→신재생": {
-   "lag_months": -17,
-   "corr": 0.39,
-   "obs": 26,
-   "overlap": 0.0
-  },
-  "전력기기·전선→완성차": {
-   "lag_months": -18,
-   "corr": 0.438,
-   "obs": 25,
-   "overlap": 0.0
-  },
-  "전력기기·전선→유틸리티·발전": {
-   "lag_months": 14,
-   "corr": 0.455,
-   "obs": 29,
-   "overlap": 0.06
-  },
-  "전력기기·전선→조선": {
-   "lag_months": 8,
-   "corr": 0.386,
-   "obs": 35,
-   "overlap": 0.0
-  },
-  "전력기기·전선→철도차량": {
-   "lag_months": -18,
-   "corr": 0.407,
-   "obs": 25,
-   "overlap": 0.0
-  },
-  "전력기기·전선→풍력": {
-   "lag_months": 0,
-   "corr": 0.514,
-   "obs": 43,
-   "overlap": 0.0
-  },
-  "전력기기·전선→동제련": {
-   "lag_months": 0,
-   "corr": 0.645,
-   "obs": 43,
-   "overlap": 0.08
-  },
-  "전력기기·전선→변압기 부품·권선": {
-   "lag_months": -11,
-   "corr": 0.426,
-   "obs": 32,
-   "overlap": 0.25
-  },
-  "전력기기·전선→전선·구리 가공": {
-   "lag_months": 0,
-   "corr": 0.57,
-   "obs": 43,
-   "overlap": 0.2
-  },
-  "전력기기·전선→철강": {
-   "lag_months": -9,
-   "corr": 0.364,
-   "obs": 34,
-   "overlap": 0.0
-  },
-  "전력기기·전선→후판·강재": {
-   "lag_months": -8,
-   "corr": 0.45,
-   "obs": 35,
-   "overlap": 0.0
-  },
-  "전선·구리 가공→건설·EPC": {
-   "lag_months": -9,
-   "corr": 0.629,
-   "obs": 34,
-   "overlap": 0.0
-  },
-  "전선·구리 가공→완성차": {
-   "lag_months": -14,
-   "corr": 0.462,
-   "obs": 29,
-   "overlap": 0.0
-  },
-  "전선·구리 가공→유틸리티·발전": {
-   "lag_months": -17,
-   "corr": 0.378,
-   "obs": 26,
-   "overlap": 0.0
-  },
-  "전선·구리 가공→전력기기·전선": {
-   "lag_months": 0,
-   "corr": 0.57,
-   "obs": 43,
-   "overlap": 0.2
-  },
-  "전선·구리 가공→철강": {
-   "lag_months": -8,
-   "corr": 0.471,
-   "obs": 35,
-   "overlap": 0.0
-  },
-  "전선·구리 가공→동제련": {
-   "lag_months": -17,
-   "corr": 0.463,
-   "obs": 26,
-   "overlap": 0.29
-  },
-  "전선·구리 가공→비철 스크랩": {
-   "lag_months": -10,
-   "corr": -0.375,
-   "obs": 33,
-   "overlap": 0.0
-  },
-  "전선·구리 가공→비철·소재": {
-   "lag_months": -10,
-   "corr": -0.422,
-   "obs": 33,
-   "overlap": 0.22
-  },
-  "전선·구리 가공→아연·연 제련": {
-   "lag_months": 17,
-   "corr": 0.378,
-   "obs": 26,
-   "overlap": 0.0
-  },
-  "전선·구리 가공→탄약·화약": {
-   "lag_months": -7,
-   "corr": -0.274,
-   "obs": 36,
-   "overlap": 0.12
-  },
-  "정유→물류·포워딩": {
-   "lag_months": 15,
-   "corr": -0.425,
-   "obs": 28,
-   "overlap": 0.0
-  },
-  "정유→석유화학": {
-   "skipped": "구성 중복",
-   "overlap": 0.6
-  },
-  "정유→유틸리티·발전": {
-   "lag_months": 0,
-   "corr": 0.564,
-   "obs": 43,
-   "overlap": 0.0
-  },
-  "정유→해운": {
-   "lag_months": 15,
-   "corr": -0.46,
-   "obs": 28,
-   "overlap": 0.0
-  },
-  "정유→LNG·가스": {
-   "lag_months": 0,
-   "corr": 0.845,
-   "obs": 43,
-   "overlap": 0.17
-  },
-  "정유→건설·EPC": {
+  "음극재·동박→장비": {
    "lag_months": -2,
-   "corr": -0.463,
+   "corr": -0.391,
    "obs": 41,
    "overlap": 0.0
   },
-  "조선→해운": {
-   "lag_months": -7,
-   "corr": 0.413,
-   "obs": 36,
+  "장비→음극재·동박": {
+   "lag_months": 2,
+   "corr": -0.391,
+   "obs": 41,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "이차전지→장비": {
+   "lag_months": 1,
+   "corr": 0.393,
+   "obs": 42,
    "overlap": 0.0
   },
-  "조선→선박 도료·케이블": {
-   "lag_months": 16,
-   "corr": -0.439,
-   "obs": 27,
+  "장비→이차전지": {
+   "lag_months": -1,
+   "corr": 0.393,
+   "obs": 42,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "장비→철강": {
+   "lag_months": -14,
+   "corr": 0.407,
+   "obs": 29,
+   "overlap": 0.0
+  },
+  "철강→장비": {
+   "lag_months": 14,
+   "corr": 0.407,
+   "obs": 29,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "장비→후판·강재": {
+   "lag_months": -14,
+   "corr": 0.535,
+   "obs": 29,
+   "overlap": 0.0
+  },
+  "후판·강재→장비": {
+   "lag_months": 14,
+   "corr": 0.535,
+   "obs": 29,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "전구체→철강": {
+   "lag_months": -14,
+   "corr": 0.406,
+   "obs": 29,
+   "overlap": 0.0
+  },
+  "철강→전구체": {
+   "lag_months": 14,
+   "corr": 0.406,
+   "obs": 29,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "전력기기·전선→조선": {
+   "lag_months": 8,
+   "corr": 0.416,
+   "obs": 35,
    "overlap": 0.0
   },
   "조선→전력기기·전선": {
    "lag_months": -8,
-   "corr": 0.386,
+   "corr": 0.416,
+   "obs": 35,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "전력기기·전선→철도차량": {
+   "lag_months": -18,
+   "corr": 0.364,
+   "obs": 25,
+   "overlap": 0.0
+  },
+  "철도차량→전력기기·전선": {
+   "lag_months": 18,
+   "corr": 0.364,
+   "obs": 25,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "전력기기·전선→풍력": {
+   "lag_months": 0,
+   "corr": 0.524,
+   "obs": 43,
+   "overlap": 0.0
+  },
+  "풍력→전력기기·전선": {
+   "lag_months": 0,
+   "corr": 0.524,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "전력기기·전선→전선·구리 가공": {
+   "lag_months": 0,
+   "corr": 0.571,
+   "obs": 43,
+   "overlap": 0.18
+  },
+  "전선·구리 가공→전력기기·전선": {
+   "lag_months": 0,
+   "corr": 0.571,
+   "obs": 43,
+   "overlap": 0.18,
+   "mirrored": true
+  },
+  "전력기기·전선→철강": {
+   "lag_months": -2,
+   "corr": 0.329,
+   "obs": 41,
+   "overlap": 0.0
+  },
+  "철강→전력기기·전선": {
+   "lag_months": 2,
+   "corr": 0.329,
+   "obs": 41,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "전력기기·전선→후판·강재": {
+   "lag_months": -8,
+   "corr": 0.415,
    "obs": 35,
    "overlap": 0.0
   },
+  "후판·강재→전력기기·전선": {
+   "lag_months": 8,
+   "corr": 0.415,
+   "obs": 35,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "전선·구리 가공→철강": {
+   "lag_months": -8,
+   "corr": 0.443,
+   "obs": 35,
+   "overlap": 0.0
+  },
+  "철강→전선·구리 가공": {
+   "lag_months": 8,
+   "corr": 0.443,
+   "obs": 35,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "전선·구리 가공→탄약·화약": {
+   "lag_months": 3,
+   "corr": -0.288,
+   "obs": 40,
+   "overlap": 0.11
+  },
+  "탄약·화약→전선·구리 가공": {
+   "lag_months": -3,
+   "corr": -0.288,
+   "obs": 40,
+   "overlap": 0.11,
+   "mirrored": true
+  },
+  "정유→해운": {
+   "lag_months": 15,
+   "corr": -0.448,
+   "obs": 28,
+   "overlap": 0.0
+  },
+  "해운→정유": {
+   "lag_months": -15,
+   "corr": -0.448,
+   "obs": 28,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "조선→해운": {
+   "lag_months": -7,
+   "corr": 0.382,
+   "obs": 36,
+   "overlap": 0.0
+  },
+  "해운→조선": {
+   "lag_months": 7,
+   "corr": 0.382,
+   "obs": 36,
+   "overlap": 0.0,
+   "mirrored": true
+  },
   "조선→조선 기자재(엔진·보냉재·의장)": {
    "lag_months": 0,
-   "corr": 0.868,
+   "corr": 0.841,
    "obs": 43,
-   "overlap": 0.14
-  },
-  "조선→철강": {
-   "lag_months": -17,
-   "corr": 0.327,
-   "obs": 26,
-   "overlap": 0.0
-  },
-  "조선→후판·강재": {
-   "lag_months": 16,
-   "corr": -0.529,
-   "obs": 27,
-   "overlap": 0.0
-  },
-  "조선 기자재(엔진·보냉재·의장)→석유화학": {
-   "lag_months": 16,
-   "corr": -0.528,
-   "obs": 27,
-   "overlap": 0.0
-  },
-  "조선 기자재(엔진·보냉재·의장)→유틸리티·발전": {
-   "lag_months": 16,
-   "corr": -0.507,
-   "obs": 27,
-   "overlap": 0.0
+   "overlap": 0.11
   },
   "조선 기자재(엔진·보냉재·의장)→조선": {
    "lag_months": 0,
-   "corr": 0.868,
+   "corr": 0.841,
    "obs": 43,
-   "overlap": 0.14
+   "overlap": 0.11,
+   "mirrored": true
+  },
+  "조선→철강": {
+   "lag_months": 5,
+   "corr": 0.255,
+   "obs": 38,
+   "overlap": 0.0
+  },
+  "철강→조선": {
+   "lag_months": -5,
+   "corr": 0.255,
+   "obs": 38,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "조선→후판·강재": {
+   "lag_months": 16,
+   "corr": -0.512,
+   "obs": 27,
+   "overlap": 0.0
+  },
+  "후판·강재→조선": {
+   "lag_months": -16,
+   "corr": -0.512,
+   "obs": 27,
+   "overlap": 0.0,
+   "mirrored": true
   },
   "조선 기자재(엔진·보냉재·의장)→해양플랜트": {
    "lag_months": 0,
-   "corr": 0.867,
+   "corr": 0.834,
    "obs": 43,
-   "overlap": 0.2
+   "overlap": 0.16
+  },
+  "해양플랜트→조선 기자재(엔진·보냉재·의장)": {
+   "lag_months": 0,
+   "corr": 0.834,
+   "obs": 43,
+   "overlap": 0.16,
+   "mirrored": true
   },
   "조선 기자재(엔진·보냉재·의장)→철강": {
    "lag_months": -6,
@@ -1414,257 +2030,90 @@
    "obs": 37,
    "overlap": 0.0
   },
-  "조선 기자재(엔진·보냉재·의장)→후판·강재": {
-   "lag_months": 16,
-   "corr": -0.453,
-   "obs": 27,
-   "overlap": 0.0
-  },
-  "철강→건설·EPC": {
-   "lag_months": 0,
-   "corr": 0.51,
-   "obs": 43,
-   "overlap": 0.09
-  },
-  "철강→건설기계": {
-   "lag_months": -16,
-   "corr": -0.46,
-   "obs": 27,
-   "overlap": 0.0
-  },
-  "철강→건설기계 부품": {
-   "lag_months": -14,
-   "corr": 0.53,
-   "obs": 29,
-   "overlap": 0.0
-  },
-  "철강→서버·전자기기": {
-   "lag_months": -17,
-   "corr": 0.381,
-   "obs": 26,
-   "overlap": 0.0
-  },
-  "철강→시멘트·레미콘": {
-   "lag_months": -15,
-   "corr": 0.452,
-   "obs": 28,
-   "overlap": 0.0
-  },
-  "철강→완성차": {
-   "lag_months": -16,
-   "corr": 0.5,
-   "obs": 27,
-   "overlap": 0.0
-  },
-  "철강→원전 기자재": {
-   "lag_months": -16,
-   "corr": -0.403,
-   "obs": 27,
-   "overlap": 0.0
-  },
-  "철강→장비": {
-   "lag_months": 15,
-   "corr": -0.378,
-   "obs": 28,
-   "overlap": 0.0
-  },
-  "철강→전력기기·전선": {
-   "lag_months": 9,
-   "corr": 0.364,
-   "obs": 34,
-   "overlap": 0.0
-  },
-  "철강→조선": {
-   "lag_months": 17,
-   "corr": 0.327,
-   "obs": 26,
-   "overlap": 0.0
-  },
   "철강→조선 기자재(엔진·보냉재·의장)": {
    "lag_months": 6,
    "corr": -0.388,
    "obs": 37,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "조선 기자재(엔진·보냉재·의장)→후판·강재": {
+   "lag_months": 16,
+   "corr": -0.452,
+   "obs": 27,
    "overlap": 0.0
+  },
+  "후판·강재→조선 기자재(엔진·보냉재·의장)": {
+   "lag_months": -16,
+   "corr": -0.452,
+   "obs": 27,
+   "overlap": 0.0,
+   "mirrored": true
   },
   "철강→철근·형강": {
    "lag_months": 0,
-   "corr": 0.569,
+   "corr": 0.544,
    "obs": 43,
-   "overlap": 0.3
-  },
-  "철강→철도차량": {
-   "lag_months": -16,
-   "corr": 0.43,
-   "obs": 27,
-   "overlap": 0.0
-  },
-  "철강→풍력": {
-   "lag_months": 17,
-   "corr": 0.489,
-   "obs": 26,
-   "overlap": 0.0
-  },
-  "철강→후판·강재": {
-   "lag_months": 0,
-   "corr": 0.732,
-   "obs": 43,
-   "overlap": 0.44
-  },
-  "철강→LNG·가스": {
-   "lag_months": 0,
-   "corr": 0.561,
-   "obs": 43,
-   "overlap": 0.09
-  },
-  "철강→내화물": {
-   "lag_months": 0,
-   "corr": 0.398,
-   "obs": 43,
-   "overlap": 0.0
-  },
-  "철강→방위산업": {
-   "lag_months": 17,
-   "corr": 0.553,
-   "obs": 26,
-   "overlap": 0.0
-  },
-  "철강→석회석": {
-   "lag_months": -13,
-   "corr": -0.37,
-   "obs": 30,
-   "overlap": 0.0
-  },
-  "철강→아연·연 제련": {
-   "lag_months": 14,
-   "corr": 0.451,
-   "obs": 29,
-   "overlap": 0.0
-  },
-  "철강→양극재": {
-   "lag_months": 0,
-   "corr": 0.573,
-   "obs": 43,
-   "overlap": 0.17
-  },
-  "철강→전구체": {
-   "lag_months": 14,
-   "corr": 0.378,
-   "obs": 29,
-   "overlap": 0.0
-  },
-  "철강→전선·구리 가공": {
-   "lag_months": 8,
-   "corr": 0.471,
-   "obs": 35,
-   "overlap": 0.0
-  },
-  "철강→해운": {
-   "lag_months": 16,
-   "corr": 0.452,
-   "obs": 27,
-   "overlap": 0.0
-  },
-  "철근·형강→건설·EPC": {
-   "lag_months": 0,
-   "corr": 0.496,
-   "obs": 43,
-   "overlap": 0.0
-  },
-  "철근·형강→시멘트·레미콘": {
-   "lag_months": 0,
-   "corr": 0.477,
-   "obs": 43,
-   "overlap": 0.0
+   "overlap": 0.27
   },
   "철근·형강→철강": {
    "lag_months": 0,
-   "corr": 0.569,
+   "corr": 0.544,
    "obs": 43,
-   "overlap": 0.3
+   "overlap": 0.27,
+   "mirrored": true
   },
-  "철근·형강→비철 스크랩": {
-   "lag_months": -18,
-   "corr": -0.46,
-   "obs": 25,
-   "overlap": 0.0
-  },
-  "철도차량→유틸리티·발전": {
-   "lag_months": -11,
-   "corr": -0.448,
-   "obs": 32,
-   "overlap": 0.0
-  },
-  "철도차량→시멘트·레미콘": {
-   "lag_months": -1,
-   "corr": 0.582,
-   "obs": 42,
-   "overlap": 0.0
-  },
-  "철도차량→전력기기·전선": {
-   "lag_months": 18,
-   "corr": 0.407,
-   "obs": 25,
+  "철강→철도차량": {
+   "lag_months": 10,
+   "corr": 0.401,
+   "obs": 33,
    "overlap": 0.0
   },
   "철도차량→철강": {
-   "lag_months": 16,
-   "corr": 0.43,
-   "obs": 27,
-   "overlap": 0.0
-  },
-  "탄약·화약→방위산업": {
-   "lag_months": 0,
-   "corr": 0.654,
-   "obs": 43,
-   "overlap": 0.15
-  },
-  "탄약·화약→전선·구리 가공": {
-   "lag_months": 7,
-   "corr": -0.274,
-   "obs": 36,
-   "overlap": 0.12
-  },
-  "태양광→소재(전구체·특수가스·CMP)": {
-   "lag_months": 15,
-   "corr": 0.46,
-   "obs": 28,
-   "overlap": 0.0
-  },
-  "태양광→신재생": {
    "lag_months": -10,
-   "corr": -0.511,
+   "corr": 0.401,
    "obs": 33,
-   "overlap": 0.29
+   "overlap": 0.0,
+   "mirrored": true
   },
-  "통신장비·케이블→음극재·동박": {
-   "lag_months": -13,
-   "corr": 0.395,
-   "obs": 30,
-   "overlap": 0.0
-  },
-  "풍력→유틸리티·발전": {
-   "lag_months": 12,
-   "corr": -0.457,
-   "obs": 31,
-   "overlap": 0.0
-  },
-  "풍력→신재생": {
-   "lag_months": -15,
-   "corr": -0.452,
-   "obs": 28,
-   "overlap": 0.25
-  },
-  "풍력→전력기기·전선": {
-   "lag_months": 0,
-   "corr": 0.514,
-   "obs": 43,
+  "철강→풍력": {
+   "lag_months": 17,
+   "corr": 0.451,
+   "obs": 26,
    "overlap": 0.0
   },
   "풍력→철강": {
    "lag_months": -17,
-   "corr": 0.489,
+   "corr": 0.451,
    "obs": 26,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "철강→후판·강재": {
+   "lag_months": 0,
+   "corr": 0.676,
+   "obs": 43,
+   "overlap": 0.4
+  },
+  "후판·강재→철강": {
+   "lag_months": 0,
+   "corr": 0.676,
+   "obs": 43,
+   "overlap": 0.4,
+   "mirrored": true
+  },
+  "철강→해운": {
+   "lag_months": 16,
+   "corr": 0.443,
+   "obs": 27,
    "overlap": 0.0
+  },
+  "해운→철강": {
+   "lag_months": -16,
+   "corr": 0.443,
+   "obs": 27,
+   "overlap": 0.0,
+   "mirrored": true
   },
   "풍력→후판·강재": {
    "lag_months": 16,
@@ -1672,137 +2121,38 @@
    "obs": 27,
    "overlap": 0.0
   },
-  "함정(방산 교차)→방위산업": {
-   "lag_months": 0,
-   "corr": 0.583,
-   "obs": 43,
-   "overlap": 0.13
-  },
-  "해양플랜트→유틸리티·발전": {
-   "lag_months": 16,
-   "corr": -0.455,
-   "obs": 27,
-   "overlap": 0.0
-  },
-  "해양플랜트→조선 기자재(엔진·보냉재·의장)": {
-   "lag_months": 0,
-   "corr": 0.867,
-   "obs": 43,
-   "overlap": 0.2
-  },
-  "해양플랜트→후판·강재": {
-   "lag_months": 16,
-   "corr": -0.531,
-   "obs": 27,
-   "overlap": 0.0
-  },
-  "해운→LNG·가스": {
-   "lag_months": 0,
-   "corr": 0.46,
-   "obs": 43,
-   "overlap": 0.0
-  },
-  "해운→물류·포워딩": {
-   "lag_months": 0,
-   "corr": 0.813,
-   "obs": 43,
-   "overlap": 0.17
-  },
-  "해운→유틸리티·발전": {
-   "lag_months": 0,
-   "corr": 0.416,
-   "obs": 43,
-   "overlap": 0.0
-  },
-  "해운→정유": {
-   "lag_months": -15,
-   "corr": -0.46,
-   "obs": 28,
-   "overlap": 0.0
-  },
-  "해운→철강": {
-   "lag_months": -16,
-   "corr": 0.452,
-   "obs": 27,
-   "overlap": 0.0
-  },
-  "해운→조선": {
-   "lag_months": 7,
-   "corr": 0.413,
-   "obs": 36,
-   "overlap": 0.0
-  },
-  "후공정·HBM 장비→반도체": {
-   "lag_months": -17,
-   "corr": -0.476,
-   "obs": 26,
-   "overlap": 0.0
-  },
-  "후판·강재→건설·EPC": {
-   "lag_months": 0,
-   "corr": 0.504,
-   "obs": 43,
-   "overlap": 0.05
-  },
-  "후판·강재→신재생": {
-   "lag_months": -14,
-   "corr": 0.426,
-   "obs": 29,
-   "overlap": 0.0
-  },
-  "후판·강재→완성차": {
-   "lag_months": -16,
-   "corr": 0.459,
-   "obs": 27,
-   "overlap": 0.0
-  },
-  "후판·강재→장비": {
-   "lag_months": 14,
-   "corr": 0.516,
-   "obs": 29,
-   "overlap": 0.0
-  },
-  "후판·강재→전력기기·전선": {
-   "lag_months": 8,
-   "corr": 0.45,
-   "obs": 35,
-   "overlap": 0.0
-  },
-  "후판·강재→조선": {
-   "lag_months": -16,
-   "corr": -0.529,
-   "obs": 27,
-   "overlap": 0.0
-  },
-  "후판·강재→조선 기자재(엔진·보냉재·의장)": {
-   "lag_months": -16,
-   "corr": -0.453,
-   "obs": 27,
-   "overlap": 0.0
-  },
-  "후판·강재→철강": {
-   "lag_months": 0,
-   "corr": 0.732,
-   "obs": 43,
-   "overlap": 0.44
-  },
   "후판·강재→풍력": {
    "lag_months": -16,
    "corr": -0.612,
+   "obs": 27,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "해양플랜트→후판·강재": {
+   "lag_months": 16,
+   "corr": -0.515,
    "obs": 27,
    "overlap": 0.0
   },
   "후판·강재→해양플랜트": {
    "lag_months": -16,
-   "corr": -0.531,
+   "corr": -0.515,
    "obs": 27,
+   "overlap": 0.0,
+   "mirrored": true
+  },
+  "화장품→화장품 ODM": {
+   "lag_months": 0,
+   "corr": 0.457,
+   "obs": 43,
    "overlap": 0.0
   },
-  "후판·강재→비철 스크랩": {
-   "lag_months": -18,
-   "corr": -0.452,
-   "obs": 25,
-   "overlap": 0.0
+  "화장품 ODM→화장품": {
+   "lag_months": 0,
+   "corr": 0.457,
+   "obs": 43,
+   "overlap": 0.0,
+   "mirrored": true
   }
  }
 }
